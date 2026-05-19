@@ -8,7 +8,7 @@ pub fn socket_path() -> PathBuf {
     if let Ok(custom) = std::env::var("JCODE_SOCKET") {
         return PathBuf::from(custom);
     }
-    crate::storage::runtime_dir().join("jcode.sock")
+    crate::storage::runtime_dir().join("iagent.sock")
 }
 
 /// Debug socket path for testing/introspection
@@ -18,7 +18,7 @@ pub fn debug_socket_path() -> PathBuf {
     let filename = main_path
         .file_name()
         .and_then(|n| n.to_str())
-        .unwrap_or("jcode.sock");
+        .unwrap_or("iagent.sock");
     let debug_filename = filename.replace(".sock", "-debug.sock");
     main_path.with_file_name(debug_filename)
 }

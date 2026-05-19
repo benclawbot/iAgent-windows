@@ -1,4 +1,4 @@
-//! End-to-end smoke tests for the jcode binary
+//! End-to-end smoke tests for the iagent binary
 //!
 //! These tests verify the critical happy path without requiring real API credentials.
 //! They are designed to be fast and run in CI as a pre-build sanity check.
@@ -11,10 +11,10 @@ use std::process::Command;
 // These tests verify the binary starts without crashing and responds to basic commands.
 // ============================================================================
 
-/// Test that the jcode binary responds to --version without crashing
+/// Test that the iagent binary responds to --version without crashing
 #[tokio::test]
 async fn smoke_version_command() -> Result<()> {
-    let output = Command::new(env!("CARGO_BIN_EXE_jcode"))
+    let output = Command::new(env!("CARGO_BIN_EXE_iagent"))
         .arg("--version")
         .output()?;
 
@@ -30,7 +30,7 @@ async fn smoke_version_command() -> Result<()> {
     );
 
     assert!(
-        stdout.contains("jcode") || stdout.contains("0.12"),
+        stdout.contains("iagent") || stdout.contains("0.12"),
         "Version output should contain 'jcode' or version number. Got: {}",
         stdout
     );
@@ -38,10 +38,10 @@ async fn smoke_version_command() -> Result<()> {
     Ok(())
 }
 
-/// Test that the jcode binary responds to --help without crashing
+/// Test that the iagent binary responds to --help without crashing
 #[tokio::test]
 async fn smoke_help_command() -> Result<()> {
-    let output = Command::new(env!("CARGO_BIN_EXE_jcode"))
+    let output = Command::new(env!("CARGO_BIN_EXE_iagent"))
         .arg("--help")
         .output()?;
 
@@ -75,21 +75,21 @@ async fn smoke_help_command() -> Result<()> {
     Ok(())
 }
 
-/// Test that the jcode binary can start a server and produce a text response (basic round-trip)
+/// Test that the iagent binary can start a server and produce a text response
 /// This uses the mock provider to avoid needing real API credentials.
 #[tokio::test]
 async fn smoke_basic_round_trip() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-smoke-roundtrip-{}",
+        "iagent-smoke-roundtrip-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     // Create a mock provider with a simple response
     let provider = MockProvider::new();
@@ -104,7 +104,7 @@ async fn smoke_basic_round_trip() -> Result<()> {
         StreamEvent::SessionId("smoke-session-1".to_string()),
     ]);
 
-    let provider: Arc<dyn jcode::provider::Provider> = Arc::new(provider);
+    let provider: Arc<dyn iagent::provider::Provider> = Arc::new(provider);
     let server_instance =
         server::Server::new_with_paths(provider, socket_path.clone(), debug_socket_path.clone());
     let server_handle = tokio::spawn(async move { server_instance.run().await });
@@ -155,14 +155,14 @@ async fn smoke_basic_round_trip() -> Result<()> {
     result
 }
 
-/// Test that the jcode binary responds to version with short timeout
+/// Test that the iagent binary responds to version with short timeout
 /// This test is useful for CI to quickly verify the binary is not completely broken
 #[tokio::test]
 async fn smoke_version_quick() -> Result<()> {
     use std::time::Duration;
 
     // Use tokio's process::Command for async timeout support
-    let child = tokio::process::Command::new(env!("CARGO_BIN_EXE_jcode"))
+    let child = tokio::process::Command::new(env!("CARGO_BIN_EXE_iagent"))
         .arg("--version")
         .spawn()?;
 

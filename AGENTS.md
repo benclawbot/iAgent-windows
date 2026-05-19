@@ -22,7 +22,7 @@
 
 - `scripts/install.ps1` is the remaining installer script while Windows
   packaging is redesigned.
-- `%LOCALAPPDATA%\jcode\bin\jcode.exe` and related `%LOCALAPPDATA%\jcode`
+- `%LOCALAPPDATA%\iAgent\bin\iagent.exe` and related `%LOCALAPPDATA%\iAgent`
   paths are transitional backend paths.
 - New user-facing packaging should target iAgent naming once the backend API
   boundary is stable.

@@ -182,7 +182,7 @@ fn next_build_patch(base_version: (u32, u32, u32)) -> Result<u32, String> {
 
 fn build_counter_file() -> PathBuf {
     if let Some(target_root) = target_root_from_out_dir() {
-        return target_root.join("jcode-build").join("patch-counters.txt");
+        return target_root.join("iagent-build").join("patch-counters.txt");
     }
 
     std::env::var("CARGO_MANIFEST_DIR")
@@ -190,7 +190,7 @@ fn build_counter_file() -> PathBuf {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."))
         .join("target")
-        .join("jcode-build")
+        .join("iagent-build")
         .join("patch-counters.txt")
 }
 

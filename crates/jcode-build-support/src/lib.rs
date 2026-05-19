@@ -549,8 +549,8 @@ pub fn smoke_test_server_binary(binary: &Path) -> Result<()> {
     let temp = tempfile::tempdir()?;
     let runtime_dir = temp.path().join("runtime");
     storage::ensure_dir(&runtime_dir)?;
-    let socket_path = temp.path().join("jcode-smoke.sock");
-    let stderr_path = temp.path().join("jcode-smoke.stderr.log");
+    let socket_path = temp.path().join("iagent-smoke.sock");
+    let stderr_path = temp.path().join("iagent-smoke.stderr.log");
     let stderr = File::create(&stderr_path)?;
 
     let mut child = Command::new(binary)

@@ -789,7 +789,7 @@ impl App {
 
     /// Get the debug socket path
     pub fn debug_socket_path() -> std::path::PathBuf {
-        crate::storage::runtime_dir().join("jcode-debug.sock")
+        crate::storage::runtime_dir().join("iagent-debug.sock")
     }
 }
 
