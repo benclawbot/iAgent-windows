@@ -5,10 +5,10 @@
     Downloads the latest iAgent release and installs it to %LOCALAPPDATA%\iAgent\bin.
 
     One-liner install:
-      irm https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/install.ps1 | iex
+      irm https://raw.githubusercontent.com/benclawbot/iagent-windows/main/scripts/install.ps1 | iex
 
     Or download and run (allows parameters):
-      & ([scriptblock]::Create((irm https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/install.ps1)))
+      & ([scriptblock]::Create((irm https://raw.githubusercontent.com/benclawbot/iagent-windows/main/scripts/install.ps1)))
 .PARAMETER InstallDir
     Override the installation directory (default: $env:LOCALAPPDATA\iAgent\bin)
 .PARAMETER Version
@@ -21,6 +21,8 @@
     Skip Alacritty install/setup helpers.
 .PARAMETER SkipHotkeySetup
     Skip Alt+; hotkey setup helpers.
+.PARAMETER SkipDesktopShortcut
+    Skip creating the iAgent desktop shortcut.
 #>
 param(
     [string]$InstallDir,
@@ -28,7 +30,8 @@ param(
     [string]$ArtifactExePath,
     [string]$ArtifactTgzPath,
     [switch]$SkipAlacrittySetup,
-    [switch]$SkipHotkeySetup
+    [switch]$SkipHotkeySetup,
+    [switch]$SkipDesktopShortcut
 )
 
 $ErrorActionPreference = 'Stop'
@@ -355,8 +358,8 @@ function Install-IagentHotkey([string]$IagentExePath) {
         "`$shortcut.TargetPath = 'wscript.exe'",
         ("`$shortcut.Arguments = '""{0}""'" -f $escapedVbsPath),
         "`$shortcut.Description = 'iAgent Alt+; hotkey listener'",
-        '`$shortcut.WindowStyle = 7',
-        '`$shortcut.Save()',
+        '$shortcut.WindowStyle = 7',
+        '$shortcut.Save()',
         "Write-Output 'OK'"
     )
     $shortcutScript = $shortcutLines -join "`r`n"
@@ -375,6 +378,110 @@ function Install-IagentHotkey([string]$IagentExePath) {
 
     Write-Info "Configured Alt+; to launch iAgent in Alacritty"
     return $true
+}
+
+function New-IagentRobotIcon([string]$IconPath) {
+    try {
+        Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+
+        $bitmap = New-Object System.Drawing.Bitmap 64, 64
+        $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+        $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+        $graphics.Clear([System.Drawing.Color]::Transparent)
+
+        $bodyBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 34, 197, 94))
+        $faceBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 15, 23, 42))
+        $eyeBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::White)
+        $antennaPen = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(255, 34, 197, 94)), 4
+
+        $graphics.DrawLine($antennaPen, 32, 14, 32, 8)
+        $graphics.FillEllipse($bodyBrush, 28, 3, 8, 8)
+        $graphics.FillRectangle($bodyBrush, 14, 16, 36, 38)
+        $graphics.FillEllipse($bodyBrush, 10, 16, 12, 12)
+        $graphics.FillEllipse($bodyBrush, 42, 16, 12, 12)
+        $graphics.FillEllipse($bodyBrush, 10, 42, 12, 12)
+        $graphics.FillEllipse($bodyBrush, 42, 42, 12, 12)
+        $graphics.FillRectangle($bodyBrush, 10, 22, 44, 26)
+        $graphics.FillRectangle($faceBrush, 16, 24, 32, 18)
+        $graphics.FillEllipse($faceBrush, 16, 24, 8, 8)
+        $graphics.FillEllipse($faceBrush, 40, 24, 8, 8)
+        $graphics.FillEllipse($faceBrush, 16, 34, 8, 8)
+        $graphics.FillEllipse($faceBrush, 40, 34, 8, 8)
+        $graphics.FillEllipse($eyeBrush, 23, 30, 6, 6)
+        $graphics.FillEllipse($eyeBrush, 35, 30, 6, 6)
+        $graphics.FillRectangle($bodyBrush, 20, 54, 8, 6)
+        $graphics.FillRectangle($bodyBrush, 36, 54, 8, 6)
+
+        $pngStream = New-Object System.IO.MemoryStream
+        $bitmap.Save($pngStream, [System.Drawing.Imaging.ImageFormat]::Png)
+        $pngBytes = $pngStream.ToArray()
+
+        $iconDir = [System.IO.Path]::GetDirectoryName($IconPath)
+        if (-not (Test-Path $iconDir)) {
+            New-Item -ItemType Directory -Path $iconDir -Force | Out-Null
+        }
+
+        $fs = [System.IO.File]::Open($IconPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+        $writer = New-Object System.IO.BinaryWriter($fs)
+        $writer.Write([UInt16]0)
+        $writer.Write([UInt16]1)
+        $writer.Write([UInt16]1)
+        $writer.Write([Byte]64)
+        $writer.Write([Byte]64)
+        $writer.Write([Byte]0)
+        $writer.Write([Byte]0)
+        $writer.Write([UInt16]1)
+        $writer.Write([UInt16]32)
+        $writer.Write([UInt32]$pngBytes.Length)
+        $writer.Write([UInt32]22)
+        $writer.Write($pngBytes)
+        $writer.Close()
+        $fs.Close()
+
+        $graphics.Dispose()
+        $bitmap.Dispose()
+        $pngStream.Dispose()
+        return $true
+    } catch {
+        Write-Warn "Could not create robot icon: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+function Install-IagentDesktopShortcut([string]$IagentExePath, [string]$IconPath) {
+    try {
+        $desktop = [Environment]::GetFolderPath("DesktopDirectory")
+        if (-not $desktop) {
+            Write-Warn "Desktop folder was not found; skipping desktop shortcut"
+            return $false
+        }
+
+        $shortcutPath = Join-Path $desktop "iAgent.lnk"
+        $shell = New-Object -ComObject WScript.Shell
+        $shortcut = $shell.CreateShortcut($shortcutPath)
+        $alacrittyPath = Find-AlacrittyPath
+
+        if ($alacrittyPath) {
+            $shortcut.TargetPath = $alacrittyPath
+            $shortcut.Arguments = ('-e "{0}"' -f $IagentExePath)
+        } else {
+            $shortcut.TargetPath = $IagentExePath
+            $shortcut.Arguments = ""
+        }
+
+        $shortcut.WorkingDirectory = [Environment]::GetFolderPath("UserProfile")
+        $shortcut.Description = "Start iAgent"
+        if (Test-Path $IconPath) {
+            $shortcut.IconLocation = $IconPath
+        }
+        $shortcut.Save()
+
+        Write-Info "Desktop shortcut ready: $shortcutPath"
+        return $true
+    } catch {
+        Write-Warn "Could not create desktop shortcut: $($_.Exception.Message)"
+        return $false
+    }
 }
 
 function Get-IagentWindowsArtifact {
@@ -435,6 +542,7 @@ $BuildsDir = Join-Path $env:LOCALAPPDATA "iAgent\builds"
 $StableDir = Join-Path $BuildsDir "stable"
 $VersionDir = Join-Path $BuildsDir "versions\$VersionNum"
 $LauncherPath = Join-Path $InstallDir "iagent.exe"
+$IconPath = Join-Path $InstallDir "iagent-robot.ico"
 
 $Existing = ""
 if (Test-Path $LauncherPath) {
@@ -557,6 +665,7 @@ $env:Path = "$InstallDir;$env:Path"
 
 $installedAlacritty = $false
 $configuredHotkey = $false
+$configuredDesktopShortcut = $false
 
 if ($SkipAlacrittySetup) {
     Write-Info "Skipping Alacritty setup"
@@ -569,6 +678,16 @@ if ($SkipHotkeySetup) {
     Write-Info "Skipping Alt+; hotkey setup"
 } elseif ($installedAlacritty) {
     $configuredHotkey = Install-IagentHotkey -IagentExePath $LauncherPath
+}
+
+if ($SkipDesktopShortcut) {
+    Write-Info "Skipping desktop shortcut setup"
+} else {
+    if (New-IagentRobotIcon -IconPath $IconPath) {
+        $configuredDesktopShortcut = Install-IagentDesktopShortcut -IagentExePath $LauncherPath -IconPath $IconPath
+    } else {
+        $configuredDesktopShortcut = Install-IagentDesktopShortcut -IagentExePath $LauncherPath -IconPath $LauncherPath
+    }
 }
 
 Set-SetupHintsState -AlacrittyConfigured:(Test-AlacrittyInstalled) -HotkeyConfigured:$configuredHotkey
@@ -586,6 +705,11 @@ if (Test-AlacrittyInstalled) {
 
 if ($configuredHotkey) {
     Write-Info "Global hotkey ready: Alt+; opens iAgent in Alacritty"
+    Write-Host ""
+}
+
+if ($configuredDesktopShortcut) {
+    Write-Info "Desktop shortcut ready: double-click iAgent to start."
     Write-Host ""
 }
 

@@ -36,14 +36,14 @@ Optional but recommended:
 Run in PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/benclawbot/iagent-windows/main/scripts/install.ps1 | iex
 ```
 
-The installer downloads the latest release, installs `iagent.exe` to:
+The installer downloads the latest release, installs `iagent.exe`, creates a
+desktop shortcut with the iAgent robot icon, and adds the install directory to
+your user `PATH`.
 
 `%LOCALAPPDATA%\iAgent\bin`
-
-and adds that location to your user `PATH`.
 
 ## First Start (2 Minutes)
 
