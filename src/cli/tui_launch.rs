@@ -1,22 +1,31 @@
 #![cfg_attr(test, allow(clippy::await_holding_lock))]
 
-use anyhow::{Context, Result};
+use anyhow::Result;
+#[cfg(feature = "terminal-ui")]
+use anyhow::Context;
 
+#[cfg(feature = "terminal-ui")]
 const MAX_INTERACTIVE_SWARM_REPLAY_PANES: usize = 16;
 use std::io::{self, Write};
+
+#[cfg(feature = "terminal-ui")]
 use std::process::Command as ProcessCommand;
 
-use crate::{
-    id, logging, replay, server, session, setup_hints, startup_profile, tui, video_export,
-};
+use crate::server;
 
+#[cfg(feature = "terminal-ui")]
+use crate::{id, logging, replay, session, setup_hints, startup_profile, tui, video_export};
+
+#[cfg(feature = "terminal-ui")]
 use super::hot_exec::{execute_requested_action, has_requested_action};
 
+#[cfg(feature = "terminal-ui")]
 use super::terminal::{
     cleanup_tui_runtime, cleanup_tui_runtime_for_run_result, init_tui_runtime,
     print_session_resume_hint, set_current_session, spawn_session_signal_watchers,
 };
 
+#[cfg(feature = "terminal-ui")]
 pub(crate) fn resumed_window_title(session_id: &str) -> String {
     let session_name = crate::process_title::session_name(session_id);
     let icon = id::session_icon(&session_name);
@@ -28,7 +37,7 @@ pub(crate) fn resumed_window_title(session_id: &str) -> String {
     }
 }
 
-#[cfg(all(unix, not(target_os = "macos")))]
+#[cfg(all(feature = "terminal-ui", unix, not(target_os = "macos")))]
 fn focus_title_best_effort(title: &str) {
     use std::process::{Command, Stdio};
 
@@ -48,7 +57,7 @@ fn focus_title_best_effort(title: &str) {
     let _ = crate::platform::spawn_detached(&mut cmd);
 }
 
-#[cfg(any(not(unix), target_os = "macos"))]
+#[cfg(all(feature = "terminal-ui", any(not(unix), target_os = "macos")))]
 fn focus_title_best_effort(_title: &str) {}
 
 pub async fn run_client() -> Result<()> {
@@ -114,6 +123,7 @@ pub async fn run_client() -> Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "terminal-ui")]
 pub async fn run_tui_client(
     resume_session: Option<String>,
     startup_hints: Option<setup_hints::StartupHints>,
@@ -194,6 +204,19 @@ pub async fn run_tui_client(
     Ok(())
 }
 
+#[cfg(not(feature = "terminal-ui"))]
+pub async fn run_tui_client(
+    _resume_session: Option<String>,
+    _startup_hints: Option<crate::setup_hints::StartupHints>,
+    _server_spawning: bool,
+    _fresh_spawn: bool,
+) -> Result<()> {
+    anyhow::bail!(
+        "this build was compiled without terminal-ui; use `jcode serve`, `jcode run`, or `jcode connect` for non-interactive backend workflows"
+    )
+}
+
+#[cfg(feature = "terminal-ui")]
 async fn should_show_server_spawning(server_spawning: bool) -> bool {
     if !server_spawning {
         return false;
@@ -211,6 +234,7 @@ async fn should_show_server_spawning(server_spawning: bool) -> bool {
     true
 }
 
+#[cfg(feature = "terminal-ui")]
 fn apply_startup_hints(app: &mut tui::App, hints: setup_hints::StartupHints) {
     if let Some(status_notice) = hints.status_notice {
         app.set_status_notice(status_notice);
@@ -227,6 +251,7 @@ fn apply_startup_hints(app: &mut tui::App, hints: setup_hints::StartupHints) {
     clippy::too_many_arguments,
     reason = "Replay command maps directly from CLI flags and transport options"
 )]
+#[cfg(feature = "terminal-ui")]
 pub async fn run_replay_command(
     session_id_or_path: &str,
     swarm: bool,
@@ -438,7 +463,28 @@ pub async fn run_replay_command(
     Ok(())
 }
 
-#[cfg(unix)]
+#[expect(
+    clippy::too_many_arguments,
+    reason = "Keep the same signature as the terminal-ui replay implementation"
+)]
+#[cfg(not(feature = "terminal-ui"))]
+pub async fn run_replay_command(
+    _session_id_or_path: &str,
+    _swarm: bool,
+    _export: bool,
+    _auto_edit: bool,
+    _speed: f64,
+    _timeline_path: Option<&str>,
+    _video_output: Option<&str>,
+    _cols: u16,
+    _rows: u16,
+    _fps: u32,
+    _centered_override: Option<bool>,
+) -> Result<()> {
+    anyhow::bail!("replay requires a build compiled with terminal-ui")
+}
+
+#[cfg(all(feature = "terminal-ui", unix))]
 pub fn spawn_resume_in_new_terminal(
     exe: &std::path::Path,
     session_id: &str,
@@ -447,7 +493,7 @@ pub fn spawn_resume_in_new_terminal(
     spawn_resume_in_new_terminal_with_provider(exe, session_id, cwd, None)
 }
 
-#[cfg(unix)]
+#[cfg(all(feature = "terminal-ui", unix))]
 pub fn spawn_resume_in_new_terminal_with_provider(
     exe: &std::path::Path,
     session_id: &str,
@@ -467,7 +513,7 @@ pub fn spawn_resume_in_new_terminal_with_provider(
     crate::terminal_launch::spawn_command_in_new_terminal(&command, cwd)
 }
 
-#[cfg(unix)]
+#[cfg(all(feature = "terminal-ui", unix))]
 pub fn spawn_selfdev_in_new_terminal(
     exe: &std::path::Path,
     session_id: &str,
@@ -476,7 +522,7 @@ pub fn spawn_selfdev_in_new_terminal(
     spawn_selfdev_in_new_terminal_with_provider(exe, session_id, cwd, None)
 }
 
-#[cfg(unix)]
+#[cfg(all(feature = "terminal-ui", unix))]
 pub fn spawn_selfdev_in_new_terminal_with_provider(
     exe: &std::path::Path,
     session_id: &str,
@@ -504,7 +550,7 @@ pub fn spawn_selfdev_in_new_terminal_with_provider(
     Ok(spawned)
 }
 
-#[cfg(not(unix))]
+#[cfg(all(feature = "terminal-ui", not(unix)))]
 fn find_wezterm_gui_binary() -> Option<String> {
     use std::process::{Command, Stdio};
 
@@ -556,7 +602,7 @@ fn find_wezterm_gui_binary() -> Option<String> {
     None
 }
 
-#[cfg(not(unix))]
+#[cfg(all(feature = "terminal-ui", not(unix)))]
 fn resume_terminal_candidates_windows() -> Vec<String> {
     std::env::var("JCODE_RESUME_TERMINAL")
         .ok()
@@ -578,7 +624,7 @@ fn resume_terminal_candidates_windows() -> Vec<String> {
         })
 }
 
-#[cfg(not(unix))]
+#[cfg(all(feature = "terminal-ui", not(unix)))]
 pub fn spawn_resume_in_new_terminal(
     exe: &std::path::Path,
     session_id: &str,
@@ -587,7 +633,7 @@ pub fn spawn_resume_in_new_terminal(
     spawn_resume_in_new_terminal_with_provider(exe, session_id, cwd, None)
 }
 
-#[cfg(not(unix))]
+#[cfg(all(feature = "terminal-ui", not(unix)))]
 pub fn spawn_resume_in_new_terminal_with_provider(
     exe: &std::path::Path,
     session_id: &str,
@@ -676,7 +722,7 @@ pub fn spawn_resume_in_new_terminal_with_provider(
     Ok(false)
 }
 
-#[cfg(not(unix))]
+#[cfg(all(feature = "terminal-ui", not(unix)))]
 pub fn spawn_selfdev_in_new_terminal(
     exe: &std::path::Path,
     session_id: &str,
@@ -685,7 +731,7 @@ pub fn spawn_selfdev_in_new_terminal(
     spawn_selfdev_in_new_terminal_with_provider(exe, session_id, cwd, None)
 }
 
-#[cfg(not(unix))]
+#[cfg(all(feature = "terminal-ui", not(unix)))]
 pub fn spawn_selfdev_in_new_terminal_with_provider(
     exe: &std::path::Path,
     session_id: &str,
@@ -777,6 +823,7 @@ pub fn spawn_selfdev_in_new_terminal_with_provider(
     Ok(false)
 }
 
+#[cfg(feature = "terminal-ui")]
 pub fn list_sessions() -> Result<()> {
     fn build_resume_target_command(
         exe: &std::path::Path,
@@ -1051,6 +1098,11 @@ pub fn list_sessions() -> Result<()> {
             Ok(())
         }
     }
+}
+
+#[cfg(not(feature = "terminal-ui"))]
+pub fn list_sessions() -> Result<()> {
+    anyhow::bail!("interactive session picking requires a build compiled with terminal-ui")
 }
 
 #[cfg(test)]

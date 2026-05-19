@@ -4,7 +4,10 @@ use serde::Serialize;
 use std::collections::BTreeSet;
 use std::io::{Read, Write};
 use std::net::ToSocketAddrs;
-use crate::{browser, gateway, memory, session, storage, tui};
+use crate::{browser, gateway, memory, session, storage};
+#[cfg(feature = "terminal-ui")]
+use crate::tui;
+#[cfg(feature = "terminal-ui")]
 use super::terminal::{cleanup_tui_runtime, init_tui_runtime};
 mod provider_setup;
 mod report_info;
@@ -119,6 +122,7 @@ pub fn run_session_rename_command(
     }
 
     session.save()?;
+    #[cfg(feature = "terminal-ui")]
     crate::tui::session_picker::invalidate_session_list_cache();
 
     let output = SessionRenameOutput {
@@ -145,6 +149,7 @@ pub fn run_session_rename_command(
     Ok(())
 }
 
+#[cfg(feature = "terminal-ui")]
 async fn run_ambient_visible() -> Result<()> {
     use crate::ambient::VisibleCycleContext;
 
@@ -188,6 +193,11 @@ async fn run_ambient_visible() -> Result<()> {
 
     result?;
     Ok(())
+}
+
+#[cfg(not(feature = "terminal-ui"))]
+async fn run_ambient_visible() -> Result<()> {
+    anyhow::bail!("visible ambient cycles require a build compiled with terminal-ui")
 }
 
 pub enum MemorySubcommand {

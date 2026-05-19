@@ -10,8 +10,9 @@ use super::args::{
 };
 use crate::{
     agent, auth, build, provider, provider_catalog, server, session, setup_hints, startup_profile,
-    tui,
 };
+#[cfg(feature = "terminal-ui")]
+use crate::tui;
 
 use super::{
     commands, debug, hot_exec, login, output, provider_init, selfdev, terminal, tui_launch,
@@ -221,7 +222,10 @@ pub(crate) async fn run_main(mut args: Args) -> Result<()> {
             commands::run_pair_command(list, revoke)?;
         }
         Some(Command::Permissions) => {
+            #[cfg(feature = "terminal-ui")]
             tui::permissions::run_permissions()?;
+            #[cfg(not(feature = "terminal-ui"))]
+            anyhow::bail!("permissions UI requires a build compiled with terminal-ui");
         }
         Some(Command::Transcript {
             text,

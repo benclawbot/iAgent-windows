@@ -1,9 +1,14 @@
 use anyhow::Result;
-use std::io::{self, IsTerminal};
 use std::panic;
 
-use crate::{id, session, telemetry, tui};
+use crate::{id, session, telemetry};
 
+#[cfg(feature = "terminal-ui")]
+use std::io::{self, IsTerminal};
+#[cfg(feature = "terminal-ui")]
+use crate::tui;
+
+#[cfg(feature = "terminal-ui")]
 pub struct TuiRuntimeState {
     mouse_capture: bool,
     keyboard_enhanced: bool,
@@ -88,6 +93,7 @@ pub fn show_crash_resume_hint() {
     eprintln!();
 }
 
+#[cfg(feature = "terminal-ui")]
 fn init_tui_terminal() -> Result<ratatui::DefaultTerminal> {
     if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
         anyhow::bail!("jcode TUI requires an interactive terminal (stdin/stdout must be a TTY)");
@@ -105,6 +111,7 @@ fn init_tui_terminal() -> Result<ratatui::DefaultTerminal> {
     }
 }
 
+#[cfg(feature = "terminal-ui")]
 pub fn init_tui_runtime() -> Result<(ratatui::DefaultTerminal, TuiRuntimeState)> {
     let terminal = init_tui_terminal()?;
     crate::tui::mermaid::install_jcode_mermaid_hooks();
@@ -138,6 +145,7 @@ pub fn init_tui_runtime() -> Result<(ratatui::DefaultTerminal, TuiRuntimeState)>
     ))
 }
 
+#[cfg(feature = "terminal-ui")]
 pub fn cleanup_tui_runtime(state: &TuiRuntimeState, restore_terminal: bool) {
     if restore_terminal {
         let _ = crossterm::execute!(std::io::stdout(), crossterm::event::DisableBracketedPaste);
@@ -156,6 +164,7 @@ pub fn cleanup_tui_runtime(state: &TuiRuntimeState, restore_terminal: bool) {
     crate::tui::mermaid::clear_image_state();
 }
 
+#[cfg(feature = "terminal-ui")]
 pub fn cleanup_tui_runtime_for_run_result(
     state: &TuiRuntimeState,
     run_result: &crate::tui::RunResult,
@@ -179,6 +188,7 @@ pub fn print_session_resume_hint(session_id: &str) {
     eprintln!();
 }
 
+#[cfg(feature = "terminal-ui")]
 fn init_tui_terminal_resume() -> Result<ratatui::DefaultTerminal> {
     use ratatui::{Terminal, backend::CrosstermBackend};
 
@@ -233,12 +243,15 @@ fn signal_crash_reason(sig: i32) -> String {
 fn handle_termination_signal(sig: i32) -> ! {
     mark_current_session_crashed(signal_crash_reason(sig));
 
+    #[cfg(feature = "terminal-ui")]
+    {
     let _ = crossterm::terminal::disable_raw_mode();
     let _ = crossterm::execute!(
         std::io::stderr(),
         crossterm::terminal::LeaveAlternateScreen,
         crossterm::cursor::Show
     );
+    }
 
     if let Some(session_id) = get_current_session() {
         print_session_resume_hint(&session_id);

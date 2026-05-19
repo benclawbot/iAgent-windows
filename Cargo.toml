@@ -223,7 +223,7 @@ aws-sdk-sts = "1.103.0"
 # Keep the heavyweight local ONNX/tokenizer embedding stack opt-in. It remains
 # available via `--features embeddings` or `JCODE_DEV_FEATURE_PROFILE=full`, but
 # ordinary check/build loops should not compile the tract/tokenizers subtree.
-default = ["pdf"]
+default = ["pdf", "terminal-ui"]
 jemalloc = [
     "dep:tikv-jemallocator",
     "dep:tikv-jemalloc-ctl",
@@ -239,6 +239,7 @@ jemalloc-prof = [
 embeddings = ["dep:jcode-embedding"]
 mmdr-size-api = ["jcode-tui-mermaid/mmdr-size-api"]
 pdf = ["dep:jcode-pdf"]
+terminal-ui = []
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Threading"] }
