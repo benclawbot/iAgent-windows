@@ -53,7 +53,7 @@ impl TestEnvGuard {
     fn new() -> anyhow::Result<Self> {
         let lock = lock_env();
         let temp_home = tempfile::Builder::new()
-            .prefix("jcode-selfdev-test-home-")
+            .prefix("iagent-selfdev-test-home-")
             .tempdir()?;
         let env = EnvVarGuard::capture(&["JCODE_HOME", "JCODE_TEST_SESSION"]);
 
@@ -211,7 +211,7 @@ async fn test_selfdev_session_and_registry() {
 async fn test_wait_for_reloading_server_returns_false_when_reload_failed() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let socket_path = temp.path().join("jcode.sock");
+    let socket_path = temp.path().join("iagent.sock");
     let _env = set_socket_test_env(&socket_path, temp.path());
     crate::server::write_reload_state(
         "reload-test",
@@ -229,7 +229,7 @@ async fn test_wait_for_reloading_server_returns_false_when_reload_failed() {
 async fn test_wait_for_reloading_server_returns_true_for_live_listener() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let socket_path = temp.path().join("jcode.sock");
+    let socket_path = temp.path().join("iagent.sock");
     let _env = set_socket_test_env(&socket_path, temp.path());
     let _listener = crate::transport::Listener::bind(&socket_path).expect("bind listener");
 

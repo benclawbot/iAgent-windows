@@ -134,27 +134,27 @@ pub fn update_estimate(summary: String, duration: Duration) -> UpdateEstimate {
 pub fn get_asset_name() -> &'static str {
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     {
-        "jcode-linux-x86_64"
+        "iagent-linux-x86_64"
     }
     #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
     {
-        "jcode-linux-aarch64"
+        "iagent-linux-aarch64"
     }
     #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
     {
-        "jcode-macos-x86_64"
+        "iagent-macos-x86_64"
     }
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     {
-        "jcode-macos-aarch64"
+        "iagent-macos-aarch64"
     }
     #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
     {
-        "jcode-windows-x86_64.exe"
+        "iagent-windows-x86_64.exe"
     }
     #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
     {
-        "jcode-windows-aarch64.exe"
+        "iagent-windows-aarch64.exe"
     }
     #[cfg(not(any(
         all(target_os = "linux", target_arch = "x86_64"),
@@ -165,7 +165,7 @@ pub fn get_asset_name() -> &'static str {
         all(target_os = "windows", target_arch = "aarch64"),
     )))]
     {
-        "jcode-unknown"
+        "iagent-unknown"
     }
 }
 

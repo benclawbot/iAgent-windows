@@ -1,5 +1,5 @@
 [package]
-name = "jcode"
+name = "iagent"
 version = "0.12.2"
 description = "Task execution backend for the iAgent Windows ambient agent"
 edition = "2024"
@@ -63,27 +63,27 @@ members = [
 ]
 
 [lib]
-name = "jcode"
+name = "iagent"
 path = "src/lib.rs"
 
 [[bin]]
-name = "jcode"
+name = "iagent"
 path = "src/main.rs"
 
 [[bin]]
-name = "test_api"
+name = "iagent-test-api"
 path = "src/bin/test_api.rs"
 
 [[bin]]
-name = "jcode-harness"
+name = "iagent-harness"
 path = "src/bin/harness.rs"
 
 [[bin]]
-name = "jcode-ambient"
+name = "iagent-ambient"
 path = "src/bin/ambient.rs"
 
 [[bin]]
-name = "jcode-overlay-ui"
+name = "iagent-overlay-ui"
 path = "src/bin/overlay_ui.rs"
 
 [dependencies]

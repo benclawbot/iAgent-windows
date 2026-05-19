@@ -49,7 +49,7 @@ fn cleanup_socket_pair_removes_main_and_debug_files() {
 #[tokio::test]
 async fn connect_socket_preserves_refused_socket_path() {
     let temp = tempfile::tempdir().expect("tempdir");
-    let socket_path = temp.path().join("jcode.sock");
+    let socket_path = temp.path().join("iagent.sock");
 
     {
         let _listener = Listener::bind(&socket_path).expect("bind listener");
@@ -256,7 +256,7 @@ async fn inspect_reload_wait_status_keeps_waiting_while_starting_marker_is_activ
     }
     .write();
 
-    let socket_path = temp.path().join("jcode.sock");
+    let socket_path = temp.path().join("iagent.sock");
     let _listener = Listener::bind(&socket_path).expect("bind listener");
 
     let status = inspect_reload_wait_status(&socket_path, Duration::from_secs(30), None).await;

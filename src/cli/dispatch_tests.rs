@@ -32,7 +32,7 @@ struct ReloadTestEnv {
 impl ReloadTestEnv {
     fn new() -> Self {
         let temp = tempfile::tempdir().expect("tempdir");
-        let socket_path = temp.path().join("jcode.sock");
+        let socket_path = temp.path().join("iagent.sock");
         let prev_socket = std::env::var_os("JCODE_SOCKET");
         let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
         crate::server::set_socket_path(socket_path.to_str().expect("utf8 socket path"));
@@ -68,7 +68,7 @@ impl Drop for ReloadTestEnv {
 #[test]
 fn spawn_lock_serializes_shared_server_bootstrap() {
     let temp = tempfile::tempdir().expect("tempdir");
-    let socket_path = temp.path().join("jcode.sock");
+    let socket_path = temp.path().join("iagent.sock");
     let lock_path = spawn_lock_path(&socket_path);
 
     let first = try_acquire_spawn_lock(&lock_path)
@@ -234,7 +234,7 @@ async fn wait_for_reloading_server_returns_true_for_live_listener() {
 #[tokio::test]
 async fn server_is_running_at_treats_live_listener_as_running_without_pong() {
     let temp = tempfile::tempdir().expect("tempdir");
-    let socket_path = temp.path().join("jcode.sock");
+    let socket_path = temp.path().join("iagent.sock");
 
     let _listener = Listener::bind(&socket_path).expect("bind listener");
 

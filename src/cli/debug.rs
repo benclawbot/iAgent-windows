@@ -21,7 +21,7 @@ pub async fn run_debug_command(
         let filename = main_path
             .file_name()
             .and_then(|n| n.to_str())
-            .unwrap_or("jcode.sock");
+            .unwrap_or("iagent.sock");
         let debug_filename = filename.replace(".sock", "-debug.sock");
         main_path.with_file_name(debug_filename)
     } else {
@@ -141,7 +141,7 @@ async fn debug_list_servers() -> Result<()> {
             let filename = socket_path
                 .file_name()
                 .and_then(|n| n.to_str())
-                .unwrap_or("jcode.sock");
+                .unwrap_or("iagent.sock");
             let debug_filename = filename.replace(".sock", "-debug.sock");
             socket_path.with_file_name(debug_filename)
         };
@@ -244,13 +244,13 @@ async fn debug_start_server(arg: &str, socket_path: Option<String>) -> Result<()
         let filename = socket_pathbuf
             .file_name()
             .and_then(|n| n.to_str())
-            .unwrap_or("jcode.sock");
+            .unwrap_or("iagent.sock");
         let debug_filename = filename.replace(".sock", "-debug.sock");
         socket_pathbuf.with_file_name(debug_filename)
     };
     let _ = std::fs::remove_file(&debug_socket);
 
-    eprintln!("Starting jcode server...");
+    eprintln!("Starting iagent server...");
 
     let exe = std::env::current_exe()?;
     let mut cmd = std::process::Command::new(&exe);

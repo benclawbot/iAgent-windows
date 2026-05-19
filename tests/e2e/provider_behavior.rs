@@ -111,8 +111,8 @@ async fn test_socket_model_cycle_supported_models() -> Result<()> {
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = MockProvider::with_models(vec!["gpt-5.2-codex", "claude-opus-4-5-20251101"]);
     let provider: Arc<dyn jcode::provider::Provider> = Arc::new(provider);
@@ -194,8 +194,8 @@ async fn test_resume_restores_model_and_tool_history() -> Result<()> {
     );
     session.save()?;
 
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     // Default model = claude, resume should switch to gpt-5.2-codex
     let provider = MockProvider::with_models(vec!["claude-opus-4-5-20251101", "gpt-5.2-codex"]);
@@ -278,8 +278,8 @@ async fn test_resume_session_with_local_history_uses_metadata_only_history() -> 
     );
     session.save()?;
 
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = Arc::new(MockProvider::with_models(vec!["model-a"]));
     provider.queue_response(vec![
@@ -423,8 +423,8 @@ async fn test_resume_session_reports_reload_interruption_for_peer_sessions() -> 
     );
     session.save()?;
 
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = Arc::new(MockProvider::with_models(vec!["model-a"]));
     let provider_dyn: Arc<dyn jcode::provider::Provider> = provider.clone();
@@ -485,8 +485,8 @@ async fn test_subscribe_selfdev_hint_marks_canary() -> Result<()> {
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = MockProvider::new();
     let provider: Arc<dyn jcode::provider::Provider> = Arc::new(provider);
@@ -533,8 +533,8 @@ async fn test_subscribe_working_dir_without_selfdev_hint_stays_normal() -> Resul
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let fake_repo = tempfile::tempdir()?;
     std::fs::create_dir_all(fake_repo.path().join(".git"))?;
@@ -596,8 +596,8 @@ async fn test_model_switch_resets_provider_session() -> Result<()> {
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = Arc::new(MockProvider::with_models(vec!["model-a", "model-b"]));
     provider.queue_response(vec![
@@ -683,8 +683,8 @@ async fn test_model_switch_is_per_session() -> Result<()> {
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = Arc::new(MockProvider::with_models(vec!["model-a", "model-b"]));
     provider.queue_response(vec![

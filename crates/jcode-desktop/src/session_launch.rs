@@ -1425,14 +1425,14 @@ fn socket_path() -> PathBuf {
         return PathBuf::from(custom);
     }
     if let Ok(dir) = std::env::var("JCODE_RUNTIME_DIR") {
-        return PathBuf::from(dir).join("jcode.sock");
+        return PathBuf::from(dir).join("iagent.sock");
     }
     if let Ok(dir) = std::env::var("XDG_RUNTIME_DIR") {
-        return PathBuf::from(dir).join("jcode.sock");
+        return PathBuf::from(dir).join("iagent.sock");
     }
     std::env::temp_dir()
-        .join(format!("jcode-{}", runtime_user_discriminator()))
-        .join("jcode.sock")
+        .join(format!("iagent-{}", runtime_user_discriminator()))
+        .join("iagent.sock")
 }
 
 #[cfg(unix)]

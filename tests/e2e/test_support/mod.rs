@@ -66,7 +66,7 @@ impl TestEnvGuard {
     pub(crate) fn new() -> Result<Self> {
         let lock = lock_jcode_home();
         let temp_home = tempfile::Builder::new()
-            .prefix("jcode-e2e-home-")
+            .prefix("iagent-e2e-home-")
             .tempdir()?;
         let prev_home = std::env::var_os("JCODE_HOME");
         let prev_runtime_dir = std::env::var_os("JCODE_RUNTIME_DIR");
@@ -498,15 +498,15 @@ pub(crate) struct TransportScenarioResult {
 
 pub(crate) async fn run_unix_transport_scenario() -> Result<TransportScenarioResult> {
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-ws-e2e-unix-{}",
+        "iagent-ws-e2e-unix-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = MockProvider::new();
     provider.queue_response(vec![
@@ -596,15 +596,15 @@ pub(crate) async fn run_unix_transport_scenario() -> Result<TransportScenarioRes
 
 pub(crate) async fn run_websocket_transport_scenario() -> Result<TransportScenarioResult> {
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-ws-e2e-websocket-{}",
+        "iagent-ws-e2e-websocket-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
     let gateway_port = reserve_tcp_port()?;
     let ws_token = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     pair_test_device(ws_token)?;

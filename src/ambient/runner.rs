@@ -998,10 +998,10 @@ impl AmbientRunnerHandle {
 
         // Find the jcode binary
         let jcode_bin =
-            std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("jcode"));
+            std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("iagent"));
 
         // Spawn kitty with `jcode ambient run-visible`
-        logging::info("Ambient visible: spawning kitty with jcode TUI");
+        logging::info("Ambient visible: spawning kitty with iagent TUI");
         let child = std::process::Command::new("kitty")
             .args([
                 "--title",

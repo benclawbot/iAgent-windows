@@ -18,7 +18,7 @@ async fn binary_integration_independent_claude() -> Result<()> {
             "run",
             "--release",
             "--bin",
-            "jcode",
+            "iagent",
             "--",
             "run",
             "Say 'test-ok' and nothing else",
@@ -50,7 +50,7 @@ async fn binary_integration_openai_provider() -> Result<()> {
             "run",
             "--release",
             "--bin",
-            "jcode",
+            "iagent",
             "--",
             "--provider",
             "openai",
@@ -83,7 +83,7 @@ async fn binary_version_command() -> Result<()> {
     use std::process::Command;
     let _env = setup_test_env()?;
 
-    let output = Command::new(env!("CARGO_BIN_EXE_jcode"))
+    let output = Command::new(env!("CARGO_BIN_EXE_iagent"))
         .arg("--version")
         .output()?;
 
@@ -91,7 +91,7 @@ async fn binary_version_command() -> Result<()> {
 
     assert!(output.status.success(), "Version command should succeed");
     assert!(
-        stdout.contains("jcode") || stdout.contains("20"),
+        stdout.contains("iagent") || stdout.contains("20"),
         "Version should contain 'jcode' or date. Got: {}",
         stdout
     );
@@ -118,7 +118,7 @@ async fn binary_integration_reload_handoff() -> Result<()> {
     }
 
     let temp_root = tempfile::Builder::new()
-        .prefix("jcode-reload-e2e-")
+        .prefix("iagent-reload-e2e-")
         .tempdir()?;
     let runtime_dir = temp_root.path().join("runtime");
     let home_dir = temp_root.path().join("home");
@@ -128,11 +128,11 @@ async fn binary_integration_reload_handoff() -> Result<()> {
     std::fs::create_dir_all(&home_dir)?;
     std::fs::create_dir_all(&install_dir)?;
 
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let stderr_file = std::fs::File::create(&stderr_path)?;
-    let mut child = Command::new(env!("CARGO_BIN_EXE_jcode"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_iagent"))
         .arg("--no-update")
         .arg("--socket")
         .arg(&socket_path)
@@ -246,7 +246,7 @@ async fn binary_integration_selfdev_reload_reconnects_quickly() -> Result<()> {
     }
 
     let temp_root = tempfile::Builder::new()
-        .prefix("jcode-selfdev-reload-e2e-")
+        .prefix("iagent-selfdev-reload-e2e-")
         .tempdir()?;
     let runtime_dir = temp_root.path().join("runtime");
     let home_dir = temp_root.path().join("home");
@@ -259,8 +259,8 @@ async fn binary_integration_selfdev_reload_reconnects_quickly() -> Result<()> {
     let _runtime_guard = EnvVarGuard::set("JCODE_RUNTIME_DIR", &runtime_dir);
     let _install_guard = EnvVarGuard::set("JCODE_INSTALL_DIR", &install_dir);
 
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
     let mut command = Command::new(&release_binary);
     command
         .arg("--no-update")
@@ -352,7 +352,7 @@ async fn binary_integration_selfdev_client_reload_resumes_session() -> Result<()
     }
 
     let temp_root = tempfile::Builder::new()
-        .prefix("jcode-selfdev-client-reload-e2e-")
+        .prefix("iagent-selfdev-client-reload-e2e-")
         .tempdir()?;
     let runtime_dir = temp_root.path().join("runtime");
     let home_dir = temp_root.path().join("home");
@@ -365,10 +365,10 @@ async fn binary_integration_selfdev_client_reload_resumes_session() -> Result<()
     let _runtime_guard = EnvVarGuard::set("JCODE_RUNTIME_DIR", &runtime_dir);
     let _install_guard = EnvVarGuard::set("JCODE_INSTALL_DIR", &install_dir);
 
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
-    let starter_binary = temp_root.path().join("jcode-selfdev-client-starter");
-    std::fs::copy(env!("CARGO_BIN_EXE_jcode"), &starter_binary)?;
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
+    let starter_binary = temp_root.path().join("iagent-selfdev-client-starter");
+    std::fs::copy(env!("CARGO_BIN_EXE_iagent"), &starter_binary)?;
     let starter_mtime = std::fs::metadata(&release_binary)?
         .modified()?
         .checked_sub(Duration::from_secs(60))
@@ -514,7 +514,7 @@ async fn binary_integration_selfdev_full_reload_resumes_session_quickly() -> Res
     }
 
     let temp_root = tempfile::Builder::new()
-        .prefix("jcode-selfdev-full-reload-e2e-")
+        .prefix("iagent-selfdev-full-reload-e2e-")
         .tempdir()?;
     let runtime_dir = temp_root.path().join("runtime");
     let home_dir = temp_root.path().join("home");
@@ -527,10 +527,10 @@ async fn binary_integration_selfdev_full_reload_resumes_session_quickly() -> Res
     let _runtime_guard = EnvVarGuard::set("JCODE_RUNTIME_DIR", &runtime_dir);
     let _install_guard = EnvVarGuard::set("JCODE_INSTALL_DIR", &install_dir);
 
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
-    let starter_binary = temp_root.path().join("jcode-selfdev-full-reload-starter");
-    std::fs::copy(env!("CARGO_BIN_EXE_jcode"), &starter_binary)?;
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
+    let starter_binary = temp_root.path().join("iagent-selfdev-full-reload-starter");
+    std::fs::copy(env!("CARGO_BIN_EXE_iagent"), &starter_binary)?;
     let starter_mtime = std::fs::metadata(&release_binary)?
         .modified()?
         .checked_sub(Duration::from_secs(60))

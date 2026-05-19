@@ -19,11 +19,11 @@ impl SpawnedWindowsServer {
             .join("target")
             .join("x86_64-pc-windows-msvc")
             .join("release")
-            .join("jcode.exe");
+            .join("iagent.exe");
         if release_binary.exists() {
             return release_binary;
         }
-        std::path::PathBuf::from(env!("CARGO_BIN_EXE_jcode"))
+        std::path::PathBuf::from(env!("CARGO_BIN_EXE_iagent"))
     }
 
     fn spawn(prefix: &str) -> Result<Self> {
@@ -37,8 +37,8 @@ impl SpawnedWindowsServer {
         std::fs::create_dir_all(&runtime_dir)?;
         std::fs::create_dir_all(&install_dir)?;
 
-        let socket_path = runtime_dir.join("jcode-windows-lifecycle.sock");
-        let debug_socket_path = runtime_dir.join("jcode-windows-lifecycle-debug.sock");
+        let socket_path = runtime_dir.join("iagent-windows-lifecycle.sock");
+        let debug_socket_path = runtime_dir.join("iagent-windows-lifecycle-debug.sock");
 
         let stdout_file = std::fs::File::create(&stdout_path)?;
         let stderr_file = std::fs::File::create(&stderr_path)?;
@@ -180,7 +180,7 @@ impl SpawnedWindowsServer {
             let _ = std::fs::copy(&self.stderr_path, artifact_dir.join("server-stderr.log"));
             let logs_dir = self.home_dir.join("logs");
             if let Ok(entries) = std::fs::read_dir(logs_dir) {
-                let copied_logs_dir = artifact_dir.join("jcode-logs");
+                let copied_logs_dir = artifact_dir.join("iagent-logs");
                 let _ = std::fs::create_dir_all(&copied_logs_dir);
                 for entry in entries.flatten() {
                     let path = entry.path();
@@ -236,7 +236,7 @@ async fn wait_for_server_unreachable(socket_path: &std::path::Path) -> Result<()
 #[tokio::test]
 async fn windows_binary_server_accepts_clients_and_debug_cli() -> Result<()> {
     let _env = setup_test_env()?;
-    let server = SpawnedWindowsServer::spawn("jcode-windows-lifecycle-")?;
+    let server = SpawnedWindowsServer::spawn("iagent-windows-lifecycle-")?;
 
     let result = async {
         server.wait_ready().await?;
@@ -292,7 +292,7 @@ async fn windows_binary_server_accepts_clients_and_debug_cli() -> Result<()> {
 #[tokio::test]
 async fn windows_binary_server_rebinds_named_pipe_after_exit() -> Result<()> {
     let _env = setup_test_env()?;
-    let mut first = SpawnedWindowsServer::spawn("jcode-windows-rebind-")?;
+    let mut first = SpawnedWindowsServer::spawn("iagent-windows-rebind-")?;
 
     let result = async {
         first.wait_ready().await?;

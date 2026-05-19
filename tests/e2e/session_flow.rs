@@ -4,15 +4,15 @@ use crate::test_support::*;
 async fn resume_session_restores_persisted_compaction_for_provider_context() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-compaction-resume-test-{}",
+        "iagent-compaction-resume-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = CapturingCompactionProvider::new();
     let captured_messages = provider.captured_messages();
@@ -170,15 +170,15 @@ async fn test_agent_clear_preserves_debug_flag() -> Result<()> {
 async fn test_debug_create_session_marks_debug() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-debug-test-{}",
+        "iagent-debug-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = MockProvider::new();
     let provider: Arc<dyn jcode::provider::Provider> = Arc::new(provider);
@@ -201,15 +201,15 @@ async fn test_debug_create_session_marks_debug() -> Result<()> {
 async fn test_debug_create_selfdev_session_marks_canary() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-debug-selfdev-test-{}",
+        "iagent-debug-selfdev-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = MockProvider::new();
     let provider: Arc<dyn jcode::provider::Provider> = Arc::new(provider);
@@ -237,15 +237,15 @@ async fn test_debug_create_selfdev_session_marks_canary() -> Result<()> {
 async fn test_clear_preserves_debug_for_resumed_debug_session() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-clear-debug-test-{}",
+        "iagent-clear-debug-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
     ));
     std::fs::create_dir_all(&runtime_dir)?;
-    let socket_path = runtime_dir.join("jcode.sock");
-    let debug_socket_path = runtime_dir.join("jcode-debug.sock");
+    let socket_path = runtime_dir.join("iagent.sock");
+    let debug_socket_path = runtime_dir.join("iagent-debug.sock");
 
     let provider = MockProvider::new();
     let provider: Arc<dyn jcode::provider::Provider> = Arc::new(provider);

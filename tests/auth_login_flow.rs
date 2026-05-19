@@ -73,7 +73,7 @@ impl TestEnv {
     fn new() -> Result<Self> {
         let lock = lock_env();
         let temp = tempfile::Builder::new()
-            .prefix("jcode-auth-flow-")
+            .prefix("iagent-auth-flow-")
             .tempdir()?;
         let saved = tracked_env_vars()
             .into_iter()
@@ -90,7 +90,7 @@ impl TestEnv {
         jcode::env::set_var("HOME", temp.path());
         jcode::env::set_var("XDG_CONFIG_HOME", temp.path().join("config"));
         jcode::env::set_var("APPDATA", temp.path().join("AppData").join("Roaming"));
-        jcode::env::set_var("JCODE_HOME", temp.path().join("jcode-home"));
+        jcode::env::set_var("JCODE_HOME", temp.path().join("iagent-home"));
         jcode::env::set_var("NO_PROXY", "127.0.0.1,localhost");
         jcode::env::set_var("no_proxy", "127.0.0.1,localhost");
         AuthStatus::invalidate_cache();

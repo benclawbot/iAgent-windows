@@ -74,7 +74,7 @@ impl TestEnv {
     fn new() -> Result<Self> {
         let lock = lock_env();
         let temp = tempfile::Builder::new()
-            .prefix("jcode-provider-matrix-")
+            .prefix("iagent-provider-matrix-")
             .tempdir()?;
         let saved = tracked_env_vars()
             .into_iter()
@@ -88,7 +88,7 @@ impl TestEnv {
             jcode::env::remove_var(key);
         }
 
-        let config_root = temp.path().join("config").join("jcode");
+        let config_root = temp.path().join("config").join("iagent");
         std::fs::create_dir_all(&config_root)?;
         jcode::env::set_var("JCODE_HOME", temp.path());
         apply_openai_compatible_profile_env(None);
@@ -102,7 +102,7 @@ impl TestEnv {
     }
 
     fn config_dir(&self) -> PathBuf {
-        self.temp.path().join("config").join("jcode")
+        self.temp.path().join("config").join("iagent")
     }
 
     fn clear_profile_keys(&self) {
