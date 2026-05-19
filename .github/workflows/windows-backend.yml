@@ -14,32 +14,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
-    name: Check Windows backend
-    runs-on: windows-latest
-    timeout-minutes: 90
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-msvc
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: windows-backend
-
-      - name: Check PowerShell scripts
-        shell: pwsh
-        run: ./scripts/check_powershell_syntax.ps1
-
-      - name: Cargo check
-        shell: pwsh
-        run: cargo check --workspace --all-targets --target x86_64-pc-windows-msvc
-
   check-headless:
-    name: Check headless backend (no terminal-ui)
+    name: Check headless default (pdf only)
     runs-on: windows-latest
     timeout-minutes: 90
 
@@ -58,6 +34,54 @@ jobs:
         shell: pwsh
         run: ./scripts/check_powershell_syntax.ps1
 
-      - name: Cargo check (headless)
+      - name: Cargo check (headless default)
+        shell: pwsh
+        run: cargo check --workspace --all-targets --target x86_64-pc-windows-msvc
+
+  check-headless-explicit:
+    name: Check headless explicit (no terminal-ui)
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-backend-headless
+
+      - name: Check PowerShell scripts
+        shell: pwsh
+        run: ./scripts/check_powershell_syntax.ps1
+
+      - name: Cargo check (headless explicit)
         shell: pwsh
         run: cargo check --workspace --all-targets --no-default-features --features pdf --target x86_64-pc-windows-msvc
+
+  check-terminal-ui:
+    name: Check terminal-ui build
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-backend-tui
+
+      - name: Check PowerShell scripts
+        shell: pwsh
+        run: ./scripts/check_powershell_syntax.ps1
+
+      - name: Cargo check (terminal-ui)
+        shell: pwsh
+        run: cargo check --workspace --all-targets --features terminal-ui --target x86_64-pc-windows-msvc
