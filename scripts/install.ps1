@@ -528,6 +528,42 @@ function Install-UvIfMissing {
     Write-Err "uv installation completed but uv.exe was not found on PATH"
 }
 
+function Stop-IagentDockProcesses([string]$TargetAppDir) {
+    $patterns = @(
+        "*$TargetAppDir*",
+        "*launch-iagent-dock*",
+        "*launch-iagent.ps1*"
+    )
+
+    try {
+        $processes = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+            Where-Object {
+                $commandLine = $_.CommandLine
+                if (-not $commandLine) {
+                    $false
+                } else {
+                    $matched = $false
+                    foreach ($pattern in $patterns) {
+                        if ($commandLine -like $pattern) {
+                            $matched = $true
+                            break
+                        }
+                    }
+                    $matched
+                }
+            }
+
+        if ($processes) {
+            $processes | ForEach-Object {
+                Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+            }
+            Start-Sleep -Seconds 1
+        }
+    } catch {
+        Write-Warn "Could not stop existing iAgent dock processes: $($_.Exception.Message)"
+    }
+}
+
 function Install-IagentDockApp([string]$TargetAppDir) {
     Write-Info "Installing iAgent desktop dock..."
 
@@ -549,6 +585,7 @@ function Install-IagentDockApp([string]$TargetAppDir) {
         $targetParent = Split-Path -Parent $TargetAppDir
         New-Item -ItemType Directory -Path $targetParent -Force | Out-Null
         if (Test-Path -LiteralPath $TargetAppDir) {
+            Stop-IagentDockProcesses -TargetAppDir $TargetAppDir
             Remove-Item -LiteralPath $TargetAppDir -Recurse -Force
         }
         Move-Item -LiteralPath $extractedRoot -Destination $TargetAppDir -Force
