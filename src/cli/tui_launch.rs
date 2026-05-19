@@ -823,6 +823,44 @@ pub fn spawn_selfdev_in_new_terminal_with_provider(
     Ok(false)
 }
 
+#[cfg(not(feature = "terminal-ui"))]
+pub fn spawn_resume_in_new_terminal(
+    _exe: &std::path::Path,
+    _session_id: &str,
+    _cwd: &std::path::Path,
+) -> Result<bool> {
+    Ok(false)
+}
+
+#[cfg(not(feature = "terminal-ui"))]
+pub fn spawn_resume_in_new_terminal_with_provider(
+    _exe: &std::path::Path,
+    _session_id: &str,
+    _cwd: &std::path::Path,
+    _provider_key: Option<&str>,
+) -> Result<bool> {
+    Ok(false)
+}
+
+#[cfg(not(feature = "terminal-ui"))]
+pub fn spawn_selfdev_in_new_terminal(
+    _exe: &std::path::Path,
+    _session_id: &str,
+    _cwd: &std::path::Path,
+) -> Result<bool> {
+    Ok(false)
+}
+
+#[cfg(not(feature = "terminal-ui"))]
+pub fn spawn_selfdev_in_new_terminal_with_provider(
+    _exe: &std::path::Path,
+    _session_id: &str,
+    _cwd: &std::path::Path,
+    _provider_key: Option<&str>,
+) -> Result<bool> {
+    Ok(false)
+}
+
 #[cfg(feature = "terminal-ui")]
 pub fn list_sessions() -> Result<()> {
     fn build_resume_target_command(
