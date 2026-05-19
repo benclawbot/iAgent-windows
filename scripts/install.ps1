@@ -109,7 +109,7 @@ function Invoke-ProcessWithTimeout {
     }
 
     $process = Start-Process @startParams
-    $timedOut = -not ($process | Wait-Process -Timeout $TimeoutSeconds -PassThru -ErrorAction SilentlyContinue)
+    $timedOut = -not $process.WaitForExit($TimeoutSeconds * 1000)
     if ($timedOut) {
         Stop-ProcessTree -ProcessId $process.Id
         return [pscustomobject]@{
