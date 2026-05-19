@@ -37,3 +37,27 @@ jobs:
       - name: Cargo check
         shell: pwsh
         run: cargo check --workspace --all-targets --target x86_64-pc-windows-msvc
+
+  check-headless:
+    name: Check headless backend (no terminal-ui)
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-backend-headless
+
+      - name: Check PowerShell scripts
+        shell: pwsh
+        run: ./scripts/check_powershell_syntax.ps1
+
+      - name: Cargo check (headless)
+        shell: pwsh
+        run: cargo check --workspace --all-targets --no-default-features --features pdf --target x86_64-pc-windows-msvc
