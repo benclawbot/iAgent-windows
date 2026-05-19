@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">iAgent Windows first run preview</title>
+  <desc id="desc">A stylized terminal screenshot showing iagent startup, login, and task execution on Windows.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B1020"/>
+      <stop offset="100%" stop-color="#1A243A"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#0B1220"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="110" y="80" width="1060" height="560" rx="14" fill="url(#panel)" stroke="#334155" stroke-width="2"/>
+    <rect x="110" y="80" width="1060" height="42" rx="14" fill="#1F2937"/>
+    <circle cx="138" cy="101" r="7" fill="#EF4444"/>
+    <circle cx="162" cy="101" r="7" fill="#F59E0B"/>
+    <circle cx="186" cy="101" r="7" fill="#22C55E"/>
+    <text x="220" y="107" font-family="Consolas, 'Courier New', monospace" font-size="16" fill="#E5E7EB">Windows PowerShell - iAgent</text>
+  </g>
+
+  <g font-family="Consolas, 'Courier New', monospace" font-size="23" fill="#E2E8F0">
+    <text x="150" y="170" fill="#93C5FD">PS C:\Users\you&gt;</text>
+    <text x="380" y="170">iagent</text>
+
+    <text x="150" y="212" fill="#A7F3D0">iagent:</text>
+    <text x="250" y="212">Session started</text>
+    <text x="490" y="212" fill="#94A3B8">(model: auto, tools: enabled)</text>
+
+    <text x="150" y="254" fill="#93C5FD">PS C:\Users\you&gt;</text>
+    <text x="380" y="254">iagent login</text>
+
+    <text x="150" y="296" fill="#A7F3D0">iagent:</text>
+    <text x="250" y="296">Provider authenticated</text>
+
+    <text x="150" y="338" fill="#93C5FD">PS C:\Users\you&gt;</text>
+    <text x="380" y="338">Summarize everything changed in this repo today</text>
+
+    <text x="150" y="380" fill="#A7F3D0">iagent:</text>
+    <text x="250" y="380">I scanned git history and working tree.</text>
+    <text x="150" y="414" fill="#A7F3D0">iagent:</text>
+    <text x="250" y="414">- 4 commits on main</text>
+    <text x="150" y="448" fill="#A7F3D0">iagent:</text>
+    <text x="250" y="448">- PR #2 merged</text>
+    <text x="150" y="482" fill="#A7F3D0">iagent:</text>
+    <text x="250" y="482">- README updated with architecture + onboarding</text>
+
+    <text x="150" y="538" fill="#FDE68A">Tip:</text>
+    <text x="206" y="538">Press Alt+; to launch quickly (if hotkey was configured).</text>
+  </g>
+</svg>
