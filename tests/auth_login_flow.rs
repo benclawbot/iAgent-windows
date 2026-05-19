@@ -1,13 +1,13 @@
 #![cfg(feature = "terminal-ui")]
 
 use anyhow::Result;
-use jcode::auth::{AuthState, AuthStatus};
-use jcode::provider::Provider;
-use jcode::provider::openrouter::OpenRouterProvider;
-use jcode::provider_catalog::{
+use iagent::auth::{AuthState, AuthStatus};
+use iagent::provider::Provider;
+use iagent::provider::openrouter::OpenRouterProvider;
+use iagent::provider_catalog::{
     OPENAI_COMPAT_LOGIN_PROVIDER, login_providers, openai_compatible_profiles,
 };
-use jcode::tui::login_picker::{LoginPicker, LoginPickerItem, LoginPickerSummary};
+use iagent::tui::login_picker::{LoginPicker, LoginPickerItem, LoginPickerSummary};
 use ratatui::{Terminal, backend::TestBackend, buffer::Buffer};
 use std::collections::HashSet;
 use std::io::{Read, Write};
@@ -84,15 +84,15 @@ impl TestEnv {
             .collect::<Vec<_>>();
 
         for (key, _) in &saved {
-            jcode::env::remove_var(key);
+            iagent::env::remove_var(key);
         }
 
-        jcode::env::set_var("HOME", temp.path());
-        jcode::env::set_var("XDG_CONFIG_HOME", temp.path().join("config"));
-        jcode::env::set_var("APPDATA", temp.path().join("AppData").join("Roaming"));
-        jcode::env::set_var("JCODE_HOME", temp.path().join("iagent-home"));
-        jcode::env::set_var("NO_PROXY", "127.0.0.1,localhost");
-        jcode::env::set_var("no_proxy", "127.0.0.1,localhost");
+        iagent::env::set_var("HOME", temp.path());
+        iagent::env::set_var("XDG_CONFIG_HOME", temp.path().join("config"));
+        iagent::env::set_var("APPDATA", temp.path().join("AppData").join("Roaming"));
+        iagent::env::set_var("JCODE_HOME", temp.path().join("iagent-home"));
+        iagent::env::set_var("NO_PROXY", "127.0.0.1,localhost");
+        iagent::env::set_var("no_proxy", "127.0.0.1,localhost");
         AuthStatus::invalidate_cache();
 
         Ok(Self {
@@ -110,21 +110,21 @@ impl TestEnv {
         allow_no_auth: bool,
     ) {
         let _ = self.temp.path();
-        jcode::env::set_var("JCODE_OPENROUTER_API_BASE", api_base);
-        jcode::env::set_var("JCODE_OPENROUTER_API_KEY_NAME", "AUTH_FLOW_TEST_KEY");
-        jcode::env::set_var("JCODE_OPENROUTER_ENV_FILE", "auth-flow-test.env");
-        jcode::env::set_var("JCODE_OPENROUTER_CACHE_NAMESPACE", cache_namespace);
-        jcode::env::set_var("JCODE_OPENROUTER_PROVIDER_FEATURES", "0");
-        jcode::env::set_var("JCODE_OPENROUTER_MODEL_CATALOG", "1");
+        iagent::env::set_var("JCODE_OPENROUTER_API_BASE", api_base);
+        iagent::env::set_var("JCODE_OPENROUTER_API_KEY_NAME", "AUTH_FLOW_TEST_KEY");
+        iagent::env::set_var("JCODE_OPENROUTER_ENV_FILE", "auth-flow-test.env");
+        iagent::env::set_var("JCODE_OPENROUTER_CACHE_NAMESPACE", cache_namespace);
+        iagent::env::set_var("JCODE_OPENROUTER_PROVIDER_FEATURES", "0");
+        iagent::env::set_var("JCODE_OPENROUTER_MODEL_CATALOG", "1");
         if let Some(key) = key {
-            jcode::env::set_var("AUTH_FLOW_TEST_KEY", key);
+            iagent::env::set_var("AUTH_FLOW_TEST_KEY", key);
         } else {
-            jcode::env::remove_var("AUTH_FLOW_TEST_KEY");
+            iagent::env::remove_var("AUTH_FLOW_TEST_KEY");
         }
         if allow_no_auth {
-            jcode::env::set_var("JCODE_OPENROUTER_ALLOW_NO_AUTH", "1");
+            iagent::env::set_var("JCODE_OPENROUTER_ALLOW_NO_AUTH", "1");
         } else {
-            jcode::env::remove_var("JCODE_OPENROUTER_ALLOW_NO_AUTH");
+            iagent::env::remove_var("JCODE_OPENROUTER_ALLOW_NO_AUTH");
         }
         AuthStatus::invalidate_cache();
     }
@@ -135,9 +135,9 @@ impl Drop for TestEnv {
         AuthStatus::invalidate_cache();
         for (key, value) in &self.saved {
             if let Some(value) = value {
-                jcode::env::set_var(key, value);
+                iagent::env::set_var(key, value);
             } else {
-                jcode::env::remove_var(key);
+                iagent::env::remove_var(key);
             }
         }
         AuthStatus::invalidate_cache();
@@ -311,8 +311,8 @@ fn live_models_contract_supports_api_key_header_mode() -> Result<()> {
         Some("sk-header-contract"),
         false,
     );
-    jcode::env::set_var("JCODE_OPENROUTER_AUTH_HEADER", "api-key");
-    jcode::env::set_var("JCODE_OPENROUTER_AUTH_HEADER_NAME", "x-api-key");
+    iagent::env::set_var("JCODE_OPENROUTER_AUTH_HEADER", "api-key");
+    iagent::env::set_var("JCODE_OPENROUTER_AUTH_HEADER_NAME", "x-api-key");
 
     let provider = OpenRouterProvider::new()?;
     let models = run_current_thread(provider.fetch_models())?;
@@ -381,7 +381,7 @@ fn model_picker_cache_miss_schedules_single_background_refresh_and_updates_route
         None,
         true,
     );
-    jcode::env::set_var("JCODE_OPENROUTER_MODEL", "background-race-selected-model");
+    iagent::env::set_var("JCODE_OPENROUTER_MODEL", "background-race-selected-model");
 
     let provider = OpenRouterProvider::new()?;
     run_current_thread(async {

@@ -104,7 +104,7 @@ async fn smoke_basic_round_trip() -> Result<()> {
         StreamEvent::SessionId("smoke-session-1".to_string()),
     ]);
 
-    let provider: Arc<dyn jcode::provider::Provider> = Arc::new(provider);
+    let provider: Arc<dyn iagent::provider::Provider> = Arc::new(provider);
     let server_instance =
         server::Server::new_with_paths(provider, socket_path.clone(), debug_socket_path.clone());
     let server_handle = tokio::spawn(async move { server_instance.run().await });

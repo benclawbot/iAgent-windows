@@ -1,8 +1,8 @@
 use anyhow::Result;
-use jcode::auth::{AuthState, AuthStatus};
-use jcode::provider::Provider;
-use jcode::provider::openrouter::OpenRouterProvider;
-use jcode::provider_catalog::{
+use iagent::auth::{AuthState, AuthStatus};
+use iagent::provider::Provider;
+use iagent::provider::openrouter::OpenRouterProvider;
+use iagent::provider_catalog::{
     OPENAI_COMPAT_PROFILE, apply_openai_compatible_profile_env, load_api_key_from_env_or_config,
     openai_compatible_profile_is_configured, openai_compatible_profiles,
     resolve_openai_compatible_profile, save_env_value_to_env_file,
@@ -85,12 +85,12 @@ impl TestEnv {
             .collect::<Vec<_>>();
 
         for (key, _) in &saved {
-            jcode::env::remove_var(key);
+            iagent::env::remove_var(key);
         }
 
         let config_root = temp.path().join("config").join("iagent");
         std::fs::create_dir_all(&config_root)?;
-        jcode::env::set_var("JCODE_HOME", temp.path());
+        iagent::env::set_var("JCODE_HOME", temp.path());
         apply_openai_compatible_profile_env(None);
         AuthStatus::invalidate_cache();
 
@@ -106,9 +106,9 @@ impl TestEnv {
     }
 
     fn clear_profile_keys(&self) {
-        jcode::env::remove_var("OPENROUTER_API_KEY");
+        iagent::env::remove_var("OPENROUTER_API_KEY");
         for profile in openai_compatible_profiles() {
-            jcode::env::remove_var(profile.api_key_env);
+            iagent::env::remove_var(profile.api_key_env);
         }
         AuthStatus::invalidate_cache();
     }
@@ -120,9 +120,9 @@ impl Drop for TestEnv {
         AuthStatus::invalidate_cache();
         for (key, value) in &self.saved {
             if let Some(value) = value {
-                jcode::env::set_var(key, value);
+                iagent::env::set_var(key, value);
             } else {
-                jcode::env::remove_var(key);
+                iagent::env::remove_var(key);
             }
         }
         AuthStatus::invalidate_cache();
@@ -173,7 +173,7 @@ fn clear_openai_compatible_runtime_env() {
         "JCODE_OPENROUTER_MODEL",
         "JCODE_OPENROUTER_STATIC_MODELS",
     ] {
-        jcode::env::remove_var(key);
+        iagent::env::remove_var(key);
     }
     AuthStatus::invalidate_cache();
 }
@@ -352,7 +352,7 @@ fn provider_matrix_env_credentials_activate_openrouter_runtime() -> Result<()> {
         env.clear_profile_keys();
         apply_openai_compatible_profile_env(Some(profile));
         let resolved = resolve_openai_compatible_profile(profile);
-        jcode::env::set_var(&resolved.api_key_env, "matrix-env-secret");
+        iagent::env::set_var(&resolved.api_key_env, "matrix-env-secret");
         AuthStatus::invalidate_cache();
 
         assert_eq!(
@@ -389,7 +389,7 @@ fn provider_matrix_env_credentials_activate_openrouter_runtime() -> Result<()> {
         OpenRouterProvider::new()?;
         assert_eq!(AuthStatus::check().openrouter, AuthState::Available);
 
-        jcode::env::remove_var(&resolved.api_key_env);
+        iagent::env::remove_var(&resolved.api_key_env);
     }
 
     Ok(())
@@ -429,13 +429,13 @@ fn provider_matrix_custom_compat_overrides_flow_into_runtime() -> Result<()> {
     let env = TestEnv::new()?;
     env.clear_profile_keys();
 
-    jcode::env::set_var(
+    iagent::env::set_var(
         "JCODE_OPENAI_COMPAT_API_BASE",
         "https://api.groq.com/openai/v1/",
     );
-    jcode::env::set_var("JCODE_OPENAI_COMPAT_API_KEY_NAME", "GROQ_API_KEY");
-    jcode::env::set_var("JCODE_OPENAI_COMPAT_ENV_FILE", "groq.env");
-    jcode::env::set_var("JCODE_OPENAI_COMPAT_DEFAULT_MODEL", "openai/gpt-oss-120b");
+    iagent::env::set_var("JCODE_OPENAI_COMPAT_API_KEY_NAME", "GROQ_API_KEY");
+    iagent::env::set_var("JCODE_OPENAI_COMPAT_ENV_FILE", "groq.env");
+    iagent::env::set_var("JCODE_OPENAI_COMPAT_DEFAULT_MODEL", "openai/gpt-oss-120b");
 
     apply_openai_compatible_profile_env(Some(OPENAI_COMPAT_PROFILE));
     let resolved = resolve_openai_compatible_profile(OPENAI_COMPAT_PROFILE);
@@ -476,7 +476,7 @@ fn provider_matrix_custom_local_compat_without_api_key_activates_openrouter_runt
     let env = TestEnv::new()?;
     env.clear_profile_keys();
 
-    jcode::env::set_var("JCODE_OPENAI_COMPAT_API_BASE", "http://localhost:11434/v1");
+    iagent::env::set_var("JCODE_OPENAI_COMPAT_API_BASE", "http://localhost:11434/v1");
 
     apply_openai_compatible_profile_env(Some(OPENAI_COMPAT_PROFILE));
     let resolved = resolve_openai_compatible_profile(OPENAI_COMPAT_PROFILE);
