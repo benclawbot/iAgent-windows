@@ -1,3 +1,5 @@
+#![cfg(feature = "terminal-ui")]
+
 use anyhow::Result;
 use jcode::auth::{AuthState, AuthStatus};
 use jcode::provider::Provider;
