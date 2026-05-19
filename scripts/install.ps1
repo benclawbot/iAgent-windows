@@ -123,9 +123,14 @@ function Invoke-ProcessWithTimeout {
     }
 
     $process.Refresh()
+    $exitCode = $process.ExitCode
+    if ($null -eq $exitCode -or "$exitCode" -eq "") {
+        $exitCode = 0
+    }
+
     return [pscustomobject]@{
         TimedOut = $false
-        ExitCode = $process.ExitCode
+        ExitCode = $exitCode
         StdoutPath = $stdoutPath
         StderrPath = $stderrPath
     }
