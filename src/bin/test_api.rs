@@ -9,7 +9,7 @@ async fn main() -> anyhow::Result<()> {
     let provider = ClaudeProvider::new();
 
     let messages = vec![Message {
-        role: jcode::message::Role::User,
+        role: iagent::message::Role::User,
         content: vec![ContentBlock::Text {
             text: "Say hello in exactly 5 words.".to_string(),
             cache_control: None,

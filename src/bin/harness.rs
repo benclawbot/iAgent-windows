@@ -75,7 +75,7 @@ async fn main() -> Result<()> {
 
     let harness_home = workspace.join(".jcode-harness-home");
     std::fs::create_dir_all(&harness_home)?;
-    jcode::env::set_var("JCODE_HOME", &harness_home);
+    iagent::env::set_var("JCODE_HOME", &harness_home);
     eprintln!("Harness JCODE_HOME: {}", harness_home.display());
 
     let provider: Arc<dyn Provider> = Arc::new(NoopProvider);
