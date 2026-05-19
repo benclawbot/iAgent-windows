@@ -5,10 +5,10 @@
     Downloads the latest iAgent release and installs it to %LOCALAPPDATA%\iAgent\bin.
 
     One-liner install:
-      irm https://raw.githubusercontent.com/benclawbot/iagent-windows/main/scripts/install.ps1 | iex
+      irm "https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/install.ps1?v=dock" | iex
 
     Or download and run (allows parameters):
-      & ([scriptblock]::Create((irm https://raw.githubusercontent.com/benclawbot/iagent-windows/main/scripts/install.ps1)))
+      & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/install.ps1?v=dock")))
 .PARAMETER InstallDir
     Override the installation directory (default: $env:LOCALAPPDATA\iAgent\bin)
 .PARAMETER Version

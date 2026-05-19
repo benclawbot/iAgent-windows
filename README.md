@@ -44,7 +44,7 @@ Optional but recommended:
 Run in PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/benclawbot/iagent-windows/main/scripts/install.ps1 | iex
+irm "https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/install.ps1?v=dock" | iex
 ```
 
 The installer downloads the latest backend release, installs the desktop dock
