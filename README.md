@@ -8,8 +8,6 @@ It is designed for people who want the computer to do useful work without
 living in a terminal. The dock stays available for follow-up, the backend runs
 locally, and the desktop shortcut opens the app directly.
 
-![iAgent full desktop screenshot](docs/assets/iagent-desktop-full.jpg)
-
 ## What It Can Do
 
 - Open from a desktop robot icon into a dock/tray UI with no terminal window.
@@ -53,6 +51,10 @@ Installed layout:
 - `%LOCALAPPDATA%\iAgent\bin`: backend CLI and hidden dock launcher scripts
 - `%LOCALAPPDATA%\iAgent\app`: desktop dock frontend, tray runtime, and worker integration
 - `%LOCALAPPDATA%\iAgent\logs`: dock launcher diagnostics
+
+## Screenshot
+
+![iAgent full desktop screenshot](docs/assets/iagent-desktop-full.jpg)
 
 ## First Start
 
