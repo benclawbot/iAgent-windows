@@ -8,7 +8,7 @@ It is designed for people who want the computer to do useful work without
 living in a terminal. The dock stays available for follow-up, the backend runs
 locally, and the desktop shortcut opens the app directly.
 
-![iAgent dock screenshot](docs/assets/iagent-dock-real.png)
+![iAgent full desktop screenshot](docs/assets/iagent-desktop-full.jpg)
 
 ## What It Can Do
 
