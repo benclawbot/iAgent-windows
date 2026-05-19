@@ -412,7 +412,9 @@ if (-not $Version) {
         $Release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
         $Version = $Release.tag_name
     } catch {
-        Write-Err "Failed to determine latest version: $_"
+        Write-Warn "Failed to determine latest release version ($($_.Exception.Message))."
+        Write-Warn "No published release found; falling back to source install from branch 'main'."
+        $Version = "main"
     }
 }
 
