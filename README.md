@@ -1,12 +1,9 @@
 # iAgent Windows
 
-iAgent is a robot dock for Windows: a desktop companion that stays near your
-workspace, accepts natural-language tasks, and hands them to a local agent
-runtime that can work across files, apps, shell commands, and web context.
+iAgent is a Windows robot dock for local agent work.
 
-It is designed for people who want the computer to do useful work without
-living in a terminal. The dock stays available for follow-up, the backend runs
-locally, and the desktop shortcut opens the app directly.
+It gives you a desktop companion that stays available for follow-up while the
+backend runs locally and handles files, apps, shell commands, and web context.
 
 ## What It Can Do
 
