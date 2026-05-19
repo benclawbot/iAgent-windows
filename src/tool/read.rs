@@ -2,6 +2,7 @@
 
 use super::{Tool, ToolContext, ToolOutput};
 use crate::bus::{Bus, BusEvent, FileOp, FileTouch};
+#[cfg(feature = "terminal-ui")]
 use crate::tui::image::{ImageDisplayParams, ImageProtocol, display_image};
 use anyhow::Result;
 use async_trait::async_trait;
@@ -344,8 +345,6 @@ fn is_image_file(path: &Path) -> bool {
 
 /// Handle reading an image file - display in terminal if supported AND return base64 for model vision
 fn handle_image_file(path: &Path, file_path: &str) -> Result<ToolOutput> {
-    let protocol = ImageProtocol::detect();
-
     let data = std::fs::read(path)?;
     let file_size = data.len() as u64;
 
@@ -364,6 +363,9 @@ fn handle_image_file(path: &Path, file_path: &str) -> Result<ToolOutput> {
     };
 
     let mut terminal_displayed = false;
+    #[cfg(feature = "terminal-ui")]
+    let protocol = ImageProtocol::detect();
+    #[cfg(feature = "terminal-ui")]
     if protocol.is_supported() {
         let params = ImageDisplayParams::from_terminal();
         match display_image(path, &params) {

@@ -155,19 +155,19 @@ desktop-monitor = { path = "crates/desktop-monitor" }
 suggestion-engine = { path = "crates/suggestion-engine" }
 overlay-ui = { path = "crates/overlay-ui" }
 app-integrations = { path = "crates/app-integrations" }
-jcode-tui-markdown = { path = "crates/jcode-tui-markdown" }
-jcode-tui-messages = { path = "crates/jcode-tui-messages" }
-jcode-tui-core = { path = "crates/jcode-tui-core" }
-jcode-tui-mermaid = { path = "crates/jcode-tui-mermaid" }
-jcode-tui-account-picker = { path = "crates/jcode-tui-account-picker" }
-jcode-tui-render = { path = "crates/jcode-tui-render" }
-jcode-tui-session-picker = { path = "crates/jcode-tui-session-picker" }
-jcode-tui-style = { path = "crates/jcode-tui-style" }
-jcode-tui-tool-display = { path = "crates/jcode-tui-tool-display" }
-jcode-tui-usage-overlay = { path = "crates/jcode-tui-usage-overlay" }
+jcode-tui-markdown = { path = "crates/jcode-tui-markdown", optional = true }
+jcode-tui-messages = { path = "crates/jcode-tui-messages", optional = true }
+jcode-tui-core = { path = "crates/jcode-tui-core", optional = true }
+jcode-tui-mermaid = { path = "crates/jcode-tui-mermaid", optional = true }
+jcode-tui-account-picker = { path = "crates/jcode-tui-account-picker", optional = true }
+jcode-tui-render = { path = "crates/jcode-tui-render", optional = true }
+jcode-tui-session-picker = { path = "crates/jcode-tui-session-picker", optional = true }
+jcode-tui-style = { path = "crates/jcode-tui-style", optional = true }
+jcode-tui-tool-display = { path = "crates/jcode-tui-tool-display", optional = true }
+jcode-tui-usage-overlay = { path = "crates/jcode-tui-usage-overlay", optional = true }
 jcode-update-core = { path = "crates/jcode-update-core" }
 jcode-terminal-launch = { path = "crates/jcode-terminal-launch" }
-jcode-tui-workspace = { path = "crates/jcode-tui-workspace" }
+jcode-tui-workspace = { path = "crates/jcode-tui-workspace", optional = true }
 jcode-usage-types = { path = "crates/jcode-usage-types" }
 
 # Streaming
@@ -237,9 +237,21 @@ jemalloc-prof = [
     "tikv-jemalloc-ctl/profiling",
 ]
 embeddings = ["dep:jcode-embedding"]
-mmdr-size-api = ["jcode-tui-mermaid/mmdr-size-api"]
+mmdr-size-api = ["terminal-ui", "jcode-tui-mermaid/mmdr-size-api"]
 pdf = ["dep:jcode-pdf"]
-terminal-ui = []
+terminal-ui = [
+    "dep:jcode-tui-account-picker",
+    "dep:jcode-tui-core",
+    "dep:jcode-tui-markdown",
+    "dep:jcode-tui-mermaid",
+    "dep:jcode-tui-messages",
+    "dep:jcode-tui-render",
+    "dep:jcode-tui-session-picker",
+    "dep:jcode-tui-style",
+    "dep:jcode-tui-tool-display",
+    "dep:jcode-tui-usage-overlay",
+    "dep:jcode-tui-workspace",
+]
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Threading"] }

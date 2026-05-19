@@ -144,6 +144,10 @@ fn provider_key_for_spawn_model(
 }
 
 fn persist_headed_startup_message(session_id: &str, message: &str) {
+    #[cfg(not(feature = "terminal-ui"))]
+    let _ = (session_id, message);
+
+    #[cfg(feature = "terminal-ui")]
     crate::tui::App::save_startup_submission_for_session(
         session_id,
         message.to_string(),

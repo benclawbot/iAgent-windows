@@ -614,6 +614,7 @@ pub(super) async fn handle_rename_session(
         }
     };
 
+    #[cfg(feature = "terminal-ui")]
     crate::tui::session_picker::invalidate_session_list_cache();
     let event = ServerEvent::SessionRenamed {
         session_id: renamed_session_id.clone(),

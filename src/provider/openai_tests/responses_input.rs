@@ -382,6 +382,7 @@ fn test_build_response_request_respects_configured_cache_retention() {
 }
 
 #[test]
+#[cfg(feature = "terminal-ui")]
 fn test_openai_cache_ttl_is_model_aware() {
     assert_eq!(
         crate::tui::cache_ttl_for_provider_model("openai", Some("gpt-5.5")),

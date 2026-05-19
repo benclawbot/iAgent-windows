@@ -375,6 +375,7 @@ pub fn import_session(session_id: &str) -> Result<Session> {
     import_session_from_file(&session_file, session_id)
 }
 
+#[cfg(feature = "terminal-ui")]
 pub fn imported_session_id_for_target(
     target: &crate::tui::session_picker::ResumeTarget,
 ) -> Option<String> {
@@ -397,6 +398,7 @@ pub fn imported_session_id_for_target(
     }
 }
 
+#[cfg(feature = "terminal-ui")]
 pub fn resolve_resume_target_to_jcode(
     target: &crate::tui::session_picker::ResumeTarget,
 ) -> Result<crate::tui::session_picker::ResumeTarget> {
@@ -982,6 +984,6 @@ pub fn import_opencode_session_from_path(
     finalize_imported_session(session, created_at, updated_at)
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "terminal-ui"))]
 #[path = "import_tests.rs"]
 mod tests;
