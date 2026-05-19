@@ -23,15 +23,19 @@
     Skip Alt+; hotkey setup helpers.
 .PARAMETER SkipDesktopShortcut
     Skip creating the iAgent desktop shortcut.
+.PARAMETER SkipDockSetup
+    Skip downloading and setting up the desktop dock frontend.
 #>
 param(
     [string]$InstallDir,
+    [string]$AppDir,
     [string]$Version,
     [string]$ArtifactExePath,
     [string]$ArtifactTgzPath,
     [switch]$SkipAlacrittySetup,
     [switch]$SkipHotkeySetup,
-    [switch]$SkipDesktopShortcut
+    [switch]$SkipDesktopShortcut,
+    [switch]$SkipDockSetup
 )
 
 $ErrorActionPreference = 'Stop'
@@ -45,6 +49,10 @@ $Repo = "benclawbot/iAgent-windows"
 
 if (-not $InstallDir) {
     $InstallDir = Join-Path $env:LOCALAPPDATA "iAgent\bin"
+}
+
+if (-not $AppDir) {
+    $AppDir = Join-Path $env:LOCALAPPDATA "iAgent\app"
 }
 
 $JcodeHome = if ($env:JCODE_HOME) {
@@ -274,18 +282,16 @@ function Set-SetupHintsState([bool]$AlacrittyConfigured, [bool]$HotkeyConfigured
     $state | ConvertTo-Json | Set-Content -Path $SetupHintsPath -Encoding UTF8
 }
 
-function Install-IagentHotkey([string]$IagentExePath) {
-    $alacrittyPath = Find-AlacrittyPath
-    if (-not $alacrittyPath) {
-        Write-Warn "Skipping Alt+; hotkey because Alacritty is not installed"
+function Install-IagentHotkey([string]$DockLauncherVbsPath) {
+    if (-not (Test-Path -LiteralPath $DockLauncherVbsPath)) {
+        Write-Warn "Skipping Alt+; hotkey because dock launcher was not found"
         return $false
     }
 
     New-Item -ItemType Directory -Path $HotkeyDir -Force | Out-Null
     Stop-IagentHotkeyListeners
 
-    $escapedAlacritty = $alacrittyPath.Replace("'", "''")
-    $escapedIagentExe = $IagentExePath.Replace("'", "''")
+    $escapedDockLauncher = $DockLauncherVbsPath.Replace("'", "''")
 
     $ps1Path = Join-Path $HotkeyDir "iagent-hotkey.ps1"
     $ps1Lines = @(
@@ -330,7 +336,7 @@ function Install-IagentHotkey([string]$IagentExePath) {
         '    $msg = New-Object HotKeyHelper+MSG',
         '    while ([HotKeyHelper]::GetMessage([ref]$msg, [IntPtr]::Zero, $WM_HOTKEY, $WM_HOTKEY) -ne 0) {',
         '        if ($msg.message -eq $WM_HOTKEY -and $msg.wParam.ToInt32() -eq $HOTKEY_ID) {',
-        "            Start-Process '$escapedAlacritty' -ArgumentList '-e', '$escapedIagentExe'",
+        "            Start-Process 'wscript.exe' -ArgumentList '`"$escapedDockLauncher`"'",
         '        }',
         '    }',
         '} finally {',
@@ -376,7 +382,7 @@ function Install-IagentHotkey([string]$IagentExePath) {
         Write-Warn "Hotkey will start on next login, but could not be launched immediately"
     }
 
-    Write-Info "Configured Alt+; to launch iAgent in Alacritty"
+    Write-Info "Configured Alt+; to launch the iAgent dock"
     return $true
 }
 
@@ -448,7 +454,7 @@ function New-IagentRobotIcon([string]$IconPath) {
     }
 }
 
-function Install-IagentDesktopShortcut([string]$IagentExePath, [string]$IconPath) {
+function Install-IagentDesktopShortcut([string]$DockLauncherVbsPath, [string]$IconPath, [string]$WorkingDirectory) {
     try {
         $desktop = [Environment]::GetFolderPath("DesktopDirectory")
         if (-not $desktop) {
@@ -459,18 +465,10 @@ function Install-IagentDesktopShortcut([string]$IagentExePath, [string]$IconPath
         $shortcutPath = Join-Path $desktop "iAgent.lnk"
         $shell = New-Object -ComObject WScript.Shell
         $shortcut = $shell.CreateShortcut($shortcutPath)
-        $alacrittyPath = Find-AlacrittyPath
-
-        if ($alacrittyPath) {
-            $shortcut.TargetPath = $alacrittyPath
-            $shortcut.Arguments = ('-e "{0}"' -f $IagentExePath)
-        } else {
-            $shortcut.TargetPath = $IagentExePath
-            $shortcut.Arguments = ""
-        }
-
-        $shortcut.WorkingDirectory = [Environment]::GetFolderPath("UserProfile")
-        $shortcut.Description = "Start iAgent"
+        $shortcut.TargetPath = "wscript.exe"
+        $shortcut.Arguments = ('"{0}"' -f $DockLauncherVbsPath)
+        $shortcut.WorkingDirectory = $WorkingDirectory
+        $shortcut.Description = "Start the iAgent desktop dock"
         if (Test-Path $IconPath) {
             $shortcut.IconLocation = $IconPath
         }
@@ -481,6 +479,160 @@ function Install-IagentDesktopShortcut([string]$IagentExePath, [string]$IconPath
     } catch {
         Write-Warn "Could not create desktop shortcut: $($_.Exception.Message)"
         return $false
+    }
+}
+
+function Install-UvIfMissing {
+    $uv = Get-Command uv -ErrorAction SilentlyContinue
+    if ($uv) {
+        return $uv.Source
+    }
+
+    Write-Info "Installing uv Python runtime manager..."
+    $uvTempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("iagent-uv-" + [Guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $uvTempDir -Force | Out-Null
+    $uvInstaller = Join-Path $uvTempDir "install-uv.ps1"
+
+    try {
+        Invoke-WebRequest -Uri "https://astral.sh/uv/install.ps1" -OutFile $uvInstaller -UseBasicParsing
+        $uvInstallResult = Invoke-ProcessWithTimeout -FilePath "powershell.exe" -ArgumentList @(
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            $uvInstaller
+        ) -TimeoutSeconds 300 -FriendlyName "uv install" -CaptureOutput
+        Write-LogTail -Path $uvInstallResult.StdoutPath -Label "uv install stdout"
+        Write-LogTail -Path $uvInstallResult.StderrPath -Label "uv install stderr"
+    } finally {
+        Remove-Item -Path $uvTempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    $uvCandidateDirs = @(
+        (Join-Path $env:USERPROFILE ".local\bin"),
+        (Join-Path $env:USERPROFILE ".cargo\bin")
+    )
+    foreach ($candidateDir in $uvCandidateDirs) {
+        $candidate = Join-Path $candidateDir "uv.exe"
+        if (Test-Path -LiteralPath $candidate) {
+            $env:Path = "$candidateDir;$env:Path"
+            return $candidate
+        }
+    }
+
+    $uv = Get-Command uv -ErrorAction SilentlyContinue
+    if ($uv) {
+        return $uv.Source
+    }
+
+    Write-Err "uv installation completed but uv.exe was not found on PATH"
+}
+
+function Install-IagentDockApp([string]$TargetAppDir) {
+    Write-Info "Installing iAgent desktop dock..."
+
+    $frontendZipUrl = "https://github.com/benclawbot/iagent/archive/refs/heads/main.zip"
+    $dockTempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("iagent-dock-" + [Guid]::NewGuid().ToString("N"))
+    $dockZipPath = Join-Path $dockTempDir "iagent-main.zip"
+    $extractDir = Join-Path $dockTempDir "extract"
+
+    New-Item -ItemType Directory -Path $dockTempDir -Force | Out-Null
+    try {
+        Invoke-WebRequest -Uri $frontendZipUrl -OutFile $dockZipPath -UseBasicParsing
+        Expand-Archive -Path $dockZipPath -DestinationPath $extractDir -Force
+
+        $extractedRoot = Join-Path $extractDir "iagent-main"
+        if (-not (Test-Path -LiteralPath (Join-Path $extractedRoot "iagent-py\pyproject.toml"))) {
+            Write-Err "Downloaded dock archive did not contain iagent-py"
+        }
+
+        $targetParent = Split-Path -Parent $TargetAppDir
+        New-Item -ItemType Directory -Path $targetParent -Force | Out-Null
+        if (Test-Path -LiteralPath $TargetAppDir) {
+            Remove-Item -LiteralPath $TargetAppDir -Recurse -Force
+        }
+        Move-Item -LiteralPath $extractedRoot -Destination $TargetAppDir -Force
+    } finally {
+        Remove-Item -Path $dockTempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    $uvPath = Install-UvIfMissing
+    $runtimeDir = Join-Path $TargetAppDir "iagent-py"
+    $uvSyncResult = Invoke-ProcessWithTimeout -FilePath $uvPath -ArgumentList @(
+        "sync",
+        "--project",
+        $runtimeDir
+    ) -TimeoutSeconds 900 -FriendlyName "iAgent dock Python dependency install" -CaptureOutput
+    Write-LogTail -Path $uvSyncResult.StdoutPath -Label "uv sync stdout"
+    Write-LogTail -Path $uvSyncResult.StderrPath -Label "uv sync stderr"
+
+    $workerDir = Join-Path $TargetAppDir "worker"
+    $npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
+    if (-not $npmCommand) {
+        $npmCommand = Get-Command npm.exe -ErrorAction SilentlyContinue
+    }
+
+    if ((Test-Path -LiteralPath (Join-Path $workerDir "package.json")) -and $npmCommand) {
+        $npmInstallResult = Invoke-ProcessWithTimeout -FilePath $npmCommand.Source -ArgumentList @(
+            "install",
+            "--prefix",
+            $workerDir
+        ) -TimeoutSeconds 900 -FriendlyName "iAgent worker dependency install" -CaptureOutput
+        Write-LogTail -Path $npmInstallResult.StdoutPath -Label "npm install stdout"
+        Write-LogTail -Path $npmInstallResult.StderrPath -Label "npm install stderr"
+    } elseif (Test-Path -LiteralPath (Join-Path $workerDir "package.json")) {
+        Write-Warn "npm was not found; worker dependencies were not installed. Dock launch still works unless worker_url is configured."
+    }
+
+    return $TargetAppDir
+}
+
+function New-IagentDockLauncher([string]$IagentExePath, [string]$TargetAppDir, [string]$TargetInstallDir) {
+    $ps1Path = Join-Path $TargetInstallDir "launch-iagent-dock.ps1"
+    $vbsPath = Join-Path $TargetInstallDir "launch-iagent-dock.vbs"
+    $logDir = Join-Path $env:LOCALAPPDATA "iAgent\logs"
+
+    $escapedIagentExe = $IagentExePath.Replace("'", "''")
+    $escapedAppDir = $TargetAppDir.Replace("'", "''")
+    $escapedLogDir = $logDir.Replace("'", "''")
+
+    $ps1Content = @(
+        '$ErrorActionPreference = "Stop"',
+        ('$env:IAGENT_JCODE_BIN = ''{0}''' -f $escapedIagentExe),
+        ('$appDir = ''{0}''' -f $escapedAppDir),
+        ('$logDir = ''{0}''' -f $escapedLogDir),
+        'New-Item -ItemType Directory -Path $logDir -Force | Out-Null',
+        '$logPath = Join-Path $logDir "dock-launch.log"',
+        'try {',
+        '    $launcher = Join-Path $appDir "launch-iagent.ps1"',
+        '    if (-not (Test-Path -LiteralPath $launcher)) {',
+        '        $legacyLauncher = Join-Path $env:USERPROFILE "iAgent\launch-iagent.ps1"',
+        '        if (Test-Path -LiteralPath $legacyLauncher) {',
+        '            $launcher = $legacyLauncher',
+        '        }',
+        '    }',
+        '    if (-not (Test-Path -LiteralPath $launcher)) {',
+        '        throw "iAgent dock launcher not found at $launcher"',
+        '    }',
+        '    & $launcher',
+        '} catch {',
+        '    $message = "[$(Get-Date -Format o)] $($_.Exception.Message)"',
+        '    Add-Content -Path $logPath -Value $message',
+        '    throw',
+        '}'
+    ) -join "`r`n"
+    Set-Content -Path $ps1Path -Value $ps1Content -Encoding UTF8
+
+    $escapedPs1Path = $ps1Path.Replace('"', '""')
+    $vbsContent = @(
+        'Set objShell = CreateObject("WScript.Shell")',
+        ('objShell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{0}""", 0, False' -f $escapedPs1Path)
+    ) -join "`r`n"
+    Set-Content -Path $vbsPath -Value $vbsContent -Encoding ASCII
+
+    return [pscustomobject]@{
+        Ps1Path = $ps1Path
+        VbsPath = $vbsPath
     }
 }
 
@@ -666,27 +818,37 @@ $env:Path = "$InstallDir;$env:Path"
 $installedAlacritty = $false
 $configuredHotkey = $false
 $configuredDesktopShortcut = $false
+$dockLauncher = $null
+
+if ($SkipDockSetup) {
+    Write-Info "Skipping iAgent dock setup"
+} else {
+    $AppDir = Install-IagentDockApp -TargetAppDir $AppDir
+}
+
+$dockLauncher = New-IagentDockLauncher -IagentExePath $LauncherPath -TargetAppDir $AppDir -TargetInstallDir $InstallDir
 
 if ($SkipAlacrittySetup) {
     Write-Info "Skipping Alacritty setup"
     $installedAlacritty = Test-AlacrittyInstalled
 } else {
-    $installedAlacritty = Install-Alacritty
+    Write-Info "Skipping Alacritty setup; the iAgent dock launches without a terminal"
+    $installedAlacritty = Test-AlacrittyInstalled
 }
 
 if ($SkipHotkeySetup) {
     Write-Info "Skipping Alt+; hotkey setup"
-} elseif ($installedAlacritty) {
-    $configuredHotkey = Install-IagentHotkey -IagentExePath $LauncherPath
+} elseif ($dockLauncher) {
+    $configuredHotkey = Install-IagentHotkey -DockLauncherVbsPath $dockLauncher.VbsPath
 }
 
 if ($SkipDesktopShortcut) {
     Write-Info "Skipping desktop shortcut setup"
 } else {
     if (New-IagentRobotIcon -IconPath $IconPath) {
-        $configuredDesktopShortcut = Install-IagentDesktopShortcut -IagentExePath $LauncherPath -IconPath $IconPath
+        $configuredDesktopShortcut = Install-IagentDesktopShortcut -DockLauncherVbsPath $dockLauncher.VbsPath -IconPath $IconPath -WorkingDirectory $AppDir
     } else {
-        $configuredDesktopShortcut = Install-IagentDesktopShortcut -IagentExePath $LauncherPath -IconPath $LauncherPath
+        $configuredDesktopShortcut = Install-IagentDesktopShortcut -DockLauncherVbsPath $dockLauncher.VbsPath -IconPath $LauncherPath -WorkingDirectory $AppDir
     }
 }
 
@@ -704,17 +866,17 @@ if (Test-AlacrittyInstalled) {
 }
 
 if ($configuredHotkey) {
-    Write-Info "Global hotkey ready: Alt+; opens iAgent in Alacritty"
+    Write-Info "Global hotkey ready: Alt+; opens the iAgent dock"
     Write-Host ""
 }
 
 if ($configuredDesktopShortcut) {
-    Write-Info "Desktop shortcut ready: double-click iAgent to start."
+    Write-Info "Desktop shortcut ready: double-click iAgent to open the dock."
     Write-Host ""
 }
 
 if (Get-Command iagent -ErrorAction SilentlyContinue) {
-    Write-Info "Run 'iagent' to get started."
+    Write-Info "Backend CLI available: iagent"
 } else {
     Write-Host "  Open a new terminal window, then run:"
     Write-Host ""

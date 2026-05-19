@@ -1,35 +1,43 @@
-# iAgent Windows
+﻿# iAgent Windows
 
-An AI operator for your Windows desktop.
+iAgent is a robot dock for Windows: a small desktop companion that stays close
+to your workspace, accepts natural-language tasks, and hands them to a local
+agent runtime that can operate across your files, apps, commands, and web
+context.
 
-iAgent runs as a local Windows-first runtime that can reason over your tasks,
-use tools, and execute work across files, shell commands, web context, and
-connected providers.
+Use it when you want the computer to do the work with you: open or control
+desktop apps, run background workflows, draft content, inspect local projects,
+execute shell commands, remember context, and report progress back through the
+dock/tray experience.
 
-![iAgent first run preview](docs/assets/iagent-windows-first-run.svg)
+![iAgent dock running on Windows](docs/assets/iagent-dock-preview.svg)
 
 ## What It Can Do
 
-- Run interactive AI sessions from your terminal with streaming responses.
-- Execute local tool workflows for files, search, shell, planning/todos, and
-  structured automation tasks.
-- Connect to multiple providers and route requests based on capability and
-  configuration.
-- Persist session context and memory so long-running work can be resumed.
-- Run ambient/background workflows and lifecycle-managed local server mode.
-- Integrate with desktop helpers including optional global hotkey launch
-  (Alt+;) through Alacritty setup in the installer.
+- Launch from a robot desktop icon into a dock/tray UI, without leaving a
+  terminal window open.
+- Accept desktop tasks in natural language and route them to the local agent
+  backend for execution.
+- Run Windows commands and background workflows while the dock remains
+  available for follow-up.
+- Work with local folders, project files, search, shell tools, memory, planning,
+  and provider-backed model calls.
+- Start optional worker/web integrations when configured.
+- Use `Alt+;` as a global shortcut to bring up the dock after installation.
+- Keep the backend CLI available as `iagent` for users who also want terminal
+  access.
 
 ## Prerequisites
 
 - Windows 10 or Windows 11
 - PowerShell 5.1 or newer
-- Internet access for installation and provider auth
+- Internet access for installation, dependency setup, and provider auth
 - An account/API access for at least one supported model provider
 
 Optional but recommended:
 
-- `winget` (used by the installer to set up Alacritty automatically)
+- Node.js/npm if you plan to use the optional worker integration.
+- `winget` for installing optional Windows tooling outside the core dock flow.
 
 ## Install (One Command)
 
@@ -39,47 +47,59 @@ Run in PowerShell:
 irm https://raw.githubusercontent.com/benclawbot/iagent-windows/main/scripts/install.ps1 | iex
 ```
 
-The installer downloads the latest release, installs `iagent.exe`, creates a
-desktop shortcut with the iAgent robot icon, and adds the install directory to
-your user `PATH`.
+The installer downloads the latest backend release, installs the desktop dock
+frontend, installs Python runtime dependencies with `uv`, creates a desktop
+shortcut with the iAgent robot icon, configures `Alt+;`, and adds the backend
+CLI directory to your user `PATH`.
 
-`%LOCALAPPDATA%\iAgent\bin`
+Installed layout:
 
-## First Start (2 Minutes)
+- `%LOCALAPPDATA%\iAgent\bin`: backend CLI plus hidden dock launcher scripts.
+- `%LOCALAPPDATA%\iAgent\app`: desktop dock frontend, tray runtime, and worker
+  integration files.
+- `%LOCALAPPDATA%\iAgent\logs`: dock launcher diagnostics.
 
-1. Open a new terminal window.
-2. Start iAgent:
+## First Start
+
+1. Double-click the `iAgent` robot icon on your desktop.
+2. The dock/tray app starts in the background with no terminal window.
+3. Use the dock to type or speak a concrete task, for example:
+   - "Open Notepad and draft a short meeting follow-up."
+   - "Summarize what changed in this project folder today."
+   - "Run the tests here and tell me what failed."
+   - "Create a quick release note from recent commits."
+4. Configure provider credentials when prompted or through the app config.
+
+Terminal users can still run the backend directly:
 
 ```powershell
 iagent
 ```
 
-3. Authenticate with a provider:
+Use `Alt+;` after installation to launch the dock again quickly.
 
-```powershell
-iagent login
-```
-
-4. Start with a concrete task, for example:
-   - "Summarize what changed in this folder today."
-   - "Find failing tests and suggest a minimal fix."
-   - "Draft a release note from recent commits."
-
-If Alacritty + hotkey setup succeeded during install, you can also launch
-iAgent quickly via `Alt+;`.
 
 ## Architecture (Current)
 
-The codebase is a Rust workspace with one primary library crate (`iagent`) and
-supporting internal crates.
+iAgent Windows is the installer and backend runtime distribution. The installed
+desktop product has two layers:
+
+- Desktop dock frontend: downloaded during installation into
+  `%LOCALAPPDATA%\iAgent\app`; it owns the PySide dock, tray icon, voice/task
+  loop, task inbox, and optional worker integration.
+- Windows backend engine: this repository's Rust workspace builds `iagent.exe`,
+  which handles provider routing, tool execution, sessions, memory, ambient
+  background work, and local command workflows.
 
 High-level flow:
 
-1. Process startup enters `src/main.rs` and calls `iagent::run()`.
-2. CLI startup (`src/cli/startup.rs`) parses mode and loads configuration.
-3. The runtime server manages sessions, tools, providers, and background work.
-4. Optional ambient and UI binaries run specialized loops on the same core.
-
+1. The desktop shortcut runs `%LOCALAPPDATA%\iAgent\bin\launch-iagent-dock.vbs`.
+2. The hidden launcher starts PowerShell without a visible terminal and points
+   the dock compatibility layer at the installed backend executable.
+3. The frontend launcher starts `uv run python -m iagent` from the dock app.
+4. The dock/tray UI receives user tasks and queues local backend workflows.
+5. The Rust backend runs the work and streams progress/results through the app
+   surfaces and logs.
 ### Runtime Entry Points
 
 Defined in `Cargo.toml`:
