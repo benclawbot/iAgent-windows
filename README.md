@@ -25,6 +25,7 @@ non-iAgent clutter removed:
 - telemetry worker deployment code
 - duplicate compatibility files that are no longer referenced
 - old heavyweight GitHub release workflows
+- legacy demo, benchmark, Linux release, stress, and remote-build scripts
 
 The remaining Rust workspace is intentionally conservative. It keeps the backend
 pieces that may still be required until the Windows app boundary is finalized
@@ -50,6 +51,12 @@ The target architecture is:
 5. Replace old `jcode` install/release scripts with Windows-first packaging.
 6. Add CI that checks the backend and Windows-facing integration without running
    legacy release jobs.
+
+## CI
+
+The current workflow is intentionally small: it runs on Windows, checks the
+remaining PowerShell scripts, and runs `cargo check --workspace --all-targets`.
+Use that signal to decide the next safe extraction step.
 
 ## Development
 

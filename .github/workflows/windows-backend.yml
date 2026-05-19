@@ -1,0 +1,39 @@
+name: Windows Backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: windows-backend-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Check Windows backend
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-backend
+
+      - name: Check PowerShell scripts
+        shell: pwsh
+        run: ./scripts/check_powershell_syntax.ps1
+
+      - name: Cargo check
+        shell: pwsh
+        run: cargo check --workspace --all-targets --target x86_64-pc-windows-msvc
