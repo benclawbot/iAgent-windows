@@ -589,6 +589,13 @@ function Install-IagentDockApp([string]$TargetAppDir) {
             Remove-Item -LiteralPath $TargetAppDir -Recurse -Force
         }
         Move-Item -LiteralPath $extractedRoot -Destination $TargetAppDir -Force
+
+        $sourceWordScript = Join-Path $PSScriptRoot "office\create_word_from_goal.ps1"
+        $targetWordScript = Join-Path $TargetAppDir "iagent-py\iagent\create_word_from_goal.ps1"
+        if (-not (Test-Path -LiteralPath $sourceWordScript)) {
+            Write-Err "Tracked Word builder script is missing at $sourceWordScript"
+        }
+        Copy-Item -LiteralPath $sourceWordScript -Destination $targetWordScript -Force
     } finally {
         Remove-Item -Path $dockTempDir -Recurse -Force -ErrorAction SilentlyContinue
     }
