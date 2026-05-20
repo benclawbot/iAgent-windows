@@ -369,6 +369,16 @@ async fn handle_http(
             http_response(200, "OK", &body.to_string())
         }
 
+        ("GET", "/status") => {
+            let body = serde_json::json!({
+                "status": "running",
+                "version": env!("JCODE_VERSION"),
+                "gateway": true,
+                "backend": "iAgent",
+            });
+            http_response(200, "OK", &body.to_string())
+        }
+
         ("POST", "/pair") => {
             // Extract JSON body (after \r\n\r\n)
             let body_str = request.split("\r\n\r\n").nth(1).unwrap_or("");

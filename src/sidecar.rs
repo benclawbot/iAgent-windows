@@ -20,6 +20,13 @@ const SIDECAR_OPENAI_OAUTH_FALLBACK_REASONING: &str = "low";
 /// Fast/cheap Claude model used when only Claude credentials are available.
 const SIDECAR_CLAUDE_MODEL: &str = "claude-haiku-4-5-20241022";
 
+/// Fast/cheap MiniMax model for memory agent.
+pub const SIDECAR_MINIMAX_MODEL: &str = "MiniMax-Text-01";
+
+/// MiniMax OpenAI-compatible API base
+const MINIMAX_API_BASE: &str = "https://api.minimax.chat/v1";
+const MINIMAX_RESPONSES_PATH: &str = "responses";
+
 /// OpenAI Responses API
 const OPENAI_API_BASE: &str = "https://api.openai.com/v1";
 const CHATGPT_API_BASE: &str = "https://chatgpt.com/backend-api/codex";
@@ -47,6 +54,17 @@ const DEFAULT_MAX_TOKENS: u32 = 1024;
 enum SidecarBackend {
     OpenAI,
     Claude,
+    MiniMax,
+}
+
+impl SidecarBackend {
+    fn name(&self) -> &'static str {
+        match self {
+            SidecarBackend::OpenAI => "openai",
+            SidecarBackend::Claude => "claude",
+            SidecarBackend::MiniMax => "minimax",
+        }
+    }
 }
 
 /// Lightweight client for fast sidecar calls
@@ -71,25 +89,17 @@ impl Sidecar {
             match crate::provider::provider_for_model(&model) {
                 Some("openai") => (SidecarBackend::OpenAI, model),
                 Some("claude") => (SidecarBackend::Claude, model),
+                Some("minimax") => (SidecarBackend::MiniMax, model),
                 _ => {
                     log_warn!(
-                        "Ignoring unsupported memory sidecar model override '{}'; expected an OpenAI or Claude model",
+                        "Ignoring unsupported memory sidecar model override '{}'; expected an OpenAI, Claude, or MiniMax model",
                         model
                     );
-                    if auth::codex::load_credentials().is_ok() {
-                        (SidecarBackend::OpenAI, SIDECAR_OPENAI_MODEL.to_string())
-                    } else {
-                        (SidecarBackend::Claude, SIDECAR_CLAUDE_MODEL.to_string())
-                    }
+                    Self::detect_fallback_backend()
                 }
             }
-        } else if auth::codex::load_credentials().is_ok() {
-            (SidecarBackend::OpenAI, SIDECAR_OPENAI_MODEL.to_string())
-        } else if auth::claude::load_credentials().is_ok() {
-            (SidecarBackend::Claude, SIDECAR_CLAUDE_MODEL.to_string())
         } else {
-            // Default to Claude - will fail on use with a clear error
-            (SidecarBackend::Claude, SIDECAR_CLAUDE_MODEL.to_string())
+            Self::detect_fallback_backend()
         };
 
         Self {
@@ -97,6 +107,18 @@ impl Sidecar {
             model,
             max_tokens: DEFAULT_MAX_TOKENS,
             backend,
+        }
+    }
+
+    fn detect_fallback_backend() -> (SidecarBackend, String) {
+        if let Ok(_) = std::env::var("MINIMAX_API_KEY") {
+            return (SidecarBackend::MiniMax, SIDECAR_MINIMAX_MODEL.to_string());
+        } else if auth::codex::load_credentials().is_ok() {
+            (SidecarBackend::OpenAI, SIDECAR_OPENAI_MODEL.to_string())
+        } else if auth::claude::load_credentials().is_ok() {
+            (SidecarBackend::Claude, SIDECAR_CLAUDE_MODEL.to_string())
+        } else {
+            (SidecarBackend::Claude, SIDECAR_CLAUDE_MODEL.to_string())
         }
     }
 
@@ -119,7 +141,72 @@ impl Sidecar {
         match self.backend {
             SidecarBackend::OpenAI => self.complete_openai(system, user_message).await,
             SidecarBackend::Claude => self.complete_claude(system, user_message).await,
+            SidecarBackend::MiniMax => self.complete_minimax(system, user_message).await,
         }
+    }
+
+    /// Complete via MiniMax OpenAI-compatible Responses API.
+    async fn complete_minimax(&self, system: &str, user_message: &str) -> Result<String> {
+        let api_key = std::env::var("MINIMAX_API_KEY")
+            .context("MINIMAX_API_KEY not set for MiniMax sidecar")?;
+
+        let url = format!("{}/{}", MINIMAX_API_BASE.trim_end_matches('/'), MINIMAX_RESPONSES_PATH);
+
+        #[derive(serde::Serialize)]
+        struct Request<'a> {
+            model: &'a str,
+            input: RequestInput<'a>,
+        }
+
+        #[derive(serde::Serialize)]
+        struct RequestInput<'a> {
+            messages: Vec<Message<'a>>,
+        }
+
+        #[derive(serde::Serialize)]
+        struct Message<'a> {
+            role: &'a str,
+            content: &'a str,
+        }
+
+        let request = Request {
+            model: &self.model,
+            input: RequestInput {
+                messages: vec![
+                    Message { role: "system", content: system },
+                    Message { role: "user", content: user_message },
+                ],
+            },
+        };
+
+        let client = reqwest::Client::new();
+        let response = client
+            .post(&url)
+            .header("Authorization", format!("Bearer {}", api_key))
+            .header("Content-Type", "application/json")
+            .json(&request)
+            .send()
+            .await
+            .context("MiniMax sidecar request failed")?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            anyhow::bail!("MiniMax returned {}: {}", status, body);
+        }
+
+        #[derive(serde::Deserialize)]
+        struct MiniMaxResponse {
+            output: serde_json::Value,
+        }
+
+        let resp: MiniMaxResponse = response.json().await.context("Failed to parse MiniMax response")?;
+
+        let text = resp.output.get("text").and_then(|v| v.as_str())
+            .context("No text in MiniMax response output")?
+            .to_string();
+
+        Ok(text)
     }
 
     /// Complete via OpenAI Responses API.
