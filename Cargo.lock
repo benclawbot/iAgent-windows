@@ -190,9 +190,11 @@ name = "app-integrations"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "reqwest",
  "serde",
  "serde_json",
  "suggestion-engine",
+ "tokio",
  "windows 0.58.0",
 ]
 

@@ -1998,6 +1998,8 @@ impl App {
 
             if let Some(skill) = skill {
                 self.active_skill = Some(skill_name.to_string());
+                // Sync allowed_tools from skill's allowed-tools field
+                self.sync_allowed_tools_from_active_skill();
                 self.push_display_message(DisplayMessage {
                     role: "system".to_string(),
                     content: format!("Activated skill: {} - {}", skill.name, skill.description),

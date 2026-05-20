@@ -1,5 +1,6 @@
 mod agentgrep;
 pub mod ambient;
+mod app;
 mod apply_patch;
 mod bash;
 mod batch;
@@ -27,6 +28,7 @@ pub mod selfdev;
 mod session_search;
 mod side_panel;
 mod skill;
+mod skill_script;
 mod task;
 mod todo;
 mod webfetch;
@@ -206,6 +208,12 @@ impl Registry {
             "skill_manage",
             skill::SkillTool::new(skills.clone()),
         );
+        // SkillScriptTool handles skillname_scriptname tool calls
+        Self::insert_tool(
+            &mut tools,
+            "skill_script",
+            skill_script::SkillScriptTool::new(skills.clone()),
+        );
         tools
     }
 
@@ -246,6 +254,7 @@ impl Registry {
             "conversation_search",
             conversation_search::ConversationSearchTool::new(compaction),
         );
+        Self::insert_tool(&mut tools_map, "app", app::AppTool::new());
         let session_tools_ms = session_tools_start.elapsed().as_millis();
 
         let write_start = std::time::Instant::now();

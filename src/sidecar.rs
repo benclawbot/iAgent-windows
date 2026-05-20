@@ -132,6 +132,7 @@ impl Sidecar {
         match self.backend {
             SidecarBackend::OpenAI => "openai",
             SidecarBackend::Claude => "claude",
+            SidecarBackend::MiniMax => "minimax",
         }
     }
 

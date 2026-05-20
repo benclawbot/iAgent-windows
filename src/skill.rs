@@ -17,6 +17,10 @@ pub struct Skill {
     pub content: String,
     pub path: PathBuf,
     search_text: String,
+    /// Supported platforms (e.g., ["windows", "linux"]). Empty means all platforms.
+    pub platforms: Vec<String>,
+    /// Scripts defined in this skill's SKILL.md frontmatter
+    pub scripts: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -25,6 +29,10 @@ struct SkillFrontmatter {
     description: String,
     #[serde(rename = "allowed-tools")]
     allowed_tools: Option<String>,
+    #[serde(rename = "platforms")]
+    platforms: Option<String>,
+    #[serde(rename = "scripts")]
+    scripts: Option<String>,
 }
 
 /// Registry of available skills
@@ -245,7 +253,7 @@ impl SkillRegistry {
         Ok(())
     }
 
-    /// Load skills from a directory
+    /// Load skills from a directory, filtering by current platform.
     fn load_from_dir(&mut self, dir: &Path) -> Result<()> {
         if !dir.is_dir() {
             return Ok(());
@@ -259,6 +267,7 @@ impl SkillRegistry {
                 let skill_file = path.join("SKILL.md");
                 if skill_file.exists()
                     && let Ok(skill) = Self::parse_skill(&skill_file)
+                    && skill.is_available_for_current_platform()
                 {
                     self.skills.insert(skill.name.clone(), skill);
                 }
@@ -279,10 +288,18 @@ impl SkillRegistry {
             name,
             description,
             allowed_tools,
+            platforms,
+            scripts,
         } = frontmatter;
 
         let allowed_tools =
             allowed_tools.map(|s| s.split(',').map(|t| t.trim().to_string()).collect());
+        let platforms: Vec<String> = platforms
+            .map(|s| s.split(',').map(|t| t.trim().to_lowercase()).collect())
+            .unwrap_or_default();
+        let scripts: Vec<String> = scripts
+            .map(|s| s.split(',').map(|t| t.trim().to_string()).collect())
+            .unwrap_or_default();
         let search_text = build_skill_search_text(&name, &description, &body);
 
         Ok(Skill {
@@ -292,6 +309,8 @@ impl SkillRegistry {
             content: body,
             path: path.to_path_buf(),
             search_text,
+            platforms,
+            scripts,
         })
     }
 
@@ -418,7 +437,19 @@ impl SkillRegistry {
 }
 
 impl Skill {
-    /// Get the full prompt content for this skill
+    /// Get the scripts directory for this skill
+    pub fn scripts_dir(&self) -> Option<PathBuf> {
+        self.path.parent().map(|p| p.join("scripts"))
+    }
+
+    /// Check if this skill supports the current platform
+    pub fn is_available_for_current_platform(&self) -> bool {
+        if self.platforms.is_empty() {
+            return true;
+        }
+        let current_os = std::env::consts::OS;
+        self.platforms.iter().any(|p| p == current_os)
+    }
     pub fn get_prompt(&self) -> String {
         format!(
             "# Skill: {}\n\n{}\n\n{}",

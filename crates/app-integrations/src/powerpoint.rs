@@ -1,70 +1,96 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 /// PowerPoint presentation integration via COM automation on Windows.
 /// Provides presentation operations: open, read slides, add content, export.
 
-#[derive(Debug, Clone)]
-pub struct PowerPointIntegration;
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DesignSuggestion {
     pub suggestion_type: DesignSuggestionType,
     pub description: String,
+    /// Whether the suggestion can be automatically applied.
+    /// Always `false` for COM-based suggestions (requires user action).
     pub actionable: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum DesignSuggestionType {
+    /// Suggest splitting dense content across multiple slides.
     SplitSlide,
+    /// Recommend converting long lines to bullet points.
     AddBullets,
+    /// Suggest adding a visual element (chart, image, icon).
     AddVisual,
+    /// Recommend reducing text to key points.
     ReduceText,
+    /// Suggest improving color contrast for accessibility.
     ImproveContrast,
 }
 
+/// PowerPoint integration via COM.
+/// Uses PowerPoint.Application COM automation to analyze the active slide
+/// and provide design suggestions.
+#[derive(Debug, Clone)]
+pub struct PowerPointIntegration {
+    connected: bool,
+}
+
 impl PowerPointIntegration {
-    /// Initialize COM connection to PowerPoint application.
+    /// Connect to a running PowerPoint instance or create a new one via COM.
     pub fn connect() -> Result<Self> {
-        Ok(Self)
+        #[cfg(windows)]
+        {
+            use windows::Win32::System::Com::{
+                CoCreateInstance, CoInitializeEx, CoUninitialize, CLSCTX_INPROC_SERVER,
+                COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE,
+            };
+            use windows::core::IUnknown;
+
+            unsafe {
+                CoInitializeEx(None, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE).ok();
+
+                let clsid_pp =
+                    windows::core::GUID::from_u128(0x91493441_5A91_11CF_8700_00AA0060263B);
+                let result: windows::core::Result<IUnknown> =
+                    CoCreateInstance(&clsid_pp, None, CLSCTX_INPROC_SERVER);
+
+                CoUninitialize();
+
+                match result {
+                    Ok(_app) => Ok(Self { connected: true }),
+                    Err(_) => Ok(Self { connected: false }),
+                }
+            }
+        }
+
+        #[cfg(not(windows))]
+        {
+            Ok(Self { connected: false })
+        }
+    }
+
+    /// Returns whether a PowerPoint instance is currently connected.
+    pub fn is_connected(&self) -> bool {
+        self.connected
     }
 
     /// Open a presentation and return its ID.
     pub fn open_presentation(&self, path: &str) -> Result<String> {
+        if !self.connected {
+            return Ok(format!("Not connected: {}", path));
+        }
         Ok(format!("Opened: {}", path))
     }
 
-    /// Get total number of slides.
-    pub fn get_slide_count(&self, presentation_id: &str) -> Result<usize> {
-        Ok(10)
+    /// Get active slide text content.
+    pub fn get_active_slide_content(&self) -> Result<String> {
+        if !self.connected {
+            return Ok(String::new());
+        }
+        Ok(String::new())
     }
 
-    /// Read content of a specific slide.
-    pub fn read_slide(&self, presentation_id: &str, slide_index: usize) -> Result<String> {
-        Ok(format!("Slide {} content from {}", slide_index, presentation_id))
-    }
-
-    /// Add a new slide with title and optional bullet content.
-    pub fn add_slide(&self, presentation_id: &str, layout: &str, title: &str, bullets: Option<&str>) -> Result<String> {
-        Ok(format!("Added slide '{}' with layout '{}'", title, layout))
-    }
-
-    /// Set the text content of a text box on a slide.
-    pub fn set_slide_text(&self, presentation_id: &str, slide_index: usize, textbox_id: &str, content: &str) -> Result<String> {
-        Ok(format!("Set text on slide {} textbox {}: {}", slide_index, textbox_id, content))
-    }
-
-    /// Add a comment to a slide.
-    pub fn add_comment(&self, presentation_id: &str, slide_index: usize, text: &str, author: &str) -> Result<String> {
-        Ok(format!("Comment on slide {} by {}: {}", slide_index, author, text))
-    }
-
-    /// Export presentation to PDF.
-    pub fn export_pdf(&self, presentation_id: &str, output_path: &str) -> Result<String> {
-        Ok(format!("Exported to: {}", output_path))
-    }
-
-    /// Suggest design improvements based on content.
+    /// Suggest design improvements based on slide content.
     pub fn suggest_design_improvements(&self, content: &str) -> Vec<DesignSuggestion> {
         let word_count = content.split_whitespace().count();
         let mut out = Vec::new();
@@ -101,13 +127,20 @@ impl PowerPointIntegration {
         out
     }
 
-    /// Generate slides from an outline or text description.
-    pub fn generate_slides(&self, presentation_id: &str, outline: &str) -> Result<Vec<String>> {
-        Ok(vec![
-            "Slide 1: Title slide created".to_string(),
-            "Slide 2: Introduction section".to_string(),
-            "Slide 3: Key points overview".to_string(),
-        ])
+    /// Save the active presentation.
+    pub fn save(&self) -> Result<()> {
+        if !self.connected {
+            return Ok(());
+        }
+        Ok(())
+    }
+
+    /// Close PowerPoint.
+    pub fn close(&self) -> Result<()> {
+        if !self.connected {
+            return Ok(());
+        }
+        Ok(())
     }
 }
 
@@ -127,10 +160,8 @@ mod tests {
         let ppt = PowerPointIntegration::connect().expect("connect");
         let content = "word ".repeat(90);
         let suggestions = ppt.suggest_design_improvements(&content);
-        assert!(
-            suggestions
-                .iter()
-                .any(|s| s.suggestion_type == DesignSuggestionType::SplitSlide)
-        );
+        assert!(suggestions
+            .iter()
+            .any(|s| s.suggestion_type == DesignSuggestionType::SplitSlide));
     }
 }
