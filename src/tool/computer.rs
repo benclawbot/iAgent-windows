@@ -103,7 +103,8 @@ impl Tool for ComputerTool {
             "Use only the constrained actions in the schema: screenshot, click, type, hotkey, ",
             "scroll, wait, active_window, context, open_app, and list_apps. Use open_app for ",
             "installed Desktop or Start Menu applications instead of shell, Python, browser, ",
-            "or arbitrary code execution."
+            "or arbitrary code execution. For Microsoft Word document creation, extraction, ",
+            "or Review comments, use the dedicated word tool instead of opening Word and typing."
         )
     }
 
@@ -151,7 +152,7 @@ impl Tool for ComputerTool {
                 },
                 "app": {
                     "type": "string",
-                    "description": "Installed app or desktop shortcut name for open_app, or optional search text for list_apps. Prefer the user's visible app name, such as 'Hermes' or 'GanttMaker'."
+                    "description": "Installed app or desktop shortcut name for open_app, or optional search text for list_apps. Prefer the user's visible app name, such as 'Hermes' or 'GanttMaker'. Use the word tool instead for Microsoft Word document creation or Review comments."
                 },
                 "intent": super::intent_schema_property()
             },
