@@ -49,10 +49,13 @@ fn schema_exposes_constrained_computer_actions() {
         "wait",
         "active_window",
         "context",
+        "open_app",
+        "list_apps",
     ] {
         assert!(actions.iter().any(|value| value == action), "{action}");
     }
     assert_eq!(schema["additionalProperties"], false);
+    assert_eq!(schema["properties"]["app"]["type"], "string");
 }
 
 #[test]
@@ -71,6 +74,36 @@ fn parses_hotkey_input() {
         parsed.keys.unwrap(),
         vec!["ctrl".to_string(), "l".to_string()]
     );
+}
+
+#[test]
+fn parses_open_app_input() {
+    let input = json!({ "action": "open_app", "app": "Hermes" });
+    let parsed: ComputerInput = serde_json::from_value(input).unwrap();
+    assert_eq!(parsed.action, ComputerAction::OpenApp);
+    assert_eq!(parsed.app.unwrap(), "Hermes");
+}
+
+#[test]
+fn app_matching_prefers_exact_and_desktop_sources() {
+    let candidates = vec![
+        AppCandidate {
+            name: "Hermes Admin".to_string(),
+            path: "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Hermes Admin.lnk"
+                .into(),
+            source: "Common Start Menu".to_string(),
+        },
+        AppCandidate {
+            name: "Hermes".to_string(),
+            path: "C:\\Users\\test\\Desktop\\Hermes.lnk".into(),
+            source: "Desktop".to_string(),
+        },
+    ];
+
+    let matches = find_app_matches("Hermes", &candidates, 5);
+    assert_eq!(matches[0].candidate.name, "Hermes");
+    assert_eq!(matches[0].candidate.source, "Desktop");
+    assert_eq!(score_app_match("Maker Gantt", "GanttMaker"), Some(70));
 }
 
 #[test]

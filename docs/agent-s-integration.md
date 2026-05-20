@@ -10,18 +10,20 @@ runtime.
 - iAgent executes desktop actions through the Rust `computer` tool.
 - The `computer` tool schema is the compatibility surface:
   `screenshot`, `click`, `type`, `hotkey`, `scroll`, `wait`,
-  `active_window`, and `context`.
+  `active_window`, `context`, `open_app`, and `list_apps`.
 - Shell, Python, and arbitrary code execution are not valid paths for ordinary
-  desktop mouse, keyboard, screenshot, or scroll control.
+  desktop app launching, mouse, keyboard, screenshot, or scroll control.
 
 ## Safety Policy
 
-Observation actions are allowed directly:
+Observation and constrained app-discovery actions are allowed directly:
 
 - `screenshot`
 - `active_window`
 - `context`
 - `wait`
+- `list_apps`
+- `open_app`
 
 Desktop-mutating actions require the iAgent permission boundary during an
 agent turn and must not be executed until approved:
@@ -30,6 +32,12 @@ agent turn and must not be executed until approved:
 - `type`
 - `hotkey`
 - `scroll`
+
+`open_app` is deliberately constrained to installed app entries discovered from
+the user's Desktop, public Desktop, OneDrive Desktop, and Start Menu folders.
+It uses the native Windows `ShellExecuteW` API for the matched shortcut or
+executable; it is not a general command runner and must not be used for URLs or
+generated commands.
 
 Direct mode remains available for explicitly invoked local tooling and focused
 tests, where the caller is already outside an autonomous agent turn.

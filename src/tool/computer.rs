@@ -7,6 +7,7 @@ use base64::engine::general_purpose::STANDARD;
 use chrono::Utc;
 use serde::Deserialize;
 use serde_json::{Value, json};
+use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub struct ComputerTool;
@@ -28,6 +29,8 @@ enum ComputerAction {
     Wait,
     ActiveWindow,
     Context,
+    OpenApp,
+    ListApps,
 }
 
 impl ComputerAction {
@@ -41,6 +44,8 @@ impl ComputerAction {
             ComputerAction::Wait => "wait",
             ComputerAction::ActiveWindow => "active_window",
             ComputerAction::Context => "context",
+            ComputerAction::OpenApp => "open_app",
+            ComputerAction::ListApps => "list_apps",
         }
     }
 
@@ -83,6 +88,7 @@ struct ComputerInput {
     keys: Option<Vec<String>>,
     amount: Option<i32>,
     duration_ms: Option<u64>,
+    app: Option<String>,
 }
 
 #[async_trait]
@@ -95,8 +101,9 @@ impl Tool for ComputerTool {
         concat!(
             "Native computer-use ACI for Windows desktop control. ",
             "Use only the constrained actions in the schema: screenshot, click, type, hotkey, ",
-            "scroll, wait, active_window, and context. This tool is intentionally not a shell, ",
-            "Python, or arbitrary code executor."
+            "scroll, wait, active_window, context, open_app, and list_apps. Use open_app for ",
+            "installed Desktop or Start Menu applications instead of shell, Python, browser, ",
+            "or arbitrary code execution."
         )
     }
 
@@ -107,7 +114,7 @@ impl Tool for ComputerTool {
             "properties": {
                 "action": {
                     "type": "string",
-                    "enum": ["screenshot", "click", "type", "hotkey", "scroll", "wait", "active_window", "context"],
+                    "enum": ["screenshot", "click", "type", "hotkey", "scroll", "wait", "active_window", "context", "open_app", "list_apps"],
                     "description": "Constrained desktop action to execute."
                 },
                 "x": {
@@ -141,6 +148,10 @@ impl Tool for ComputerTool {
                     "minimum": 0,
                     "maximum": 30000,
                     "description": "Delay for action='wait'. Defaults to 1000ms and is capped at 30000ms."
+                },
+                "app": {
+                    "type": "string",
+                    "description": "Installed app or desktop shortcut name for open_app, or optional search text for list_apps. Prefer the user's visible app name, such as 'Hermes' or 'GanttMaker'."
                 },
                 "intent": super::intent_schema_property()
             },
@@ -194,6 +205,13 @@ impl Tool for ComputerTool {
             }
             ComputerAction::ActiveWindow => active_window(false).await,
             ComputerAction::Context => active_window(true).await,
+            ComputerAction::OpenApp => {
+                let app = params
+                    .app
+                    .ok_or_else(|| anyhow!("app is required for action='open_app'"))?;
+                open_app(app).await
+            }
+            ComputerAction::ListApps => list_apps(params.app).await,
         }
     }
 }
@@ -295,6 +313,10 @@ fn permission_description(params: &ComputerInput) -> String {
                 _ => String::new(),
             }
         ),
+        ComputerAction::OpenApp => format!(
+            "Open installed Desktop or Start Menu app '{}'.",
+            params.app.as_deref().unwrap_or("<missing app>")
+        ),
         _ => format!("Run computer action '{}'.", params.action.as_str()),
     }
 }
@@ -307,6 +329,7 @@ fn permission_details(params: &ComputerInput) -> Value {
         "keys": params.keys,
         "amount": params.amount,
         "duration_ms": params.duration_ms,
+        "app": params.app,
         "text_preview": params.text.as_deref().map(|text| preview_text(text, 200)),
         "text_char_count": params.text.as_deref().map(|text| text.chars().count()),
     })
@@ -318,6 +341,370 @@ fn preview_text(text: &str, max_chars: usize) -> String {
         preview.push_str("...");
     }
     preview
+}
+
+async fn open_app(app: String) -> Result<ToolOutput> {
+    let app = app.trim().to_string();
+    if app.is_empty() {
+        return Err(anyhow!("app must not be empty for action='open_app'"));
+    }
+
+    #[cfg(windows)]
+    {
+        tokio::task::spawn_blocking(move || open_app_windows(&app))
+            .await
+            .context("open_app task failed")?
+    }
+
+    #[cfg(not(windows))]
+    {
+        let _ = app;
+        Err(anyhow!("computer open_app is only available on Windows"))
+    }
+}
+
+async fn list_apps(filter: Option<String>) -> Result<ToolOutput> {
+    #[cfg(windows)]
+    {
+        tokio::task::spawn_blocking(move || list_apps_windows(filter))
+            .await
+            .context("list_apps task failed")?
+    }
+
+    #[cfg(not(windows))]
+    {
+        let _ = filter;
+        Err(anyhow!("computer list_apps is only available on Windows"))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct AppCandidate {
+    name: String,
+    path: PathBuf,
+    source: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct AppMatch {
+    candidate: AppCandidate,
+    score: u8,
+}
+
+fn normalize_app_name(name: &str) -> String {
+    name.chars()
+        .flat_map(char::to_lowercase)
+        .filter(|c| c.is_alphanumeric())
+        .collect()
+}
+
+fn score_app_match(query: &str, candidate: &str) -> Option<u8> {
+    let raw_query = query;
+    let query = normalize_app_name(query);
+    let candidate = normalize_app_name(candidate);
+    if query.is_empty() || candidate.is_empty() {
+        return None;
+    }
+    if candidate == query {
+        return Some(100);
+    }
+    if candidate.starts_with(&query) {
+        return Some(90);
+    }
+    if candidate.contains(&query) {
+        return Some(80);
+    }
+
+    let raw_tokens: Vec<String> = raw_query
+        .split_whitespace()
+        .map(normalize_app_name)
+        .filter(|token| !token.is_empty())
+        .collect();
+    if !raw_tokens.is_empty() && raw_tokens.iter().all(|token| candidate.contains(token)) {
+        return Some(70);
+    }
+
+    None
+}
+
+fn find_app_matches(query: &str, candidates: &[AppCandidate], limit: usize) -> Vec<AppMatch> {
+    let mut matches: Vec<AppMatch> = candidates
+        .iter()
+        .filter_map(|candidate| {
+            score_app_match(query, &candidate.name).map(|score| AppMatch {
+                candidate: candidate.clone(),
+                score,
+            })
+        })
+        .collect();
+
+    matches.sort_by(|a, b| {
+        b.score
+            .cmp(&a.score)
+            .then_with(|| source_rank(&a.candidate.source).cmp(&source_rank(&b.candidate.source)))
+            .then_with(|| a.candidate.name.cmp(&b.candidate.name))
+            .then_with(|| a.candidate.path.cmp(&b.candidate.path))
+    });
+    matches.truncate(limit);
+    matches
+}
+
+fn source_rank(source: &str) -> u8 {
+    match source {
+        "Desktop" => 0,
+        "OneDrive Desktop" => 1,
+        "Public Desktop" => 2,
+        "Start Menu" => 3,
+        "Common Start Menu" => 4,
+        _ => 5,
+    }
+}
+
+#[cfg(windows)]
+fn open_app_windows(app: &str) -> Result<ToolOutput> {
+    let candidates = discover_app_candidates()?;
+    let matches = find_app_matches(app, &candidates, 8);
+    let best = matches
+        .first()
+        .ok_or_else(|| no_app_match_error(app, &candidates))?;
+
+    if matches.len() > 1
+        && matches[0].score < 100
+        && matches[0].score == matches[1].score
+        && source_rank(&matches[0].candidate.source) == source_rank(&matches[1].candidate.source)
+    {
+        let names = matches
+            .iter()
+            .take(5)
+            .map(|m| {
+                format!(
+                    "{} ({}, {})",
+                    m.candidate.name,
+                    m.candidate.source,
+                    m.candidate.path.display()
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("; ");
+        return Err(anyhow!(
+            "multiple installed apps match '{app}': {names}. Use action='list_apps' with app='{app}' and then retry with the exact app name."
+        ));
+    }
+
+    shell_execute_path(&best.candidate.path)?;
+    Ok(ToolOutput::new(format!(
+        "Opened app '{}' from {}: {}",
+        best.candidate.name,
+        best.candidate.source,
+        best.candidate.path.display()
+    ))
+    .with_title(format!("computer: open_app {}", best.candidate.name))
+    .with_metadata(json!({
+        "action": "open_app",
+        "app": app,
+        "matched_name": best.candidate.name,
+        "matched_path": best.candidate.path,
+        "source": best.candidate.source,
+        "executed": true
+    })))
+}
+
+#[cfg(windows)]
+fn list_apps_windows(filter: Option<String>) -> Result<ToolOutput> {
+    let mut candidates = discover_app_candidates()?;
+    candidates.sort_by(|a, b| {
+        source_rank(&a.source)
+            .cmp(&source_rank(&b.source))
+            .then_with(|| a.name.cmp(&b.name))
+            .then_with(|| a.path.cmp(&b.path))
+    });
+
+    let total = candidates.len();
+    let matches: Vec<AppCandidate> = if let Some(ref query) = filter {
+        find_app_matches(query, &candidates, 50)
+            .into_iter()
+            .map(|m| m.candidate)
+            .collect()
+    } else {
+        candidates.into_iter().take(50).collect()
+    };
+
+    let header = match filter.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        Some(query) => format!("Found {} app match(es) for '{}'.", matches.len(), query),
+        None => {
+            format!("Found {total} installed Desktop/Start Menu app shortcut(s). Showing first 50.")
+        }
+    };
+    let lines = matches
+        .iter()
+        .map(|candidate| {
+            format!(
+                "- {} [{}] {}",
+                candidate.name,
+                candidate.source,
+                candidate.path.display()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let output = if lines.is_empty() {
+        header
+    } else {
+        format!("{header}\n{lines}")
+    };
+
+    Ok(ToolOutput::new(output)
+        .with_title("computer: list_apps")
+        .with_metadata(json!({
+            "action": "list_apps",
+            "filter": filter,
+            "count": matches.len(),
+            "total": total
+        })))
+}
+
+#[cfg(windows)]
+fn no_app_match_error(app: &str, candidates: &[AppCandidate]) -> anyhow::Error {
+    let sample = candidates
+        .iter()
+        .take(12)
+        .map(|candidate| candidate.name.as_str())
+        .collect::<Vec<_>>()
+        .join(", ");
+    anyhow!(
+        "no Desktop or Start Menu app matched '{app}'. Use action='list_apps' to inspect available apps. Sample apps: {sample}"
+    )
+}
+
+#[cfg(windows)]
+fn discover_app_candidates() -> Result<Vec<AppCandidate>> {
+    let mut candidates = Vec::new();
+    for (root, source) in app_search_roots() {
+        collect_app_candidates(&root, &source, &mut candidates)?;
+    }
+
+    candidates.sort_by(|a, b| {
+        source_rank(&a.source)
+            .cmp(&source_rank(&b.source))
+            .then_with(|| a.name.cmp(&b.name))
+            .then_with(|| a.path.cmp(&b.path))
+    });
+    candidates.dedup_by(|a, b| a.name == b.name && a.path == b.path);
+    Ok(candidates)
+}
+
+#[cfg(windows)]
+fn app_search_roots() -> Vec<(PathBuf, String)> {
+    let mut roots = Vec::new();
+    if let Some(user_profile) = std::env::var_os("USERPROFILE").map(PathBuf::from) {
+        roots.push((user_profile.join("Desktop"), "Desktop".to_string()));
+    }
+    for var in ["OneDrive", "OneDriveCommercial", "OneDriveConsumer"] {
+        if let Some(one_drive) = std::env::var_os(var).map(PathBuf::from) {
+            roots.push((one_drive.join("Desktop"), "OneDrive Desktop".to_string()));
+        }
+    }
+    if let Some(public) = std::env::var_os("PUBLIC").map(PathBuf::from) {
+        roots.push((public.join("Desktop"), "Public Desktop".to_string()));
+    }
+    if let Some(appdata) = std::env::var_os("APPDATA").map(PathBuf::from) {
+        roots.push((
+            appdata.join("Microsoft\\Windows\\Start Menu\\Programs"),
+            "Start Menu".to_string(),
+        ));
+    }
+    if let Some(programdata) = std::env::var_os("PROGRAMDATA").map(PathBuf::from) {
+        roots.push((
+            programdata.join("Microsoft\\Windows\\Start Menu\\Programs"),
+            "Common Start Menu".to_string(),
+        ));
+    }
+
+    let mut unique = Vec::new();
+    for root in roots {
+        if root.0.exists()
+            && !unique
+                .iter()
+                .any(|(path, _): &(PathBuf, String)| *path == root.0)
+        {
+            unique.push(root);
+        }
+    }
+    unique
+}
+
+#[cfg(windows)]
+fn collect_app_candidates(root: &Path, source: &str, out: &mut Vec<AppCandidate>) -> Result<()> {
+    let mut stack = vec![root.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        let entries = match std::fs::read_dir(&dir) {
+            Ok(entries) => entries,
+            Err(_) => continue,
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+                continue;
+            }
+            if !is_launchable_app_path(&path) {
+                continue;
+            }
+            let Some(stem) = path.file_stem().and_then(|stem| stem.to_str()) else {
+                continue;
+            };
+            out.push(AppCandidate {
+                name: stem.to_string(),
+                path,
+                source: source.to_string(),
+            });
+        }
+    }
+    Ok(())
+}
+
+#[cfg(windows)]
+fn is_launchable_app_path(path: &Path) -> bool {
+    let Some(ext) = path.extension().and_then(|ext| ext.to_str()) else {
+        return false;
+    };
+    matches!(
+        ext.to_ascii_lowercase().as_str(),
+        "lnk" | "appref-ms" | "exe"
+    )
+}
+
+#[cfg(windows)]
+fn shell_execute_path(path: &Path) -> Result<()> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::UI::Shell::ShellExecuteW;
+    use windows_sys::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+
+    let operation: Vec<u16> = "open".encode_utf16().chain(std::iter::once(0)).collect();
+    let file: Vec<u16> = path
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+    let result = unsafe {
+        ShellExecuteW(
+            std::ptr::null_mut(),
+            operation.as_ptr(),
+            file.as_ptr(),
+            std::ptr::null(),
+            std::ptr::null(),
+            SW_SHOWNORMAL,
+        )
+    };
+
+    if (result as isize) <= 32 {
+        return Err(anyhow!(
+            "ShellExecuteW failed with code {} for {}",
+            result as isize,
+            path.display()
+        ));
+    }
+    Ok(())
 }
 
 async fn capture_screenshot() -> Result<ToolOutput> {
