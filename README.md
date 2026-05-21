@@ -1,4 +1,4 @@
-# 🤖 iAgent Windows
+# iAgent Windows
 
 <div align="center">
 
