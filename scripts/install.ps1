@@ -70,6 +70,44 @@ function Write-Info($msg) { Write-Host $msg -ForegroundColor Blue }
 function Write-Err($msg) { Write-Host "error: $msg" -ForegroundColor Red; exit 1 }
 function Write-Warn($msg) { Write-Host "warning: $msg" -ForegroundColor Yellow }
 
+# ── OfficeCLI ──────────────────────────────────────────────────────────────────
+# Office document automation for Word (.docx), Excel (.xlsx), PowerPoint (.pptx).
+# Installed to $InstallDir so it's alongside iagent.exe and already on PATH.
+function Install-OfficeCLI {
+    Write-Info "Installing OfficeCLI..."
+    $cliDest = Join-Path $InstallDir "officecli.exe"
+
+    if ($IsWindows -or (-not (Test-Path variable:IsWindows) -and $env:OS -eq "Windows_NT")) {
+        # Windows
+        try {
+            $response = Invoke-RestMethod -Uri "https://api.github.com/repos/iOfficeAI/OfficeCLI/releases/latest" -TimeoutSec 15
+            $asset = $response.assets | Where-Object { $_.name -eq "officecli-win-x64.exe" } | Select-Object -First 1
+            if ($null -eq $asset) { throw "No win-x64 asset found in latest release" }
+            Write-Info "  Downloading $($asset.name)..."
+            Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $cliDest -TimeoutSec 120
+        } catch {
+            Write-Warn "OfficeCLI download failed: $_"
+            Write-Info "  To install manually: irm https://raw.githubusercontent.com/iOfficeAI/OfficeCLI/main/install.ps1 | iex"
+        }
+    } else {
+        # macOS / Linux
+        Write-Info "  OfficeCLI: run the install command for your platform"
+        Write-Info "    curl -fsSL https://raw.githubusercontent.com/iOfficeAI/OfficeCLI/main/install.sh | bash"
+    }
+
+    if (Test-Path $cliDest) {
+        Write-Info "OfficeCLI installed: $cliDest"
+        Write-Info "  Verify: $cliDest --version"
+    }
+}
+
+function Test-OfficeCLIInstalled {
+    $cliPath = Join-Path $InstallDir "officecli.exe"
+    if (Test-Path $cliPath) { return $true }
+    $found = Get-Command officecli -ErrorAction SilentlyContinue
+    return ($null -ne $found)
+}
+
 function Resolve-OptionalPath([string]$PathValue) {
     if (-not $PathValue) {
         return $null
@@ -915,7 +953,15 @@ if ($configuredDesktopShortcut) {
 if (Get-Command iagent -ErrorAction SilentlyContinue) {
     Write-Info "Backend CLI available: iagent"
 } else {
-    Write-Host "  Open a new terminal window, then run:"
+    Write-Host "  Open a new terminal window, then run:" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "    iagent" -ForegroundColor Green
+}
+
+if (Test-OfficeCLIInstalled) {
+    Write-Info "OfficeCLI ready: Word/Excel/PowerPoint automation available"
+    Write-Host "  Run: $InstallDir\officecli.exe --version" -ForegroundColor DarkGray
+} else {
+    Write-Warn "OfficeCLI not installed - Office automation will not be available"
+    Write-Host "  To install: irm https://raw.githubusercontent.com/iOfficeAI/OfficeCLI/main/install.ps1 | iex" -ForegroundColor DarkGray
 }

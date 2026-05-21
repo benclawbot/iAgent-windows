@@ -17,7 +17,8 @@ use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// CDP WebSocket/HTTP client for Chrome/Edge automation.
+/// CDP browser wrapper for Chrome/Edge DevTools Protocol automation
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct CdpBrowser {
     /// Browser type (chrome or edge)

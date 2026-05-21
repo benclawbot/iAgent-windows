@@ -1,57 +1,27 @@
-//! `app` tool - unified Office/browser automation via COM and CDP.
+//! `app` tool — Office document automation via OfficeCLI + browser automation via CDP.
 //!
-//! Provides a single tool entry point wrapping all app-integrations:
-//! - Word (COM): document creation, text manipulation, formatting
-//! - Excel (COM): spreadsheet operations, cell read/write, formulas
-//! - PowerPoint (COM): slide analysis, design suggestions, presentation control
-//! - Browser (CDP): Chrome/Edge via DevTools Protocol over HTTP/WebSocket
-//! - Form Fill (CDP): high-level form filling via CDP
+//! Office: Word (.docx), Excel (.xlsx), PowerPoint (.pptx) via OfficeCLI subprocess.
+//! Browser: Chrome/Edge via Chrome DevTools Protocol (CDP/HTTP/WebSocket).
 //!
-//! ## Actions
+//! ## OfficeCLI Installation
 //!
-//! ### Word
-//! - `word_connect` - Connect to Word via COM
-//! - `word_get_selection` - Get current selection text
-//! - `word_set_selection` - Replace current selection
-//! - `word_get_document` - Get active document content
-//! - `word_insert_text` - Insert text at cursor
-//! - `word_bold` - Bold the selection
-//! - `word_save` / `word_close` - Save or close document
+//! ```bash
+//! # macOS / Linux
+//! curl -fsSL https://raw.githubusercontent.com/iOfficeAI/OfficeCLI/main/install.sh | bash
 //!
-//! ### Excel
-//! - `excel_connect` - Connect to Excel via COM
-//! - `excel_get_cell` - Read a cell value
-//! - `excel_set_cell` - Write to a cell
-//! - `excel_set_formula` - Set a cell formula
-//! - `excel_used_range` - Get used range dimensions
-//! - `excel_evaluate` - Evaluate a formula
-//! - `excel_save` / `excel_close` - Save or close workbook
+//! # Windows (PowerShell)
+//! irm https://raw.githubusercontent.com/iOfficeAI/OfficeCLI/main/install.ps1 | iex
+//! ```
 //!
-//! ### PowerPoint
-//! - `ppt_connect` - Connect to PowerPoint via COM
-//! - `ppt_get_slide` - Get active slide content
-//! - `ppt_suggest` - Get design improvement suggestions
-//! - `ppt_save` / `ppt_close` - Save or close presentation
+//! Verify: `officecli --version`
 //!
-//! ### Browser (CDP)
-//! - `browser_status` - Check CDP browser status
-//! - `browser_list_tabs` - List open tabs
-//! - `browser_new_tab` - Open a new tab
-//! - `browser_navigate` - Navigate to URL
-//! - `browser_get_content` - Get page HTML
-//! - `browser_interactables` - Get clickable elements
-//! - `browser_click` - Click an element
-//! - `browser_type` - Type text
-//! - `browser_fill` - Fill form fields
-//! - `browser_screenshot` - Take screenshot
-//! - `browser_evaluate` - Execute JavaScript
+//! ## Browser Setup
 //!
-//! ### Form Fill
-//! - `form_fill` - Fill a multi-field form with submit option
+//! Chrome/Edge must be launched with `--remote-debugging-port=9222`.
 
 use crate::tool::{Tool, ToolContext, ToolOutput};
 use anyhow::Result;
-use app_integrations::{browser, excel, form_fill, powerpoint, word};
+use app_integrations::{browser, form_fill, officecli};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -67,34 +37,64 @@ impl AppTool {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
 enum AppInput {
-    // Word actions
-    word_connect,
-    word_get_selection,
-    word_set_selection { text: String },
-    word_get_document,
-    word_insert_text { document_id: Option<String>, text: String },
-    word_bold,
-    word_save { document_id: Option<String> },
-    word_close { document_id: Option<String>, save_changes: Option<bool> },
+    // ===== OfficeCLI / Office =====
 
-    // Excel actions
-    excel_connect,
-    excel_get_cell { sheet: String, row: u32, col: u32 },
-    excel_set_cell { sheet: String, row: u32, col: u32, value: String },
-    excel_set_formula { sheet: String, row: u32, col: u32, formula: String },
-    excel_used_range { sheet: String },
-    excel_evaluate { formula: String },
-    excel_save,
-    excel_close { save_changes: Option<bool> },
+    /// Check if OfficeCLI is installed.
+    oc_check,
 
-    // PowerPoint actions
-    ppt_connect,
-    ppt_get_slide,
-    ppt_suggest { content: String },
-    ppt_save,
-    ppt_close,
+    /// Get OfficeCLI version.
+    oc_version,
 
-    // Browser (CDP) actions
+    /// Create a blank Office document.
+    oc_create { path: String },
+
+    /// View document (modes: outline, stats, issues, text, annotated, html).
+    oc_view { path: String, mode: String },
+
+    /// Get document statistics as JSON.
+    oc_stats { path: String },
+
+    /// Validate a document against OpenXML schema.
+    oc_validate { path: String },
+
+    /// Extract plain text from a document.
+    oc_text { path: String, start: Option<u32>, end: Option<u32> },
+
+    /// Get a node at a path.
+    oc_get { path: String, doc_path: String, depth: Option<u32>, json: Option<bool> },
+
+    /// Query a document with a CSS-like selector.
+    oc_query { path: String, selector: String, json: Option<bool> },
+
+    /// Set properties on a document element.
+    oc_set { path: String, doc_path: String, props: Vec<(String, String)> },
+
+    /// Add an element to a document.
+    oc_add { path: String, parent: String, element_type: String, props: Vec<(String, String)> },
+
+    /// Format matched text (e.g. make text bold/red).
+    oc_format { path: String, doc_path: String, find: String, props: Vec<(String, String)>, regex: Option<bool> },
+
+    /// Replace matched text throughout document.
+    oc_replace { path: String, doc_path: String, find: String, replacement: String, regex: Option<bool> },
+
+    /// Remove an element.
+    oc_remove { path: String, doc_path: String },
+
+    /// Open document in resident mode.
+    oc_open { path: String },
+
+    /// Close document (flush changes).
+    oc_close { path: String },
+
+    /// Run batch operations from JSON.
+    oc_batch { path: String, commands: String, json: Option<bool> },
+
+    /// Export document as HTML.
+    oc_export_html { path: String, browser: Option<bool> },
+
+    // ===== Browser (CDP) =====
+
     browser_list_tabs { port: Option<u16> },
     browser_new_tab { url: String, port: Option<u16> },
     browser_navigate { url: String, port: Option<u16> },
@@ -106,7 +106,8 @@ enum AppInput {
     browser_evaluate { script: String, port: Option<u16> },
     browser_fill { fields: Vec<form_fill::FormField>, url: Option<String>, port: Option<u16> },
 
-    // Form fill action
+    // ===== Form Fill =====
+
     form_fill { request: form_fill::FormFillRequest },
 }
 
@@ -121,9 +122,8 @@ impl Tool for AppTool {
     }
 
     fn description(&self) -> &str {
-        "Office automation (Word/Excel/PowerPoint via COM) and browser automation (Chrome/Edge \
-         via CDP). Actions: word_*, excel_*, ppt_*, browser_*, form_fill. \
-         Use 'form_fill' for multi-field form filling with smart selector matching."
+        "Office document automation (Word/Excel/PowerPoint via OfficeCLI) and browser \
+         automation (Chrome/Edge via CDP). Office: oc_* actions. Browser: browser_* / form_fill."
     }
 
     fn parameters_schema(&self) -> Value {
@@ -131,66 +131,49 @@ impl Tool for AppTool {
             "type": "object",
             "required": ["action"],
             "properties": {
-                "intent": { "type": "string" },
                 "action": {
                     "type": "string",
-                    "enum": [
-                        "word_connect", "word_get_selection", "word_set_selection",
-                        "word_get_document", "word_insert_text", "word_bold",
-                        "word_save", "word_close",
-                        "excel_connect", "excel_get_cell", "excel_set_cell",
-                        "excel_set_formula", "excel_used_range", "excel_evaluate",
-                        "excel_save", "excel_close",
-                        "ppt_connect", "ppt_get_slide", "ppt_suggest",
-                        "ppt_save", "ppt_close",
-                        "browser_list_tabs", "browser_new_tab", "browser_navigate",
-                        "browser_get_content", "browser_screenshot",
-                        "browser_interactables", "browser_click", "browser_type",
-                        "browser_evaluate", "browser_fill",
-                        "form_fill",
-                    ],
-                    "description": "The app automation action to perform."
+                    "description": "The action to perform. Office actions start with 'oc_'. Browser actions start with 'browser_'. Form fill: 'form_fill'."
                 },
-                // Word params
-                "text": { "type": "string" },
-                "save_changes": { "type": "boolean" },
-                // Excel params
-                "sheet": { "type": "string" },
-                "row": { "type": "integer" },
-                "col": { "type": "integer" },
-                "value": { "type": "string" },
-                "formula": { "type": "string" },
-                // PowerPoint params
-                "content": { "type": "string" },
-                // Browser params
-                "port": { "type": "integer" },
-                "url": { "type": "string" },
-                "selector": { "type": "string" },
-                "script": { "type": "string" },
-                "fields": {
+                // oc_ params
+                "path": { "type": "string" },
+                "mode": { "type": "string" },
+                "doc_path": { "type": "string" },
+                "depth": { "type": "integer" },
+                "json": { "type": "boolean" },
+                "props": {
                     "type": "array",
                     "items": {
                         "type": "object",
                         "properties": {
-                            "selector": { "type": "string" },
-                            "name": { "type": "string" },
-                            "id": { "type": "string" },
-                            "label": { "type": "string" },
-                            "placeholder": { "type": "string" },
-                            "value": { "type": "string" },
-                            "checked": { "type": "boolean" },
-                        }
+                            "k": { "type": "string" },
+                            "v": { "type": "string" }
+                        },
+                        "required": ["k", "v"]
                     }
                 },
-                // Form fill params
+                "element_type": { "type": "string" },
+                "parent": { "type": "string" },
+                "find": { "type": "string" },
+                "replacement": { "type": "string" },
+                "regex": { "type": "boolean" },
+                "start": { "type": "integer" },
+                "end": { "type": "integer" },
+                "commands": { "type": "string" },
+                // browser params
+                "port": { "type": "integer" },
+                "url": { "type": "string" },
+                "selector": { "type": "string" },
+                "script": { "type": "string" },
+                "text": { "type": "string" },
+                "fields": { "type": "array" },
+                // form fill params
                 "request": {
                     "type": "object",
                     "properties": {
                         "url": { "type": "string" },
                         "fields": { "$ref": "#/properties/fields" },
                         "submit": { "type": "boolean" },
-                        "submit_selector": { "type": "string" },
-                        "wait_after_submit_ms": { "type": "integer" },
                     }
                 }
             }
@@ -201,176 +184,166 @@ impl Tool for AppTool {
         let input: AppInput = serde_json::from_value(input)?;
 
         match input {
-            // ===== Word =====
-            AppInput::word_connect => {
-                let word = word::WordIntegration::connect()?;
-                Ok(ToolOutput::new(format!(
-                    "Word connection: connected={}",
-                    word.is_connected()
-                )))
-            }
-            AppInput::word_get_selection => {
-                let w = word::WordIntegration::connect()?;
-                let sel = w.get_selection()?;
-                Ok(ToolOutput::new(serde_json::to_string(&sel)?))
-            }
-            AppInput::word_set_selection { text } => {
-                let w = word::WordIntegration::connect()?;
-                w.set_selection_text(&text)?;
-                Ok(ToolOutput::new("Selection updated"))
-            }
-            AppInput::word_get_document => {
-                let w = word::WordIntegration::connect()?;
-                let content = w.get_active_document_content()?;
-                Ok(ToolOutput::new(content))
-            }
-            AppInput::word_insert_text { document_id, text } => {
-                let w = word::WordIntegration::connect()?;
-                let doc_id = document_id.as_deref().unwrap_or("");
-                w.insert_text(doc_id, &text)?;
-                Ok(ToolOutput::new("Text inserted"))
-            }
-            AppInput::word_bold => {
-                let w = word::WordIntegration::connect()?;
-                w.bold_selection()?;
-                Ok(ToolOutput::new("Bold formatting applied"))
-            }
-            AppInput::word_save { document_id } => {
-                let w = word::WordIntegration::connect()?;
-                let doc_id = document_id.as_deref().unwrap_or("");
-                w.save(doc_id)?;
-                Ok(ToolOutput::new("Document saved"))
-            }
-            AppInput::word_close { document_id, save_changes } => {
-                let w = word::WordIntegration::connect()?;
-                let doc_id = document_id.as_deref().unwrap_or("");
-                w.close(doc_id)?;
-                Ok(ToolOutput::new("Document closed"))
+            // ===== OfficeCLI / Office =====
+
+            AppInput::oc_check => {
+                Ok(ToolOutput::new(format!("OfficeCLI installed: {}", officecli::is_installed())))
             }
 
-            // ===== Excel =====
-            AppInput::excel_connect => {
-                let e = excel::ExcelIntegration::connect()?;
-                Ok(ToolOutput::new(format!(
-                    "Excel connection: connected={}",
-                    e.is_connected()
-                )))
-            }
-            AppInput::excel_get_cell { sheet, row, col } => {
-                let e = excel::ExcelIntegration::connect()?;
-                let cell = e.get_cell(&sheet, row, col)?;
-                Ok(ToolOutput::new(serde_json::to_string(&cell)?))
-            }
-            AppInput::excel_set_cell { sheet, row, col, value } => {
-                let e = excel::ExcelIntegration::connect()?;
-                e.set_cell(&sheet, row, col, &value)?;
-                Ok(ToolOutput::new("Cell updated"))
-            }
-            AppInput::excel_set_formula { sheet, row, col, formula } => {
-                let e = excel::ExcelIntegration::connect()?;
-                e.set_formula(&sheet, row, col, &formula)?;
-                Ok(ToolOutput::new("Formula set"))
-            }
-            AppInput::excel_used_range { sheet } => {
-                let e = excel::ExcelIntegration::connect()?;
-                let (rows, cols) = e.get_used_range(&sheet)?;
-                Ok(ToolOutput::new(format!("Rows: {}, Cols: {}", rows, cols)))
-            }
-            AppInput::excel_evaluate { formula } => {
-                let e = excel::ExcelIntegration::connect()?;
-                let result = e.evaluate(&formula)?;
-                Ok(ToolOutput::new(result))
-            }
-            AppInput::excel_save => {
-                let e = excel::ExcelIntegration::connect()?;
-                e.save()?;
-                Ok(ToolOutput::new("Workbook saved"))
-            }
-            AppInput::excel_close { save_changes } => {
-                let e = excel::ExcelIntegration::connect()?;
-                e.close(save_changes.unwrap_or(true))?;
-                Ok(ToolOutput::new("Workbook closed"))
+            AppInput::oc_version => {
+                let v = officecli::version()?;
+                Ok(ToolOutput::new(v))
             }
 
-            // ===== PowerPoint =====
-            AppInput::ppt_connect => {
-                let p = powerpoint::PowerPointIntegration::connect()?;
-                Ok(ToolOutput::new(format!(
-                    "PowerPoint connection: connected={}",
-                    p.is_connected()
-                )))
+            AppInput::oc_create { path } => {
+                let out = officecli::create(&path)?;
+                Ok(ToolOutput::new(out))
             }
-            AppInput::ppt_get_slide => {
-                let p = powerpoint::PowerPointIntegration::connect()?;
-                let slide = p.get_active_slide_content()?;
-                Ok(ToolOutput::new(serde_json::to_string(&slide)?))
+
+            AppInput::oc_view { path, mode } => {
+                let out = officecli::view(&path, &mode)?;
+                Ok(ToolOutput::new(out))
             }
-            AppInput::ppt_suggest { content } => {
-                let p = powerpoint::PowerPointIntegration::connect()?;
-                let suggestions = p.suggest_design_improvements(&content);
-                Ok(ToolOutput::new(serde_json::to_string(&suggestions)?))
+
+            AppInput::oc_stats { path } => {
+                match officecli::stats(&path) {
+                    Ok(s) => Ok(ToolOutput::new(serde_json::to_string_pretty(&s)?)),
+                    Err(e) => Ok(ToolOutput::new(format!("Stats unavailable: {}", e))),
+                }
             }
-            AppInput::ppt_save => {
-                let p = powerpoint::PowerPointIntegration::connect()?;
-                p.save()?;
-                Ok(ToolOutput::new("Presentation saved"))
+
+            AppInput::oc_validate { path } => {
+                match officecli::validate(&path) {
+                    Ok(v) => Ok(ToolOutput::new(serde_json::to_string_pretty(&v)?)),
+                    Err(e) => Ok(ToolOutput::new(format!("Validation failed: {}", e))),
+                }
             }
-            AppInput::ppt_close => {
-                let p = powerpoint::PowerPointIntegration::connect()?;
-                p.close()?;
-                Ok(ToolOutput::new("Presentation closed"))
+
+            AppInput::oc_text { path, start, end } => {
+                let out = officecli::text(&path, start, end)?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_get { path, doc_path, depth, json } => {
+                let out = officecli::get(&path, &doc_path, depth, json.unwrap_or(false))?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_query { path, selector, json } => {
+                let out = officecli::query(&path, &selector, json.unwrap_or(false))?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_set { path, doc_path, props } => {
+                let props_ref: Vec<(&str, &str)> = props.iter()
+                    .map(|(k, v)| (k.as_str(), v.as_str()))
+                    .collect();
+                let out = officecli::set(&path, &doc_path, &props_ref)?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_add { path, parent, element_type, props } => {
+                let props_ref: Vec<(&str, &str)> = props.iter()
+                    .map(|(k, v)| (k.as_str(), v.as_str()))
+                    .collect();
+                let out = officecli::add(&path, &parent, &element_type, &props_ref)?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_format { path, doc_path, find, props, regex } => {
+                let props_ref: Vec<(&str, &str)> = props.iter()
+                    .map(|(k, v)| (k.as_str(), v.as_str()))
+                    .collect();
+                let out = officecli::format_text(&path, &doc_path, &find, &props_ref, regex.unwrap_or(false))?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_replace { path, doc_path, find, replacement, regex } => {
+                let out = officecli::replace(&path, &doc_path, &find, &replacement, regex.unwrap_or(false))?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_remove { path, doc_path } => {
+                let out = officecli::remove(&path, &doc_path)?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_open { path } => {
+                let out = officecli::open(&path)?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_close { path } => {
+                let out = officecli::close(&path)?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_batch { path, commands, json } => {
+                let out = officecli::batch(&path, &commands, json.unwrap_or(false))?;
+                Ok(ToolOutput::new(out))
+            }
+
+            AppInput::oc_export_html { path, browser } => {
+                let out = officecli::export_html(&path, browser.unwrap_or(false))?;
+                Ok(ToolOutput::new(out))
             }
 
             // ===== Browser (CDP) =====
+
             AppInput::browser_list_tabs { port } => {
                 let port = port.unwrap_or(9222);
                 let b = make_browser(port);
                 let tabs = b.list_tabs().await?;
                 Ok(ToolOutput::new(serde_json::to_string(&tabs)?))
             }
+
             AppInput::browser_new_tab { url, port } => {
                 let port = port.unwrap_or(9222);
                 let mut b = make_browser(port);
                 let tab_id = b.new_tab(&url).await?;
                 Ok(ToolOutput::new(format!("New tab: {}", tab_id)))
             }
+
             AppInput::browser_navigate { url, port } => {
                 let port = port.unwrap_or(9222);
                 let mut b = make_browser(port);
                 b.navigate(&url).await?;
                 Ok(ToolOutput::new(format!("Navigated to {}", url)))
             }
+
             AppInput::browser_get_content { port } => {
                 let port = port.unwrap_or(9222);
                 let b = make_browser(port);
                 let content = b.get_content().await?;
                 Ok(ToolOutput::new(content))
             }
+
             AppInput::browser_screenshot { port } => {
                 let port = port.unwrap_or(9222);
                 let b = make_browser(port);
                 let data = b.screenshot().await?;
                 let b64 = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &data);
-                Ok(ToolOutput::new(format!("Screenshot: {} bytes", data.len())).with_metadata(
-                    serde_json::json!({ "screenshot_b64": b64 }),
-                ))
+                Ok(ToolOutput::new(format!("Screenshot: {} bytes", data.len()))
+                    .with_metadata(serde_json::json!({ "screenshot_b64": b64 })))
             }
+
             AppInput::browser_interactables { port } => {
                 let port = port.unwrap_or(9222);
                 let b = make_browser(port);
                 let els = b.get_interactables().await?;
                 Ok(ToolOutput::new(serde_json::to_string(&els)?))
             }
+
             AppInput::browser_click { selector, port } => {
                 let port = port.unwrap_or(9222);
                 let b = make_browser(port);
                 b.click(&selector).await?;
                 Ok(ToolOutput::new(format!("Clicked: {}", selector)))
             }
+
             AppInput::browser_type { text, port } => {
                 let port = port.unwrap_or(9222);
                 let b = make_browser(port);
-                // type uses fill_form with a single field
                 use browser::CdpFormField;
                 b.fill_form(&[CdpFormField {
                     selector: String::new(),
@@ -384,12 +357,14 @@ impl Tool for AppTool {
                 }]).await?;
                 Ok(ToolOutput::new("Typed"))
             }
+
             AppInput::browser_evaluate { script, port } => {
                 let port = port.unwrap_or(9222);
                 let b = make_browser(port);
                 let result = b.evaluate(&script).await?;
                 Ok(ToolOutput::new(result))
             }
+
             AppInput::browser_fill { fields, url, port } => {
                 let port = port.unwrap_or(9222);
                 let b = make_browser(port);
@@ -412,6 +387,7 @@ impl Tool for AppTool {
             }
 
             // ===== Form Fill =====
+
             AppInput::form_fill { request } => {
                 let mut b = make_browser(9222);
                 let result = form_fill::fill_form(&mut b, &request).await?;

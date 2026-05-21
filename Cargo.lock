@@ -195,7 +195,6 @@ dependencies = [
  "serde_json",
  "suggestion-engine",
  "tokio",
- "windows 0.58.0",
 ]
 
 [[package]]
