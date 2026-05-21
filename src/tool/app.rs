@@ -32,6 +32,11 @@ impl AppTool {
     pub fn new() -> Self {
         Self
     }
+
+    /// Returns true if OfficeCLI is available on this system.
+    pub fn officecli_ready() -> bool {
+        app_integrations::officecli::is_installed()
+    }
 }
 
 #[derive(Debug, Deserialize)]
