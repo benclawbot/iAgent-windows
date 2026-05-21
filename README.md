@@ -6,8 +6,6 @@
 
 Persistent desktop AI orchestration with local execution, ambient workflows, provider routing, memory systems, and tool-driven automation.
 
-![iAgent Architecture](docs/assets/iagent-architecture.svg)
-
 ![iAgent Infographic](docs/assets/iagent-infographic.jpg)
 
 </div>
