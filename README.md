@@ -89,6 +89,68 @@ Integrated tooling includes:
 
 ---
 
+## Desktop Integrations
+
+iAgent connects directly to the Windows desktop and key productivity applications through three integration layers.
+
+### Windows Desktop Automation
+
+The runtime can control Windows applications via Chrome DevTools Protocol (CDP), communicating directly with running Chrome or Edge browsers. This enables:
+
+- **Tab management** — list open tabs, open new tabs, navigate to URLs
+- **DOM inspection** — find clickable elements, forms, buttons, and text fields
+- **Browser actions** — click elements, type text, evaluate JavaScript, capture screenshots
+- **Form automation** — fill and submit web forms automatically from structured field data
+
+Launch Chrome or Edge with `--remote-debugging-port=9222` to enable the agent's browser control. All browser actions work against live browser sessions — no screenshot-based OCR or X11 forwarding needed.
+
+### Web & Form Automation
+
+The form-fill engine extracts interactive elements from any webpage and can populate them from structured input. Use it for:
+
+- Autofill data entry on web-based administrative tools
+- Batch-fill repetitive forms from CSV or structured input
+- Automated data submission to internal web portals
+
+### Office Documents (Word, Excel, PowerPoint)
+
+iAgent manipulates Office documents directly via [OfficeCLI](https://github.com/iOfficeAI/OfficeCLI) — a self-contained cross-platform binary that reads and writes `.docx`, `.xlsx`, and `.pptx` files without requiring Microsoft Office to be installed.
+
+**Word (.docx)**
+
+- Create new documents, open existing files
+- Read and extract plain text from any position in the document
+- Get document statistics: paragraph count, word count, page count
+- Insert paragraphs and text with optional style formatting
+- Find and replace text throughout a document (plain or regex)
+- Format matched text (bold, color, style)
+- Remove elements by path
+- Validate against OpenXML schema
+- Export to HTML
+
+**Excel (.xlsx)**
+
+- Get and set cell values by address (e.g. `Sheet1!A1`)
+- Insert formulas into cells
+- Read cell ranges as JSON
+- Get sheet statistics: rows, columns, sheets
+- Batch update multiple cells from structured data
+- Open in resident mode to prevent file lock conflicts
+
+**PowerPoint (.pptx)**
+
+- Add slides with configurable layouts
+- Add textboxes to any slide with position and content
+- Set shape properties (fill, outline, font)
+- Get all shapes on a slide with their properties
+- Read slide text and content
+
+**Batch operations** — run multi-step document workflows from a single JSON command batch (e.g. open 50 Excel files, update a header row, save and close).
+
+All Office operations return structured JSON output and work on Windows, macOS, and Linux.
+
+---
+
 ## Multi-Provider Runtime
 
 Provider abstraction enables routing across:
