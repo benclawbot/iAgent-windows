@@ -85,3 +85,23 @@ jobs:
       - name: Cargo check (terminal-ui)
         shell: pwsh
         run: cargo check --workspace --all-targets --features terminal-ui --target x86_64-pc-windows-msvc
+
+  test-office-workflows:
+    name: Test Office workflow fixtures
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-backend-office-tests
+
+      - name: Run app-integrations tests (includes office workflow fixtures)
+        shell: pwsh
+        run: cargo test -p app-integrations --target x86_64-pc-windows-msvc

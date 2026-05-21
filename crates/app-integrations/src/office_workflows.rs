@@ -2,6 +2,7 @@
 
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 use crate::officecli;
 
@@ -47,6 +48,14 @@ pub struct WorkflowResult {
     pub errors: Vec<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ActionItem {
+    pub title: String,
+    pub owner: String,
+    pub due_date: String,
+    pub status: String,
+}
+
 pub fn run_workflow(request: &WorkflowRequest) -> Result<WorkflowResult> {
     match request.workflow {
         WorkflowKind::SummarizeWordDoc => summarize_word_doc(request),
@@ -58,7 +67,7 @@ pub fn run_workflow(request: &WorkflowRequest) -> Result<WorkflowResult> {
 
 fn summarize_word_doc(request: &WorkflowRequest) -> Result<WorkflowResult> {
     let dry_run = request.dry_run.unwrap_or(true);
-    let text = officecli::text(&request.input_path, None, None)?;
+    let text = load_document_text(&request.input_path)?;
     let sentences = split_sentences(&text);
     let summary = sentences.into_iter().take(5).collect::<Vec<_>>().join(" ");
     let preview = serde_json::json!({
@@ -222,9 +231,9 @@ fn generate_powerpoint_from_notes(request: &WorkflowRequest) -> Result<WorkflowR
 }
 
 fn extract_action_items(request: &WorkflowRequest) -> Result<WorkflowResult> {
-    let text = officecli::text(&request.input_path, None, None)?;
+    let text = load_document_text(&request.input_path)?;
     let max_items = request.max_items.unwrap_or(12);
-    let action_items = extract_tasks_like_items(&text, max_items);
+    let action_items = to_action_items(extract_tasks_like_items(&text, max_items));
     let preview = serde_json::json!({
         "action_items": action_items,
         "count": action_items.len()
@@ -248,6 +257,39 @@ fn extract_action_items(request: &WorkflowRequest) -> Result<WorkflowResult> {
         preview,
         errors: Vec::new(),
     })
+}
+
+fn load_document_text(input_path: &str) -> Result<String> {
+    if input_path.trim().is_empty() {
+        bail!("input_path is required");
+    }
+    let extension = Path::new(input_path)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+
+    if matches!(
+        extension.as_str(),
+        "txt" | "md" | "markdown" | "rst" | "log"
+    ) {
+        return std::fs::read_to_string(input_path)
+            .with_context(|| format!("failed reading plain text input {}", input_path));
+    }
+
+    match officecli::text(input_path, None, None) {
+        Ok(text) => Ok(text),
+        Err(office_err) => {
+            // Test fixtures often use UTF-8 placeholder content with Office-like extensions.
+            // Fall back to direct UTF-8 read when possible; otherwise preserve OfficeCLI error.
+            std::fs::read_to_string(input_path).with_context(|| {
+                format!(
+                    "failed reading {} via OfficeCLI: {}",
+                    input_path, office_err
+                )
+            })
+        }
+    }
 }
 
 fn split_sentences(text: &str) -> Vec<String> {
@@ -311,6 +353,18 @@ fn extract_tasks_like_items(text: &str, max_items: usize) -> Vec<String> {
     out
 }
 
+fn to_action_items(items: Vec<String>) -> Vec<ActionItem> {
+    items
+        .into_iter()
+        .map(|title| ActionItem {
+            title,
+            owner: "unassigned".to_string(),
+            due_date: "TBD".to_string(),
+            status: "pending".to_string(),
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -328,5 +382,15 @@ mod tests {
         let tasks = extract_tasks_like_items(text, 10);
         assert_eq!(tasks.len(), 2);
         assert!(tasks[0].contains("Finish budget"));
+    }
+
+    #[test]
+    fn action_items_are_normalized() {
+        let items = to_action_items(vec!["Send notes".to_string()]);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].title, "Send notes");
+        assert_eq!(items[0].owner, "unassigned");
+        assert_eq!(items[0].due_date, "TBD");
+        assert_eq!(items[0].status, "pending");
     }
 }

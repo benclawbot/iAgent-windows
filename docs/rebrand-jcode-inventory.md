@@ -39,3 +39,15 @@ From a repo-wide search snapshot:
 1. Add alias env handling (`JCODE_*` + `IAGENT_*`).
 2. Rename user-visible app strings to `iAgent`.
 3. Update install/runtime path messaging to mention `~/.iagent` while still reading `~/.jcode`.
+
+## Compatibility Shim (Current)
+
+- `IAGENT_*` environment overrides are accepted and mapped to existing `JCODE_*` config keys.
+- `IAGENT_HOME` is mapped to `JCODE_HOME` when `JCODE_HOME` is not set.
+- Existing `JCODE_*` names continue to work during migration.
+
+## Migration Guidance
+
+1. Prefer setting `IAGENT_*` variables in new docs and deployment manifests.
+2. Keep `JCODE_*` support during the compatibility window.
+3. Remove old names only after a documented sunset release.

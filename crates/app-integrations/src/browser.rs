@@ -18,7 +18,13 @@ use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::HashMap;
+use std::time::Duration;
+use tokio::time::{sleep, timeout};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
+
+const DEFAULT_ACTION_TIMEOUT: Duration = Duration::from_secs(10);
+const DEFAULT_MAX_RETRIES: usize = 2;
+const RETRY_BACKOFF_MS: u64 = 120;
 
 /// CDP browser wrapper for Chrome/Edge DevTools Protocol automation
 #[allow(dead_code)]
@@ -34,12 +40,31 @@ pub struct CdpBrowser {
     ws_url: Option<String>,
     /// Active browser page target ID
     target_id: Option<String>,
+    /// Timeout applied to each browser action.
+    action_timeout: Duration,
+    /// Retry count for transient failures.
+    max_retries: usize,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum BrowserType {
     Chrome,
     Edge,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum BrowserErrorCategory {
+    Transient,
+    InvalidInput,
+    TargetMissing,
+    Fatal,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct BrowserErrorInfo {
+    pub category: BrowserErrorCategory,
+    pub message: String,
 }
 
 impl std::fmt::Display for BrowserType {
@@ -144,12 +169,78 @@ impl CdpBrowser {
             port: 9222,
             ws_url: None,
             target_id: None,
+            action_timeout: DEFAULT_ACTION_TIMEOUT,
+            max_retries: DEFAULT_MAX_RETRIES,
         }
     }
 
     /// Set the debugging port (default 9222).
     pub fn with_port(self, port: u16) -> Self {
         Self { port, ..self }
+    }
+
+    /// Set a per-action timeout.
+    pub fn with_action_timeout(self, timeout: Duration) -> Self {
+        Self {
+            action_timeout: timeout,
+            ..self
+        }
+    }
+
+    /// Set retry count for transient failures.
+    pub fn with_max_retries(self, max_retries: usize) -> Self {
+        Self {
+            max_retries,
+            ..self
+        }
+    }
+
+    fn classify_error_message(message: &str) -> BrowserErrorCategory {
+        let msg = message.to_ascii_lowercase();
+        if msg.contains("timeout")
+            || msg.contains("timed out")
+            || msg.contains("temporar")
+            || msg.contains("connection reset")
+            || msg.contains("broken pipe")
+            || msg.contains("connection refused")
+            || msg.contains("dns")
+            || msg.contains("channel closed")
+            || msg.contains("websocket closed")
+        {
+            return BrowserErrorCategory::Transient;
+        }
+
+        if msg.contains("invalid selector")
+            || msg.contains("syntaxerror")
+            || msg.contains("runtime.evaluate exception")
+            || msg.contains("failed serializing")
+            || msg.contains("failed parsing")
+        {
+            return BrowserErrorCategory::InvalidInput;
+        }
+
+        if msg.contains("tab not found")
+            || msg.contains("no page targets")
+            || msg.contains("no debuggable page target")
+            || msg.contains("missing websocket")
+            || msg.contains("not found")
+            || msg.contains("no clickable element")
+            || msg.contains("not visible")
+            || msg.contains("no data field")
+        {
+            return BrowserErrorCategory::TargetMissing;
+        }
+
+        BrowserErrorCategory::Fatal
+    }
+
+    fn normalize_error(message: impl Into<String>) -> anyhow::Error {
+        let message = message.into();
+        let category = Self::classify_error_message(&message);
+        anyhow!(
+            "[browser/{category:?}] {}",
+            BrowserErrorInfo { category, message }.message
+        )
     }
 
     /// Build the CDP HTTP endpoint URL.
@@ -159,26 +250,37 @@ impl CdpBrowser {
 
     async fn fetch_tabs_raw(&self) -> Result<Vec<RawCdpTab>> {
         let url = self.http_url("json/list");
-        let resp = reqwest::get(&url).await?;
-        if !resp.status().is_success() {
-            bail!("CDP endpoint returned {}: {}", resp.status(), url);
-        }
-        resp.json()
+        let client = reqwest::Client::builder()
+            .timeout(self.action_timeout)
+            .build()
+            .context("Failed to build HTTP client for CDP tabs request")?;
+        let resp = timeout(self.action_timeout, client.get(&url).send())
             .await
-            .with_context(|| format!("Failed to decode CDP tabs from {}", url))
+            .map_err(|_| Self::normalize_error(format!("Timeout fetching CDP tabs from {url}")))?
+            .map_err(|err| Self::normalize_error(format!("Failed fetching CDP tabs: {err}")))?;
+        if !resp.status().is_success() {
+            return Err(Self::normalize_error(format!(
+                "CDP endpoint returned {} while fetching tabs from {}",
+                resp.status(),
+                url
+            )));
+        }
+        timeout(self.action_timeout, resp.json())
+            .await
+            .map_err(|_| Self::normalize_error(format!("Timeout decoding CDP tabs from {url}")))?
+            .map_err(|err| {
+                Self::normalize_error(format!("Failed to decode CDP tabs from {url}: {err}"))
+            })
     }
 
     async fn resolve_active_page(&self) -> Result<RawCdpTab> {
         let tabs = self.fetch_tabs_raw().await?;
         let pages: Vec<_> = tabs.into_iter().filter(|t| t.type_ == "page").collect();
         if pages.is_empty() {
-            bail!(
+            return Err(Self::normalize_error(format!(
                 "No page targets available on {}:{} (is {:?} running with --remote-debugging-port={})",
-                self.host,
-                self.port,
-                self.browser_type,
-                self.port
-            );
+                self.host, self.port, self.browser_type, self.port
+            )));
         }
 
         if let Some(target_id) = &self.target_id
@@ -196,13 +298,55 @@ impl CdpBrowser {
         pages
             .into_iter()
             .find(|t| !t.ws_url.is_empty())
-            .ok_or_else(|| anyhow!("No debuggable page target found (missing websocket URL)"))
+            .ok_or_else(|| {
+                Self::normalize_error("No debuggable page target found (missing websocket URL)")
+            })
     }
 
     async fn cdp_call_with_ws(&self, ws_url: &str, method: &str, params: Value) -> Result<Value> {
-        let (mut socket, _) = connect_async(ws_url)
+        let mut last_err: Option<anyhow::Error> = None;
+        for attempt in 0..=self.max_retries {
+            match self
+                .cdp_call_with_ws_once(ws_url, method, params.clone())
+                .await
+            {
+                Ok(value) => return Ok(value),
+                Err(err) => {
+                    let category = Self::classify_error_message(&err.to_string());
+                    last_err = Some(err);
+                    let can_retry =
+                        category == BrowserErrorCategory::Transient && attempt < self.max_retries;
+                    if can_retry {
+                        let delay_ms = RETRY_BACKOFF_MS * (attempt as u64 + 1);
+                        sleep(Duration::from_millis(delay_ms)).await;
+                        continue;
+                    }
+                    break;
+                }
+            }
+        }
+
+        Err(last_err.unwrap_or_else(|| {
+            Self::normalize_error(format!("Unknown CDP websocket error for method {method}"))
+        }))
+    }
+
+    async fn cdp_call_with_ws_once(
+        &self,
+        ws_url: &str,
+        method: &str,
+        params: Value,
+    ) -> Result<Value> {
+        let (mut socket, _) = timeout(self.action_timeout, connect_async(ws_url))
             .await
-            .with_context(|| format!("Failed connecting CDP websocket: {ws_url}"))?;
+            .map_err(|_| {
+                Self::normalize_error(format!(
+                    "Timeout connecting CDP websocket for {method}: {ws_url}"
+                ))
+            })?
+            .map_err(|err| {
+                Self::normalize_error(format!("Failed connecting CDP websocket: {ws_url}: {err}"))
+            })?;
 
         let req_id = 1_u64;
         let request = json!({
@@ -211,14 +355,34 @@ impl CdpBrowser {
             "params": params
         });
 
-        socket
-            .send(Message::Text(request.to_string().into()))
-            .await
-            .with_context(|| format!("Failed sending CDP request {method}"))?;
+        timeout(
+            self.action_timeout,
+            socket.send(Message::Text(request.to_string().into())),
+        )
+        .await
+        .map_err(|_| Self::normalize_error(format!("Timeout sending CDP request {method}")))?
+        .map_err(|err| {
+            Self::normalize_error(format!("Failed sending CDP request {method}: {err}"))
+        })?;
 
-        while let Some(frame) = socket.next().await {
-            let frame =
-                frame.with_context(|| format!("Error receiving CDP response for {method}"))?;
+        loop {
+            let frame_opt = timeout(self.action_timeout, socket.next())
+                .await
+                .map_err(|_| {
+                    Self::normalize_error(format!(
+                        "Timeout waiting for CDP response frame for {method}"
+                    ))
+                })?;
+
+            let Some(frame) = frame_opt else {
+                return Err(Self::normalize_error(format!(
+                    "CDP websocket closed before response for method {method}"
+                )));
+            };
+
+            let frame = frame.map_err(|err| {
+                Self::normalize_error(format!("Error receiving CDP response for {method}: {err}"))
+            })?;
 
             match frame {
                 Message::Text(txt) => {
@@ -227,27 +391,33 @@ impl CdpBrowser {
                     }
                 }
                 Message::Binary(bin) => {
-                    let txt = String::from_utf8(bin.to_vec())
-                        .context("CDP websocket returned non-utf8 binary payload")?;
+                    let txt = String::from_utf8(bin.to_vec()).map_err(|err| {
+                        Self::normalize_error(format!(
+                            "CDP websocket returned non-utf8 binary payload: {err}"
+                        ))
+                    })?;
                     if let Some(response) = Self::parse_cdp_response(&txt, req_id, method)? {
                         return Ok(response);
                     }
                 }
                 Message::Ping(payload) => {
-                    socket.send(Message::Pong(payload)).await.ok();
+                    let _ = socket.send(Message::Pong(payload)).await;
                 }
                 Message::Pong(_) => {}
                 Message::Frame(_) => {}
-                Message::Close(_) => break,
+                Message::Close(_) => {
+                    return Err(Self::normalize_error(format!(
+                        "CDP websocket closed before response for method {method}"
+                    )));
+                }
             }
         }
-
-        bail!("CDP websocket closed before response for method {method}");
     }
 
     fn parse_cdp_response(txt: &str, req_id: u64, method: &str) -> Result<Option<Value>> {
-        let value: Value =
-            serde_json::from_str(txt).context("Invalid JSON frame from CDP websocket")?;
+        let value: Value = serde_json::from_str(txt).map_err(|err| {
+            Self::normalize_error(format!("Invalid JSON frame from CDP websocket: {err}"))
+        })?;
         let Some(id) = value.get("id").and_then(Value::as_u64) else {
             return Ok(None);
         };
@@ -264,7 +434,9 @@ impl CdpBrowser {
             let detail = err
                 .get("data")
                 .map_or(String::new(), |d| format!("; data={}", d));
-            bail!("CDP {method} failed ({code}): {message}{detail}");
+            return Err(Self::normalize_error(format!(
+                "CDP {method} failed ({code}): {message}{detail}"
+            )));
         }
 
         Ok(Some(
@@ -275,7 +447,9 @@ impl CdpBrowser {
     async fn cdp_call(&self, method: &str, params: Value) -> Result<Value> {
         let tab = self.resolve_active_page().await?;
         if tab.ws_url.is_empty() {
-            bail!("Active tab has no websocket debugger URL");
+            return Err(Self::normalize_error(
+                "Active tab has no websocket debugger URL",
+            ));
         }
         self.cdp_call_with_ws(&tab.ws_url, method, params).await
     }
@@ -297,7 +471,9 @@ impl CdpBrowser {
                 .get("text")
                 .and_then(Value::as_str)
                 .unwrap_or("JavaScript exception");
-            bail!("Runtime.evaluate exception: {text}");
+            return Err(Self::normalize_error(format!(
+                "Runtime.evaluate exception: {text}"
+            )));
         }
 
         let js_value = result
@@ -327,10 +503,12 @@ impl CdpBrowser {
         let tab = tabs
             .into_iter()
             .find(|t| t.id == tab_id && t.type_ == "page")
-            .ok_or_else(|| anyhow!("Tab not found: {tab_id}"))?;
+            .ok_or_else(|| Self::normalize_error(format!("Tab not found: {tab_id}")))?;
 
         if tab.ws_url.is_empty() {
-            bail!("Tab {tab_id} cannot be debugged (missing websocket URL)");
+            return Err(Self::normalize_error(format!(
+                "Tab {tab_id} cannot be debugged (missing websocket URL)"
+            )));
         }
 
         self.ws_url = Some(tab.ws_url);
@@ -341,31 +519,36 @@ impl CdpBrowser {
     /// Create a new browser tab (CDP NewTarget).
     pub async fn new_tab(&mut self, url: &str) -> Result<String> {
         let endpoint = self.http_url(&format!("json/new?{url}"));
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder()
+            .timeout(self.action_timeout)
+            .build()
+            .context("Failed to build HTTP client for CDP new-tab request")?;
 
-        let response = match client.put(&endpoint).send().await {
-            Ok(resp) if resp.status().is_success() => resp,
-            _ => client
-                .get(&endpoint)
-                .send()
-                .await
-                .with_context(|| format!("Failed creating new tab via {endpoint}"))?,
+        let response = match timeout(self.action_timeout, client.put(&endpoint).send()).await {
+            Ok(Ok(resp)) if resp.status().is_success() => resp,
+            _ => client.get(&endpoint).send().await.map_err(|err| {
+                Self::normalize_error(format!("Failed creating new tab via {endpoint}: {err}"))
+            })?,
         };
 
         if !response.status().is_success() {
-            bail!(
+            return Err(Self::normalize_error(format!(
                 "Failed creating new tab: status={} endpoint={}",
                 response.status(),
                 endpoint
-            );
+            )));
         }
 
-        let tab: RawCdpTab = response
-            .json()
+        let tab: RawCdpTab = timeout(self.action_timeout, response.json())
             .await
-            .context("Failed decoding CDP new-tab response")?;
+            .map_err(|_| Self::normalize_error("Timeout decoding CDP new-tab response"))?
+            .map_err(|err| {
+                Self::normalize_error(format!("Failed decoding CDP new-tab response: {err}"))
+            })?;
         if tab.id.is_empty() || tab.ws_url.is_empty() {
-            bail!("CDP new-tab response missing id or websocket URL");
+            return Err(Self::normalize_error(
+                "CDP new-tab response missing id or websocket URL",
+            ));
         }
 
         self.target_id = Some(tab.id.clone());
@@ -579,13 +762,34 @@ impl CdpBrowser {
     "a, button, input[type='button'], input[type='submit'], [role='button'], [onclick]"
   )).filter(isVisible);
 
+  const cssEscape = (window.CSS && CSS.escape)
+    ? CSS.escape
+    : (v) => String(v).replace(/["\\]/g, "\\$&");
+  const selectorFor = (el) => {{
+    if (!el || !(el instanceof Element)) return "";
+    if (el.id) return `#${{cssEscape(el.id)}}`;
+    if (el.getAttribute("name")) {{
+      return `${{el.tagName.toLowerCase()}}[name="${{cssEscape(el.getAttribute("name"))}}"]`;
+    }}
+    return el.tagName.toLowerCase();
+  }};
+
   let target = null;
   if (raw.startsWith("text=")) {{
     const needle = raw.slice(5).trim().toLowerCase();
-    target = clickable().find((el) => (el.innerText || el.textContent || "")
+    const matches = clickable().filter((el) => (el.innerText || el.textContent || "")
       .trim()
       .toLowerCase()
       .includes(needle));
+    if (matches.length > 1) {{
+      const candidates = matches.slice(0, 8).map((el) => ({{
+        selector: selectorFor(el),
+        tag: (el.tagName || "").toLowerCase(),
+        text: (el.innerText || el.textContent || "").trim().slice(0, 120)
+      }}));
+      throw new Error(`Ambiguous click target for selector: ${{raw}}; candidates=${{JSON.stringify(candidates)}}`);
+    }}
+    target = matches[0] || null;
   }} else if (raw.startsWith("index=")) {{
     const idx = Number(raw.slice(6));
     if (!Number.isNaN(idx)) {{
@@ -737,6 +941,40 @@ mod tests {
     fn stringify_json_formats_non_strings() {
         let out = CdpBrowser::stringify_json(json!({"ok": true})).expect("stringify");
         assert_eq!(out, r#"{"ok":true}"#);
+    }
+
+    #[test]
+    fn browser_defaults_include_resilience_controls() {
+        let browser = CdpBrowser::new(BrowserType::Chrome);
+        assert_eq!(browser.action_timeout, DEFAULT_ACTION_TIMEOUT);
+        assert_eq!(browser.max_retries, DEFAULT_MAX_RETRIES);
+    }
+
+    #[test]
+    fn classify_error_message_maps_expected_categories() {
+        assert_eq!(
+            CdpBrowser::classify_error_message("request timeout while connecting"),
+            BrowserErrorCategory::Transient
+        );
+        assert_eq!(
+            CdpBrowser::classify_error_message("invalid selector syntax"),
+            BrowserErrorCategory::InvalidInput
+        );
+        assert_eq!(
+            CdpBrowser::classify_error_message("tab not found"),
+            BrowserErrorCategory::TargetMissing
+        );
+        assert_eq!(
+            CdpBrowser::classify_error_message("unexpected protocol mismatch"),
+            BrowserErrorCategory::Fatal
+        );
+    }
+
+    #[test]
+    fn normalize_error_prefixes_category() {
+        let err = CdpBrowser::normalize_error("tab not found");
+        let msg = err.to_string();
+        assert!(msg.contains("[browser/TargetMissing]"));
     }
 
     #[tokio::test]

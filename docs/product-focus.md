@@ -49,6 +49,14 @@ Ship one high-confidence loop end to end:
 - approval decision (if required)
 - audit write
 
+## Current Runtime Gates
+
+1. `[features] memory = true|false`
+2. `[features] swarm = true|false`
+3. `[ambient] enabled = true|false`
+4. `[gateway] enabled = true|false`
+5. Safety notification channels are opt-in under `[safety]` toggles.
+
 ## Operational KPIs
 
 1. Suggestion acceptance rate.
@@ -56,3 +64,19 @@ Ship one high-confidence loop end to end:
 3. Action success rate.
 4. Undo/rollback usage rate.
 5. Safety blocks by risk level.
+
+## KPI Schema Examples
+
+- `suggestion.accepted`: `{ "intent": "...", "latency_ms": 1234 }`
+- `approval.decision`: `{ "approved": true, "latency_ms": 950, "risk_level": "external_send" }`
+- `action.execution`: `{ "action_type": "fill_form", "success": true, "risk_level": "edit_local" }`
+- `action.undo`: `{ "action_type": "edit", "undo_used": true }`
+
+Events are appended to `~/.jcode/telemetry/core_loop_metrics.jsonl` with `schema_version`.
+
+## Dashboard Query Examples
+
+1. Suggestion acceptance trend by day and intent.
+2. Approval latency p50/p95 split by risk level.
+3. Action success/failure rate by workflow type.
+4. Undo usage share for reversible actions.

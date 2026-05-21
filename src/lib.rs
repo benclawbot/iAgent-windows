@@ -5,6 +5,7 @@
     clippy::unnecessary_sort_by,
     clippy::useless_conversion
 )]
+#![recursion_limit = "512"]
 
 #[macro_use]
 pub mod logging;
@@ -25,8 +26,9 @@ pub mod cli;
 pub mod compaction;
 pub mod config;
 pub mod copilot_usage;
-pub mod dictation;
+pub mod core_loop_metrics;
 pub mod desktop_ambient;
+pub mod dictation;
 #[cfg(feature = "embeddings")]
 pub mod embedding;
 #[cfg(not(feature = "embeddings"))]

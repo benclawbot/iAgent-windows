@@ -793,6 +793,7 @@ impl Default for AmbientDesktopMonitoringConfig {
 pub struct AmbientDesktopSuggestionsConfig {
     pub min_text_length: usize,
     pub cache_ttl_seconds: u64,
+    pub intent_confidence_threshold: f32,
     pub provider: Option<String>,
 }
 
@@ -801,6 +802,7 @@ impl Default for AmbientDesktopSuggestionsConfig {
         Self {
             min_text_length: 50,
             cache_ttl_seconds: 300,
+            intent_confidence_threshold: 0.55,
             provider: None,
         }
     }

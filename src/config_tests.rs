@@ -172,6 +172,10 @@ fn test_ambient_desktop_defaults() {
     let ambient = AmbientConfig::default();
     assert_eq!(ambient.desktop_suggestions.min_text_length, 50);
     assert_eq!(ambient.desktop_suggestions.cache_ttl_seconds, 300);
+    assert_eq!(
+        ambient.desktop_suggestions.intent_confidence_threshold,
+        0.55
+    );
     assert!(ambient.desktop_notifications.enabled);
     assert_eq!(ambient.desktop_notifications.importance_threshold, 70);
     assert_eq!(ambient.desktop_notifications.check_interval_seconds, 30);
@@ -353,6 +357,21 @@ fn test_external_auth_source_allowed_for_path_ignores_broad_legacy_entry() {
     cfg.auth.trusted_external_sources = vec!["test_source".to_string()];
 
     assert!(!cfg.external_auth_source_allowed_for_path_config("test_source", &path));
+}
+
+#[test]
+fn iagent_env_aliases_are_applied_to_legacy_config_overrides() {
+    let _guard = crate::storage::lock_test_env();
+    let prev_iagent = std::env::var_os("IAGENT_AMBIENT_ENABLED");
+    let prev_jcode = std::env::var_os("JCODE_AMBIENT_ENABLED");
+    crate::env::remove_var("JCODE_AMBIENT_ENABLED");
+    crate::env::set_var("IAGENT_AMBIENT_ENABLED", "true");
+
+    let cfg = Config::load();
+    assert!(cfg.ambient.enabled);
+
+    restore_env_var("IAGENT_AMBIENT_ENABLED", prev_iagent);
+    restore_env_var("JCODE_AMBIENT_ENABLED", prev_jcode);
 }
 
 impl Config {

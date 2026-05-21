@@ -3,7 +3,9 @@ use std::time::Duration;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use desktop_monitor::{DesktopMonitor, ImportanceScorer, NotificationDetector, UserPatterns};
+use desktop_monitor::{
+    DesktopMonitor, ImportanceScorer, NotificationDetector, NotificationState, UserPatterns,
+};
 use overlay_ui::{
     ImportantNotification as OverlayNotification, OverlayConfig, spawn_overlay_daemon,
 };
@@ -60,6 +62,9 @@ pub async fn run(headless: bool) -> Result<()> {
         EngineConfig {
             min_text_length: min_text_len,
             cache_ttl_secs: ambient_cfg.desktop_suggestions.cache_ttl_seconds,
+            intent_confidence_threshold: ambient_cfg
+                .desktop_suggestions
+                .intent_confidence_threshold,
             ..EngineConfig::default()
         },
     );
@@ -86,12 +91,14 @@ pub async fn run(headless: bool) -> Result<()> {
                 if let Some(text) = context.text_content.as_deref() {
                     let suggestions = engine.generate_suggestions(text, &context).await.unwrap_or_default();
                     if !suggestions.is_empty() {
+                        crate::core_loop_metrics::record_suggestions_generated(suggestions.len());
                         let _ = overlay_client.show_suggestions(suggestions, context.cursor_position);
                     }
                 }
             }
             Some(notification) = notification_rx.recv() => {
                 if ambient_cfg.desktop_notifications.enabled
+                    && notification.state != NotificationState::Dismissed
                     && notification.importance >= ambient_cfg.desktop_notifications.importance_threshold as f32 {
                     let _ = overlay_client.show_notification(OverlayNotification{
                         app: notification.app,

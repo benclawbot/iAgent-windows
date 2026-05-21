@@ -1,0 +1,5 @@
+Project Follow-ups
+
+- Send revised onboarding checklist
+Action item: prepare migration runbook
+Please confirm ownership for incident drill.

@@ -440,15 +440,24 @@ impl SafetySystem {
         message: Option<String>,
     ) -> Result<()> {
         // Remove from queue
+        let mut approval_latency_ms: Option<i64> = None;
+        let mut approval_action: Option<String> = None;
+        let now = Utc::now();
         if let Ok(mut q) = self.queue.lock() {
-            q.retain(|r| r.id != request_id);
+            if let Some(pos) = q.iter().position(|r| r.id == request_id) {
+                let request = q.remove(pos);
+                approval_action = Some(request.action.clone());
+                approval_latency_ms = Some((now - request.created_at).num_milliseconds().max(0));
+            } else {
+                q.retain(|r| r.id != request_id);
+            }
             let _ = persist_queue(&q);
         }
 
         let decision = Decision {
             request_id: request_id.to_string(),
             approved,
-            decided_at: Utc::now(),
+            decided_at: now,
             decided_via: via.to_string(),
             message,
         };
@@ -475,6 +484,13 @@ impl SafetySystem {
             screenshot_after: None,
             screenshot_diff: None,
         });
+
+        crate::core_loop_metrics::record_approval_decision(
+            approved,
+            approval_latency_ms,
+            Some(risk_level_slug(RiskLevel::EditLocal)),
+            approval_action.as_deref(),
+        );
 
         Ok(())
     }
@@ -509,6 +525,30 @@ impl SafetySystem {
             screenshot_after: log.screenshot_after.clone(),
             screenshot_diff: log.screenshot_diff.clone(),
         });
+
+        let success = log
+            .details
+            .as_ref()
+            .and_then(|details| details.get("success"))
+            .and_then(|value| value.as_bool())
+            .unwrap_or(disposition != PolicyDisposition::Deny);
+        let undo_available = log.undo_token.is_some();
+        let action_type = log.action_type.clone();
+        crate::core_loop_metrics::record_action_execution(
+            &action_type,
+            success,
+            Some(risk_level_slug(risk_level)),
+            undo_available,
+        );
+        let undo_used = log
+            .details
+            .as_ref()
+            .and_then(|details| details.get("undo_used"))
+            .and_then(|value| value.as_bool())
+            .unwrap_or(false);
+        if undo_used {
+            crate::core_loop_metrics::record_undo_usage(&action_type);
+        }
 
         if let Ok(mut actions) = self.actions.lock() {
             actions.push(log);
@@ -671,6 +711,16 @@ fn persist_audit(audit: &[AuditEntry]) -> Result<()> {
 fn persist_never_again(rules: &[NeverAgainRule]) -> Result<()> {
     let path = never_again_path()?;
     storage::write_json(&path, rules)
+}
+
+fn risk_level_slug(level: RiskLevel) -> &'static str {
+    match level {
+        RiskLevel::ReadOnly => "read_only",
+        RiskLevel::EditLocal => "edit_local",
+        RiskLevel::ExternalSend => "external_send",
+        RiskLevel::FinancialLegal => "financial_legal",
+        RiskLevel::Destructive => "destructive",
+    }
 }
 
 // ---------------------------------------------------------------------------

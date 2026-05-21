@@ -526,6 +526,8 @@ mod tests {
             content: content.to_string(),
             path: PathBuf::from(format!("/tmp/{name}/SKILL.md")),
             search_text: build_skill_search_text(name, description, content),
+            platforms: Vec::new(),
+            scripts: Vec::new(),
         }
     }
 

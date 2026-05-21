@@ -20,6 +20,8 @@ pub struct Suggestion {
     pub confidence: Option<f32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub action: Option<ActionCard>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub debug: Option<SuggestionDebug>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -43,6 +45,17 @@ pub struct ActionCard {
     pub payload: serde_json::Value,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SuggestionDebug {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent_detected: Option<SuggestionIntent>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent_confidence: Option<f32>,
+    pub fallback_to_rewrite: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fallback_reason: Option<String>,
+}
+
 #[derive(Debug, Clone)]
 pub struct EngineConfig {
     pub min_text_length: usize,
@@ -50,6 +63,7 @@ pub struct EngineConfig {
     pub context_aware: bool,
     pub cache_ttl_secs: u64,
     pub cache_capacity: usize,
+    pub intent_confidence_threshold: f32,
 }
 
 impl Default for EngineConfig {
@@ -60,6 +74,7 @@ impl Default for EngineConfig {
             context_aware: true,
             cache_ttl_secs: 300,
             cache_capacity: 512,
+            intent_confidence_threshold: 0.55,
         }
     }
 }
@@ -106,7 +121,10 @@ impl SuggestionEngine {
             return Ok(cached);
         }
 
-        if let Some(intent_suggestion) = self.intent_card_suggestion(text, context) {
+        let intent_candidate = self.classify_intent(text, context);
+        if let Some(intent_suggestion) =
+            self.intent_card_suggestion(text, context, &intent_candidate)
+        {
             let suggestions = vec![intent_suggestion];
             self.update_cache(cache_key, suggestions.clone()).await;
             return Ok(suggestions);
@@ -114,7 +132,23 @@ impl SuggestionEngine {
 
         let prompt = self.build_prompt(text, context);
         let response = self.provider.complete(&prompt).await?;
-        let suggestions = self.parse_suggestions(&response)?;
+        let mut suggestions = self.parse_suggestions(&response)?;
+        if let Some((intent, confidence)) = intent_candidate
+            && confidence < self.config.intent_confidence_threshold
+        {
+            let fallback_reason = format!(
+                "intent_confidence {:.2} below threshold {:.2}",
+                confidence, self.config.intent_confidence_threshold
+            );
+            for suggestion in &mut suggestions {
+                suggestion.debug = Some(SuggestionDebug {
+                    intent_detected: Some(intent.clone()),
+                    intent_confidence: Some(confidence),
+                    fallback_to_rewrite: true,
+                    fallback_reason: Some(fallback_reason.clone()),
+                });
+            }
+        }
         self.update_cache(cache_key, suggestions.clone()).await;
         Ok(suggestions)
     }
@@ -192,9 +226,14 @@ Return JSON only with this schema:
         )
     }
 
-    fn intent_card_suggestion(&self, text: &str, context: &WindowContext) -> Option<Suggestion> {
-        let (intent, confidence) = self.classify_intent(text, context)?;
-        if confidence < 0.55 {
+    fn intent_card_suggestion(
+        &self,
+        text: &str,
+        context: &WindowContext,
+        intent_candidate: &Option<(SuggestionIntent, f32)>,
+    ) -> Option<Suggestion> {
+        let (intent, confidence) = intent_candidate.clone()?;
+        if confidence < self.config.intent_confidence_threshold {
             return None;
         }
         let card = build_action_card(intent.clone(), confidence, text, context);
@@ -205,9 +244,15 @@ Return JSON only with this schema:
                 "Detected intent {:?} with confidence {:.2}.",
                 intent, confidence
             )),
-            intent: Some(intent),
+            intent: Some(intent.clone()),
             confidence: Some(confidence),
             action: Some(card),
+            debug: Some(SuggestionDebug {
+                intent_detected: Some(intent),
+                intent_confidence: Some(confidence),
+                fallback_to_rewrite: false,
+                fallback_reason: None,
+            }),
         })
     }
 
@@ -275,6 +320,7 @@ Return JSON only with this schema:
                 intent: None,
                 confidence: None,
                 action: None,
+                debug: None,
             })
             .collect::<Vec<_>>();
         Ok(suggestions)
@@ -413,6 +459,53 @@ mod tests {
         assert_eq!(out.len(), 1);
         assert!(out[0].intent.is_some());
         assert!(out[0].action.is_some());
+        assert_eq!(
+            out[0].debug.as_ref().map(|meta| meta.fallback_to_rewrite),
+            Some(false)
+        );
+    }
+
+    #[tokio::test]
+    async fn low_confidence_intent_falls_back_with_debug_metadata() {
+        let payload = r#"{
+            "suggestions":[
+                {"label":"More Direct","text":"A","reasoning":"r1"}
+            ]
+        }"#;
+        let provider = Arc::new(MockProvider {
+            calls: AtomicUsize::new(0),
+            payload: payload.to_string(),
+        });
+        let cfg = EngineConfig {
+            min_text_length: 1,
+            intent_confidence_threshold: 0.9,
+            ..EngineConfig::default()
+        };
+        let engine = SuggestionEngine::new(provider.clone(), cfg);
+        let out = engine
+            .generate_suggestions(
+                "Please draft a reply to this customer email",
+                &sample_context(),
+            )
+            .await
+            .expect("rewrite fallback should succeed");
+
+        assert_eq!(provider.calls.load(Ordering::SeqCst), 1);
+        assert_eq!(out.len(), 1);
+        assert!(out[0].action.is_none());
+        let debug = out[0]
+            .debug
+            .as_ref()
+            .expect("low-confidence fallback should include debug metadata");
+        assert!(debug.fallback_to_rewrite);
+        assert_eq!(debug.intent_detected, Some(SuggestionIntent::DraftReply));
+        assert!(
+            debug
+                .fallback_reason
+                .as_deref()
+                .unwrap_or_default()
+                .contains("below threshold")
+        );
     }
 
     #[tokio::test]

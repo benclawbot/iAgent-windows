@@ -102,9 +102,11 @@ fn config_env_fingerprint() -> Vec<(String, String)> {
         .filter_map(|(key, value)| {
             let key = key.to_string_lossy().to_string();
             if key == "JCODE_HOME"
+                || key == "IAGENT_HOME"
                 || key == "HOME"
                 || key == "XDG_CONFIG_HOME"
                 || key.starts_with("JCODE_")
+                || key.starts_with("IAGENT_")
             {
                 Some((key, value.to_string_lossy().to_string()))
             } else {

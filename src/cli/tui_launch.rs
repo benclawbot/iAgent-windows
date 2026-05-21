@@ -1143,5 +1143,5 @@ pub fn list_sessions() -> Result<()> {
     anyhow::bail!("interactive session picking requires a build compiled with terminal-ui")
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "terminal-ui"))]
 mod tests;
