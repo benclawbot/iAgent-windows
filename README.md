@@ -8,7 +8,15 @@ Persistent desktop AI orchestration with local execution, ambient workflows, pro
 
 ![iAgent Architecture](docs/assets/iagent-architecture.svg)
 
+![iAgent Infographic](docs/assets/iagent-infographic.jpg)
+
 </div>
+
+---
+
+## Screenshots
+
+![iAgent Desktop](docs/assets/iagent-desktop-full.jpg)
 
 ---
 
