@@ -13,7 +13,7 @@
 //!
 //! Chrome/Edge must be launched with `--remote-debugging-port=9222`.
 
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -54,6 +54,32 @@ pub struct CdpTab {
     pub title: String,
     pub url: String,
     pub type_: String,
+    pub web_socket_debugger_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RawCdpTab {
+    id: String,
+    #[serde(default)]
+    title: String,
+    #[serde(default)]
+    url: String,
+    #[serde(rename = "type", default)]
+    type_: String,
+    #[serde(rename = "webSocketDebuggerUrl")]
+    web_socket_debugger_url: Option<String>,
+}
+
+impl From<RawCdpTab> for CdpTab {
+    fn from(value: RawCdpTab) -> Self {
+        Self {
+            id: value.id,
+            title: value.title,
+            url: value.url,
+            type_: value.type_,
+            web_socket_debugger_url: value.web_socket_debugger_url,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,54 +141,149 @@ impl CdpBrowser {
         Self { port, ..self }
     }
 
-    /// Build the CDP HTTP endpoint URL.
-    fn http_url(&self, path: &str) -> String {
-        format!("http://{}:{}/{}", self.host, self.port, path)
+    /// Returns the currently attached tab id, if any.
+    pub fn active_tab_id(&self) -> Option<&str> {
+        self.target_id.as_deref()
     }
 
-    /// List all browser tabs via CDP /json endpoint.
+    /// Returns the currently attached page websocket URL, if any.
+    pub fn websocket_url(&self) -> Option<&str> {
+        self.ws_url.as_deref()
+    }
+
+    /// Build the CDP HTTP endpoint URL.
+    fn http_url(&self, path: &str) -> String {
+        format!(
+            "http://{}:{}/{}",
+            self.host,
+            self.port,
+            path.trim_start_matches('/')
+        )
+    }
+
+    fn default_page_ws_url(&self, tab_id: &str) -> String {
+        format!("ws://{}:{}/devtools/page/{}", self.host, self.port, tab_id)
+    }
+
+    fn activate_endpoint(&self, tab_id: &str) -> String {
+        self.http_url(&format!("json/activate/{}", tab_id))
+    }
+
+    async fn activate_tab(&self, tab_id: &str) -> Result<()> {
+        let url = self.activate_endpoint(tab_id);
+        let resp = reqwest::Client::new()
+            .get(&url)
+            .send()
+            .await
+            .context("Failed to call CDP activate endpoint")?;
+
+        if !resp.status().is_success() {
+            let status = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            bail!(
+                "Failed to activate tab {} (status {}): {}",
+                tab_id,
+                status,
+                body
+            );
+        }
+
+        Ok(())
+    }
+
+    /// List all browser tabs via CDP /json/list endpoint.
     pub async fn list_tabs(&self) -> Result<Vec<CdpTab>> {
-        let url = self.http_url("json");
-        let resp = reqwest::get(&url).await?;
+        let url = self.http_url("json/list");
+        let resp = reqwest::Client::new()
+            .get(&url)
+            .send()
+            .await
+            .context("Failed to call CDP tab listing endpoint")?;
+
         if !resp.status().is_success() {
             bail!("CDP endpoint returned {}: {}", resp.status(), url);
         }
-        let tabs: Vec<serde_json::Value> = resp.json().await?;
+
+        let tabs: Vec<RawCdpTab> = resp.json().await.context("Failed to parse CDP tabs JSON")?;
+
         let out: Vec<CdpTab> = tabs
             .into_iter()
-            .filter(|t| t.get("type").and_then(|v| v.as_str()) == Some("page"))
-            .map(|t| CdpTab {
-                id: t.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                title: t.get("title").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                url: t.get("url").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-                type_: t.get("type").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-            })
+            .filter(|t| t.type_ == "page")
+            .map(CdpTab::from)
             .collect();
+
         Ok(out)
     }
 
     /// Attach to a specific tab by ID.
     pub async fn attach_to_tab(&mut self, tab_id: &str) -> Result<()> {
-        let tabs = self.list_tabs().await?;
-        let _tab = tabs
+        let tab = self
+            .list_tabs()
+            .await?
             .into_iter()
             .find(|t| t.id == tab_id)
-            .ok_or_else(|| anyhow::anyhow!("Tab not found: {}", tab_id))?;
+            .ok_or_else(|| anyhow!("Tab not found: {}", tab_id))?;
 
-        // CDP WebSocket URL for the tab
-        self.ws_url = Some(format!(
-            "ws://{}:{}/devtools/browser/{}",
-            self.host, self.port, tab_id
-        ));
+        // Best-effort activate so the selected target is also foregrounded.
+        // If activation fails, we still keep the attachment state because some
+        // environments disallow activation while still exposing CDP control.
+        let _ = self.activate_tab(tab_id).await;
+
+        self.ws_url = Some(
+            tab.web_socket_debugger_url
+                .unwrap_or_else(|| self.default_page_ws_url(tab_id)),
+        );
         self.target_id = Some(tab_id.to_string());
+
         Ok(())
     }
 
-    /// Create a new browser tab (CDP NewTarget).
+    /// Explicitly select (activate + attach) a tab.
+    pub async fn select_tab(&mut self, tab_id: &str) -> Result<()> {
+        self.activate_tab(tab_id).await?;
+        self.attach_to_tab(tab_id).await
+    }
+
+    /// Create a new browser tab (CDP NewTarget) and attach to it.
     pub async fn new_tab(&mut self, url: &str) -> Result<String> {
-        let _ = url;
-        // CDP stub - would POST to /json/new and return the new tab's webSocketDebuggerURL
-        Ok(String::new())
+        let client = reqwest::Client::new();
+        let endpoint = format!("{}?url={}", self.http_url("json/new"), url);
+
+        // CDP canonical endpoint is PUT /json/new?{url}, but some setups only
+        // accept GET /json/new?url=... . Try PUT first, then fallback to GET.
+        let put_attempt = client.put(&endpoint).send().await;
+        let resp = match put_attempt {
+            Ok(resp) if resp.status().is_success() => resp,
+            Ok(_) | Err(_) => client
+                .get(&endpoint)
+                .send()
+                .await
+                .context("Failed to call CDP new-tab endpoint")?,
+        };
+
+        if !resp.status().is_success() {
+            let status = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            bail!("Failed to create new tab (status {}): {}", status, body);
+        }
+
+        let created: RawCdpTab = resp
+            .json()
+            .await
+            .context("Failed to parse CDP new-tab response")?;
+
+        let tab_id = created.id.clone();
+        self.ws_url = Some(
+            created
+                .web_socket_debugger_url
+                .unwrap_or_else(|| self.default_page_ws_url(&tab_id)),
+        );
+        self.target_id = Some(tab_id.clone());
+
+        // Keep target state in sync with browser foreground where possible.
+        let _ = self.activate_tab(&tab_id).await;
+
+        Ok(tab_id)
     }
 
     /// Navigate to a URL in the active tab.
@@ -230,14 +351,14 @@ pub async fn discover_browsers() -> Result<Vec<CdpBrowser>> {
 
     // Try Chrome default port
     let chrome = CdpBrowser::new(BrowserType::Chrome);
-    if reqwest::get(chrome.http_url("json")).await.is_ok() {
+    if reqwest::get(chrome.http_url("json/list")).await.is_ok() {
         browsers.push(chrome);
     }
 
     // Try Edge default port (9223 is sometimes used)
     let mut edge = CdpBrowser::new(BrowserType::Edge);
     edge.port = 9223;
-    if reqwest::get(edge.http_url("json")).await.is_ok() {
+    if reqwest::get(edge.http_url("json/list")).await.is_ok() {
         browsers.push(edge);
     }
 
@@ -272,8 +393,38 @@ mod tests {
         assert_eq!(browser.browser_type, BrowserType::Chrome);
     }
 
+    #[test]
+    fn default_ws_url_points_to_page_target() {
+        let browser = CdpBrowser::new(BrowserType::Chrome).with_port(1337);
+        assert_eq!(
+            browser.default_page_ws_url("abc123"),
+            "ws://127.0.0.1:1337/devtools/page/abc123"
+        );
+    }
+
+    #[test]
+    fn cdp_tab_deserializes_websocket_field() {
+        let raw = serde_json::json!({
+            "id": "tab-1",
+            "title": "Example",
+            "url": "https://example.com",
+            "type": "page",
+            "webSocketDebuggerUrl": "ws://127.0.0.1:9222/devtools/page/tab-1"
+        });
+
+        let parsed: RawCdpTab = serde_json::from_value(raw).unwrap();
+        let tab: CdpTab = parsed.into();
+
+        assert_eq!(tab.id, "tab-1");
+        assert_eq!(tab.type_, "page");
+        assert_eq!(
+            tab.web_socket_debugger_url.as_deref(),
+            Some("ws://127.0.0.1:9222/devtools/page/tab-1")
+        );
+    }
+
     #[tokio::test]
-    async fn list_tabs_returns_empty_on_no_browser() {
+    async fn list_tabs_returns_error_on_no_browser() {
         let browser = CdpBrowser::new(BrowserType::Chrome).with_port(9999);
         let tabs = browser.list_tabs().await;
         // Should error because nothing is on port 9999
