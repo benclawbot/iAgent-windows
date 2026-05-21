@@ -8,14 +8,17 @@
 //! - Query and interact with DOM elements
 //! - Screenshot capture
 //! - Evaluate JavaScript
-//! - Network interception
 //! - Storage/state inspection
 //!
 //! Chrome/Edge must be launched with `--remote-debugging-port=9222`.
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
+use base64::Engine as _;
+use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 use std::collections::HashMap;
+use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 /// CDP browser wrapper for Chrome/Edge DevTools Protocol automation
 #[allow(dead_code)]
@@ -54,32 +57,7 @@ pub struct CdpTab {
     pub title: String,
     pub url: String,
     pub type_: String,
-    pub web_socket_debugger_url: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct RawCdpTab {
-    id: String,
-    #[serde(default)]
-    title: String,
-    #[serde(default)]
-    url: String,
-    #[serde(rename = "type", default)]
-    type_: String,
-    #[serde(rename = "webSocketDebuggerUrl")]
-    web_socket_debugger_url: Option<String>,
-}
-
-impl From<RawCdpTab> for CdpTab {
-    fn from(value: RawCdpTab) -> Self {
-        Self {
-            id: value.id,
-            title: value.title,
-            url: value.url,
-            type_: value.type_,
-            web_socket_debugger_url: value.web_socket_debugger_url,
-        }
-    }
+    pub ws_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -124,6 +102,39 @@ pub struct CdpFormField {
     pub visible: bool,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+struct RawCdpTab {
+    #[serde(default)]
+    id: String,
+    #[serde(default)]
+    title: String,
+    #[serde(default)]
+    url: String,
+    #[serde(default, rename = "type")]
+    type_: String,
+    #[serde(default, rename = "webSocketDebuggerUrl")]
+    ws_url: String,
+}
+
+impl RawCdpTab {
+    fn to_tab(&self) -> Option<CdpTab> {
+        if self.type_ != "page" {
+            return None;
+        }
+        Some(CdpTab {
+            id: self.id.clone(),
+            title: self.title.clone(),
+            url: self.url.clone(),
+            type_: self.type_.clone(),
+            ws_url: if self.ws_url.is_empty() {
+                None
+            } else {
+                Some(self.ws_url.clone())
+            },
+        })
+    }
+}
+
 impl CdpBrowser {
     /// Create a new CDP browser handle.
     pub fn new(browser_type: BrowserType) -> Self {
@@ -141,195 +152,499 @@ impl CdpBrowser {
         Self { port, ..self }
     }
 
-    /// Returns the currently attached tab id, if any.
-    pub fn active_tab_id(&self) -> Option<&str> {
-        self.target_id.as_deref()
-    }
-
-    /// Returns the currently attached page websocket URL, if any.
-    pub fn websocket_url(&self) -> Option<&str> {
-        self.ws_url.as_deref()
-    }
-
     /// Build the CDP HTTP endpoint URL.
     fn http_url(&self, path: &str) -> String {
-        format!(
-            "http://{}:{}/{}",
-            self.host,
-            self.port,
-            path.trim_start_matches('/')
-        )
+        format!("http://{}:{}/{}", self.host, self.port, path)
     }
 
-    fn default_page_ws_url(&self, tab_id: &str) -> String {
-        format!("ws://{}:{}/devtools/page/{}", self.host, self.port, tab_id)
-    }
-
-    fn activate_endpoint(&self, tab_id: &str) -> String {
-        self.http_url(&format!("json/activate/{}", tab_id))
-    }
-
-    async fn activate_tab(&self, tab_id: &str) -> Result<()> {
-        let url = self.activate_endpoint(tab_id);
-        let resp = reqwest::Client::new()
-            .get(&url)
-            .send()
-            .await
-            .context("Failed to call CDP activate endpoint")?;
-
-        if !resp.status().is_success() {
-            let status = resp.status();
-            let body = resp.text().await.unwrap_or_default();
-            bail!(
-                "Failed to activate tab {} (status {}): {}",
-                tab_id,
-                status,
-                body
-            );
-        }
-
-        Ok(())
-    }
-
-    /// List all browser tabs via CDP /json/list endpoint.
-    pub async fn list_tabs(&self) -> Result<Vec<CdpTab>> {
+    async fn fetch_tabs_raw(&self) -> Result<Vec<RawCdpTab>> {
         let url = self.http_url("json/list");
-        let resp = reqwest::Client::new()
-            .get(&url)
-            .send()
-            .await
-            .context("Failed to call CDP tab listing endpoint")?;
-
+        let resp = reqwest::get(&url).await?;
         if !resp.status().is_success() {
             bail!("CDP endpoint returned {}: {}", resp.status(), url);
         }
+        resp.json()
+            .await
+            .with_context(|| format!("Failed to decode CDP tabs from {}", url))
+    }
 
-        let tabs: Vec<RawCdpTab> = resp.json().await.context("Failed to parse CDP tabs JSON")?;
+    async fn resolve_active_page(&self) -> Result<RawCdpTab> {
+        let tabs = self.fetch_tabs_raw().await?;
+        let pages: Vec<_> = tabs.into_iter().filter(|t| t.type_ == "page").collect();
+        if pages.is_empty() {
+            bail!(
+                "No page targets available on {}:{} (is {:?} running with --remote-debugging-port={})",
+                self.host,
+                self.port,
+                self.browser_type,
+                self.port
+            );
+        }
 
-        let out: Vec<CdpTab> = tabs
+        if let Some(target_id) = &self.target_id
+            && let Some(tab) = pages.iter().find(|t| &t.id == target_id)
+        {
+            return Ok(tab.clone());
+        }
+
+        if let Some(ws_url) = &self.ws_url
+            && let Some(tab) = pages.iter().find(|t| &t.ws_url == ws_url)
+        {
+            return Ok(tab.clone());
+        }
+
+        pages
             .into_iter()
-            .filter(|t| t.type_ == "page")
-            .map(CdpTab::from)
-            .collect();
+            .find(|t| !t.ws_url.is_empty())
+            .ok_or_else(|| anyhow!("No debuggable page target found (missing websocket URL)"))
+    }
 
-        Ok(out)
+    async fn cdp_call_with_ws(&self, ws_url: &str, method: &str, params: Value) -> Result<Value> {
+        let (mut socket, _) = connect_async(ws_url)
+            .await
+            .with_context(|| format!("Failed connecting CDP websocket: {ws_url}"))?;
+
+        let req_id = 1_u64;
+        let request = json!({
+            "id": req_id,
+            "method": method,
+            "params": params
+        });
+
+        socket
+            .send(Message::Text(request.to_string().into()))
+            .await
+            .with_context(|| format!("Failed sending CDP request {method}"))?;
+
+        while let Some(frame) = socket.next().await {
+            let frame =
+                frame.with_context(|| format!("Error receiving CDP response for {method}"))?;
+
+            match frame {
+                Message::Text(txt) => {
+                    if let Some(response) = Self::parse_cdp_response(&txt, req_id, method)? {
+                        return Ok(response);
+                    }
+                }
+                Message::Binary(bin) => {
+                    let txt = String::from_utf8(bin.to_vec())
+                        .context("CDP websocket returned non-utf8 binary payload")?;
+                    if let Some(response) = Self::parse_cdp_response(&txt, req_id, method)? {
+                        return Ok(response);
+                    }
+                }
+                Message::Ping(payload) => {
+                    socket.send(Message::Pong(payload)).await.ok();
+                }
+                Message::Pong(_) => {}
+                Message::Frame(_) => {}
+                Message::Close(_) => break,
+            }
+        }
+
+        bail!("CDP websocket closed before response for method {method}");
+    }
+
+    fn parse_cdp_response(txt: &str, req_id: u64, method: &str) -> Result<Option<Value>> {
+        let value: Value =
+            serde_json::from_str(txt).context("Invalid JSON frame from CDP websocket")?;
+        let Some(id) = value.get("id").and_then(Value::as_u64) else {
+            return Ok(None);
+        };
+        if id != req_id {
+            return Ok(None);
+        }
+
+        if let Some(err) = value.get("error") {
+            let code = err.get("code").and_then(Value::as_i64).unwrap_or(-1);
+            let message = err
+                .get("message")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown CDP error");
+            let detail = err
+                .get("data")
+                .map_or(String::new(), |d| format!("; data={}", d));
+            bail!("CDP {method} failed ({code}): {message}{detail}");
+        }
+
+        Ok(Some(
+            value.get("result").cloned().unwrap_or_else(|| json!({})),
+        ))
+    }
+
+    async fn cdp_call(&self, method: &str, params: Value) -> Result<Value> {
+        let tab = self.resolve_active_page().await?;
+        if tab.ws_url.is_empty() {
+            bail!("Active tab has no websocket debugger URL");
+        }
+        self.cdp_call_with_ws(&tab.ws_url, method, params).await
+    }
+
+    async fn evaluate_json(&self, script: &str) -> Result<Value> {
+        let result = self
+            .cdp_call(
+                "Runtime.evaluate",
+                json!({
+                    "expression": script,
+                    "awaitPromise": true,
+                    "returnByValue": true,
+                }),
+            )
+            .await?;
+
+        if let Some(exception) = result.get("exceptionDetails") {
+            let text = exception
+                .get("text")
+                .and_then(Value::as_str)
+                .unwrap_or("JavaScript exception");
+            bail!("Runtime.evaluate exception: {text}");
+        }
+
+        let js_value = result
+            .get("result")
+            .and_then(|obj| obj.get("value"))
+            .cloned()
+            .unwrap_or(Value::Null);
+        Ok(js_value)
+    }
+
+    fn stringify_json(value: Value) -> Result<String> {
+        match value {
+            Value::String(s) => Ok(s),
+            other => serde_json::to_string(&other).context("Failed to stringify JavaScript value"),
+        }
+    }
+
+    /// List all browser tabs via CDP /json endpoint.
+    pub async fn list_tabs(&self) -> Result<Vec<CdpTab>> {
+        let tabs = self.fetch_tabs_raw().await?;
+        Ok(tabs.into_iter().filter_map(|t| t.to_tab()).collect())
     }
 
     /// Attach to a specific tab by ID.
     pub async fn attach_to_tab(&mut self, tab_id: &str) -> Result<()> {
-        let tab = self
-            .list_tabs()
-            .await?
+        let tabs = self.fetch_tabs_raw().await?;
+        let tab = tabs
             .into_iter()
-            .find(|t| t.id == tab_id)
-            .ok_or_else(|| anyhow!("Tab not found: {}", tab_id))?;
+            .find(|t| t.id == tab_id && t.type_ == "page")
+            .ok_or_else(|| anyhow!("Tab not found: {tab_id}"))?;
 
-        // Best-effort activate so the selected target is also foregrounded.
-        // If activation fails, we still keep the attachment state because some
-        // environments disallow activation while still exposing CDP control.
-        let _ = self.activate_tab(tab_id).await;
+        if tab.ws_url.is_empty() {
+            bail!("Tab {tab_id} cannot be debugged (missing websocket URL)");
+        }
 
-        self.ws_url = Some(
-            tab.web_socket_debugger_url
-                .unwrap_or_else(|| self.default_page_ws_url(tab_id)),
-        );
-        self.target_id = Some(tab_id.to_string());
-
+        self.ws_url = Some(tab.ws_url);
+        self.target_id = Some(tab.id);
         Ok(())
     }
 
-    /// Explicitly select (activate + attach) a tab.
-    pub async fn select_tab(&mut self, tab_id: &str) -> Result<()> {
-        self.activate_tab(tab_id).await?;
-        self.attach_to_tab(tab_id).await
-    }
-
-    /// Create a new browser tab (CDP NewTarget) and attach to it.
+    /// Create a new browser tab (CDP NewTarget).
     pub async fn new_tab(&mut self, url: &str) -> Result<String> {
+        let endpoint = self.http_url(&format!("json/new?{url}"));
         let client = reqwest::Client::new();
-        let endpoint = format!("{}?url={}", self.http_url("json/new"), url);
 
-        // CDP canonical endpoint is PUT /json/new?{url}, but some setups only
-        // accept GET /json/new?url=... . Try PUT first, then fallback to GET.
-        let put_attempt = client.put(&endpoint).send().await;
-        let resp = match put_attempt {
+        let response = match client.put(&endpoint).send().await {
             Ok(resp) if resp.status().is_success() => resp,
-            Ok(_) | Err(_) => client
+            _ => client
                 .get(&endpoint)
                 .send()
                 .await
-                .context("Failed to call CDP new-tab endpoint")?,
+                .with_context(|| format!("Failed creating new tab via {endpoint}"))?,
         };
 
-        if !resp.status().is_success() {
-            let status = resp.status();
-            let body = resp.text().await.unwrap_or_default();
-            bail!("Failed to create new tab (status {}): {}", status, body);
+        if !response.status().is_success() {
+            bail!(
+                "Failed creating new tab: status={} endpoint={}",
+                response.status(),
+                endpoint
+            );
         }
 
-        let created: RawCdpTab = resp
+        let tab: RawCdpTab = response
             .json()
             .await
-            .context("Failed to parse CDP new-tab response")?;
+            .context("Failed decoding CDP new-tab response")?;
+        if tab.id.is_empty() || tab.ws_url.is_empty() {
+            bail!("CDP new-tab response missing id or websocket URL");
+        }
 
-        let tab_id = created.id.clone();
-        self.ws_url = Some(
-            created
-                .web_socket_debugger_url
-                .unwrap_or_else(|| self.default_page_ws_url(&tab_id)),
-        );
-        self.target_id = Some(tab_id.clone());
-
-        // Keep target state in sync with browser foreground where possible.
-        let _ = self.activate_tab(&tab_id).await;
-
-        Ok(tab_id)
+        self.target_id = Some(tab.id.clone());
+        self.ws_url = Some(tab.ws_url);
+        Ok(tab.id)
     }
 
     /// Navigate to a URL in the active tab.
     pub async fn navigate(&mut self, url: &str) -> Result<()> {
-        let _ = url;
-        // CDP stub - would send Page.navigate via WebSocket
+        if self.resolve_active_page().await.is_err() {
+            self.new_tab(url).await?;
+            return Ok(());
+        }
+
+        let _ = self.cdp_call("Page.enable", json!({})).await;
+        self.cdp_call("Page.navigate", json!({ "url": url }))
+            .await?;
         Ok(())
     }
 
     /// Get interactable elements on the page.
     pub async fn get_interactables(&self) -> Result<Vec<CdpInteractable>> {
-        // CDP stub - DOM.getDocument + DOM.querySelectorAll + DOM.getBoxModel
-        Ok(Vec::new())
+        let script = r#"
+(() => {
+  const cssEscape = (window.CSS && CSS.escape)
+    ? CSS.escape
+    : (v) => String(v).replace(/["\\]/g, "\\$&");
+
+  const selectorFor = (el) => {
+    if (!el || !(el instanceof Element)) return "";
+    if (el.id) return `#${cssEscape(el.id)}`;
+    if (el.getAttribute("name")) {
+      return `${el.tagName.toLowerCase()}[name="${cssEscape(el.getAttribute("name"))}"]`;
+    }
+
+    const chain = [];
+    let cur = el;
+    while (cur && cur.nodeType === Node.ELEMENT_NODE && chain.length < 8) {
+      let part = cur.tagName.toLowerCase();
+      const classes = Array.from(cur.classList || []).filter(Boolean).slice(0, 2);
+      if (classes.length > 0) {
+        part += classes.map(c => "." + cssEscape(c)).join("");
+      } else if (cur.parentElement) {
+        const sibs = Array.from(cur.parentElement.children).filter(n => n.tagName === cur.tagName);
+        if (sibs.length > 1) {
+          part += `:nth-of-type(${sibs.indexOf(cur) + 1})`;
+        }
+      }
+      chain.unshift(part);
+      if (cur.id) break;
+      cur = cur.parentElement;
+    }
+    return chain.join(" > ");
+  };
+
+  const isVisible = (el, rect) => {
+    const style = window.getComputedStyle(el);
+    return rect.width > 0 &&
+      rect.height > 0 &&
+      style.visibility !== "hidden" &&
+      style.display !== "none" &&
+      style.opacity !== "0";
+  };
+
+  const nodes = Array.from(document.querySelectorAll(
+    "a, button, input, select, textarea, [role='button'], [onclick], [contenteditable='true']"
+  ));
+
+  return nodes.map((el) => {
+    const rect = el.getBoundingClientRect();
+    const txt = (el.innerText || el.textContent || "").trim();
+    return {
+      selector: selectorFor(el),
+      tag: el.tagName.toLowerCase(),
+      text: txt || null,
+      rect: {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height
+      },
+      input_type: el.getAttribute("type"),
+      visible: isVisible(el, rect)
+    };
+  });
+})()
+"#;
+
+        let value = self.evaluate_json(script).await?;
+        serde_json::from_value(value).context("Failed parsing interactables response")
     }
 
     /// Fill form fields on the page.
     pub async fn fill_form(&self, fields: &[CdpFormField]) -> Result<()> {
-        let _ = fields;
-        // CDP stub - Input.dispatchKeyEvent for typing
+        if fields.is_empty() {
+            return Ok(());
+        }
+
+        let fields_json =
+            serde_json::to_string(fields).context("Failed serializing fields for fill_form")?;
+        let script = format!(
+            r#"
+(() => {{
+  const fields = {fields_json};
+  const cssEscape = (window.CSS && CSS.escape)
+    ? CSS.escape
+    : (v) => String(v).replace(/["\\]/g, "\\$&");
+
+  const resolveElement = (field) => {{
+    if (field.selector) {{
+      const el = document.querySelector(field.selector);
+      if (el) return {{ el, selector: field.selector }};
+    }}
+    if (field.id) {{
+      const byId = document.getElementById(field.id);
+      if (byId) return {{ el: byId, selector: `#${{cssEscape(field.id)}}` }};
+    }}
+    if (field.name) {{
+      const byName = document.querySelector(`[name="${{cssEscape(field.name)}}"]`);
+      if (byName) return {{ el: byName, selector: `[name="${{cssEscape(field.name)}}"]` }};
+    }}
+    if (field.placeholder) {{
+      const byPlaceholder = document.querySelector(`[placeholder="${{cssEscape(field.placeholder)}}"]`);
+      if (byPlaceholder) return {{ el: byPlaceholder, selector: `[placeholder="${{cssEscape(field.placeholder)}}"]` }};
+    }}
+    return {{ el: null, selector: field.selector || field.id || field.name || field.placeholder || "<unknown>" }};
+  }};
+
+  const output = {{
+    filled: [],
+    missing: [],
+    errors: []
+  }};
+
+  for (const field of fields) {{
+    const {{ el, selector }} = resolveElement(field);
+    if (!el) {{
+      output.missing.push(selector);
+      continue;
+    }}
+
+    try {{
+      const desiredValue = field.value ?? "";
+      const inputType = String(field.input_type || el.type || "").toLowerCase();
+      const tag = String(el.tagName || "").toLowerCase();
+      const boolValue = ["1", "true", "yes", "on"].includes(String(desiredValue).toLowerCase());
+
+      if (inputType === "checkbox" || inputType === "radio") {{
+        el.checked = boolValue;
+      }} else if (tag === "select") {{
+        el.value = String(desiredValue);
+      }} else {{
+        el.focus();
+        el.value = String(desiredValue);
+      }}
+
+      el.dispatchEvent(new Event("input", {{ bubbles: true }}));
+      el.dispatchEvent(new Event("change", {{ bubbles: true }}));
+      output.filled.push(selector);
+    }} catch (err) {{
+      output.errors.push(`${{selector}}: ${{err?.message || String(err)}}`);
+    }}
+  }}
+
+  return output;
+}})()
+"#
+        );
+
+        let value = self.evaluate_json(&script).await?;
+        let missing = value
+            .get("missing")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let errors = value
+            .get("errors")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+
+        if !errors.is_empty() {
+            bail!("Failed filling fields: {}", Value::Array(errors));
+        }
+        if !missing.is_empty() {
+            bail!("Some fields were not found: {}", Value::Array(missing));
+        }
         Ok(())
     }
 
     /// Click an element by selector.
     pub async fn click(&self, selector: &str) -> Result<()> {
-        let _ = selector;
-        // CDP stub - Runtime.evaluate + HTMLElement.click()
+        let selector_json =
+            serde_json::to_string(selector).context("Failed serializing click selector")?;
+        let script = format!(
+            r#"
+(() => {{
+  const raw = {selector_json};
+  const isVisible = (el) => {{
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    const style = window.getComputedStyle(el);
+    return rect.width > 0 &&
+      rect.height > 0 &&
+      style.visibility !== "hidden" &&
+      style.display !== "none" &&
+      style.opacity !== "0";
+  }};
+
+  const clickable = () => Array.from(document.querySelectorAll(
+    "a, button, input[type='button'], input[type='submit'], [role='button'], [onclick]"
+  )).filter(isVisible);
+
+  let target = null;
+  if (raw.startsWith("text=")) {{
+    const needle = raw.slice(5).trim().toLowerCase();
+    target = clickable().find((el) => (el.innerText || el.textContent || "")
+      .trim()
+      .toLowerCase()
+      .includes(needle));
+  }} else if (raw.startsWith("index=")) {{
+    const idx = Number(raw.slice(6));
+    if (!Number.isNaN(idx)) {{
+      target = clickable()[idx] || null;
+    }}
+  }} else {{
+    target = document.querySelector(raw);
+  }}
+
+  if (!target) {{
+    throw new Error(`No clickable element found for selector: ${{raw}}`);
+  }}
+  if (!isVisible(target)) {{
+    throw new Error(`Element is not visible for selector: ${{raw}}`);
+  }}
+
+  target.scrollIntoView({{ block: "center", inline: "center" }});
+  target.click();
+  return "clicked";
+}})()
+"#
+        );
+
+        let _ = self.evaluate_json(&script).await?;
         Ok(())
     }
 
     /// Evaluate a JavaScript expression.
     pub async fn evaluate(&self, script: &str) -> Result<String> {
-        let _ = script;
-        // CDP stub - Runtime.evaluate
-        Ok(String::new())
+        let value = self.evaluate_json(script).await?;
+        Self::stringify_json(value)
     }
 
     /// Take a screenshot of the current tab.
     pub async fn screenshot(&self) -> Result<Vec<u8>> {
-        // CDP stub - Page.captureScreenshot
-        Ok(Vec::new())
+        let _ = self.cdp_call("Page.enable", json!({})).await;
+        let result = self
+            .cdp_call(
+                "Page.captureScreenshot",
+                json!({
+                    "format": "png",
+                    "fromSurface": true
+                }),
+            )
+            .await?;
+
+        let encoded = result
+            .get("data")
+            .and_then(Value::as_str)
+            .ok_or_else(|| anyhow!("Page.captureScreenshot returned no data field"))?;
+        base64::engine::general_purpose::STANDARD
+            .decode(encoded)
+            .context("Failed to decode screenshot base64 payload")
     }
 
     /// Get page HTML content.
     pub async fn get_content(&self) -> Result<String> {
-        // CDP stub - Runtime.evaluate(document.documentElement.outerHTML)
-        Ok(String::new())
+        self.evaluate("document.documentElement ? document.documentElement.outerHTML : ''")
+            .await
     }
 
     /// Close the browser connection.
@@ -394,33 +709,34 @@ mod tests {
     }
 
     #[test]
-    fn default_ws_url_points_to_page_target() {
-        let browser = CdpBrowser::new(BrowserType::Chrome).with_port(1337);
+    fn raw_tab_maps_to_page_tab() {
+        let raw = RawCdpTab {
+            id: "target-1".to_string(),
+            title: "Example".to_string(),
+            url: "https://example.com".to_string(),
+            type_: "page".to_string(),
+            ws_url: "ws://127.0.0.1:9222/devtools/page/target-1".to_string(),
+        };
+        let tab = raw.to_tab().expect("page should convert");
+        assert_eq!(tab.id, "target-1");
         assert_eq!(
-            browser.default_page_ws_url("abc123"),
-            "ws://127.0.0.1:1337/devtools/page/abc123"
+            tab.ws_url.as_deref(),
+            Some("ws://127.0.0.1:9222/devtools/page/target-1")
         );
     }
 
     #[test]
-    fn cdp_tab_deserializes_websocket_field() {
-        let raw = serde_json::json!({
-            "id": "tab-1",
-            "title": "Example",
-            "url": "https://example.com",
-            "type": "page",
-            "webSocketDebuggerUrl": "ws://127.0.0.1:9222/devtools/page/tab-1"
-        });
+    fn parse_cdp_response_ignores_events() {
+        let event = r#"{"method":"Runtime.consoleAPICalled","params":{"type":"log"}}"#;
+        let parsed = CdpBrowser::parse_cdp_response(event, 1, "Runtime.evaluate")
+            .expect("event should parse");
+        assert!(parsed.is_none());
+    }
 
-        let parsed: RawCdpTab = serde_json::from_value(raw).unwrap();
-        let tab: CdpTab = parsed.into();
-
-        assert_eq!(tab.id, "tab-1");
-        assert_eq!(tab.type_, "page");
-        assert_eq!(
-            tab.web_socket_debugger_url.as_deref(),
-            Some("ws://127.0.0.1:9222/devtools/page/tab-1")
-        );
+    #[test]
+    fn stringify_json_formats_non_strings() {
+        let out = CdpBrowser::stringify_json(json!({"ok": true})).expect("stringify");
+        assert_eq!(out, r#"{"ok":true}"#);
     }
 
     #[tokio::test]

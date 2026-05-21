@@ -21,10 +21,10 @@
 
 use crate::tool::{Tool, ToolContext, ToolOutput};
 use anyhow::Result;
-use app_integrations::{browser, form_fill, officecli};
+use app_integrations::{browser, form_fill, office_workflows, officecli};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub struct AppTool;
 
@@ -43,7 +43,6 @@ impl AppTool {
 #[serde(tag = "action", rename_all = "snake_case")]
 enum AppInput {
     // ===== OfficeCLI / Office =====
-
     /// Check if OfficeCLI is installed.
     oc_check,
 
@@ -51,69 +50,158 @@ enum AppInput {
     oc_version,
 
     /// Create a blank Office document.
-    oc_create { path: String },
+    oc_create {
+        path: String,
+    },
 
     /// View document (modes: outline, stats, issues, text, annotated, html).
-    oc_view { path: String, mode: String },
+    oc_view {
+        path: String,
+        mode: String,
+    },
 
     /// Get document statistics as JSON.
-    oc_stats { path: String },
+    oc_stats {
+        path: String,
+    },
 
     /// Validate a document against OpenXML schema.
-    oc_validate { path: String },
+    oc_validate {
+        path: String,
+    },
 
     /// Extract plain text from a document.
-    oc_text { path: String, start: Option<u32>, end: Option<u32> },
+    oc_text {
+        path: String,
+        start: Option<u32>,
+        end: Option<u32>,
+    },
 
     /// Get a node at a path.
-    oc_get { path: String, doc_path: String, depth: Option<u32>, json: Option<bool> },
+    oc_get {
+        path: String,
+        doc_path: String,
+        depth: Option<u32>,
+        json: Option<bool>,
+    },
 
     /// Query a document with a CSS-like selector.
-    oc_query { path: String, selector: String, json: Option<bool> },
+    oc_query {
+        path: String,
+        selector: String,
+        json: Option<bool>,
+    },
 
     /// Set properties on a document element.
-    oc_set { path: String, doc_path: String, props: Vec<(String, String)> },
+    oc_set {
+        path: String,
+        doc_path: String,
+        props: Vec<(String, String)>,
+    },
 
     /// Add an element to a document.
-    oc_add { path: String, parent: String, element_type: String, props: Vec<(String, String)> },
+    oc_add {
+        path: String,
+        parent: String,
+        element_type: String,
+        props: Vec<(String, String)>,
+    },
 
     /// Format matched text (e.g. make text bold/red).
-    oc_format { path: String, doc_path: String, find: String, props: Vec<(String, String)>, regex: Option<bool> },
+    oc_format {
+        path: String,
+        doc_path: String,
+        find: String,
+        props: Vec<(String, String)>,
+        regex: Option<bool>,
+    },
 
     /// Replace matched text throughout document.
-    oc_replace { path: String, doc_path: String, find: String, replacement: String, regex: Option<bool> },
+    oc_replace {
+        path: String,
+        doc_path: String,
+        find: String,
+        replacement: String,
+        regex: Option<bool>,
+    },
 
     /// Remove an element.
-    oc_remove { path: String, doc_path: String },
+    oc_remove {
+        path: String,
+        doc_path: String,
+    },
 
     /// Open document in resident mode.
-    oc_open { path: String },
+    oc_open {
+        path: String,
+    },
 
     /// Close document (flush changes).
-    oc_close { path: String },
+    oc_close {
+        path: String,
+    },
 
     /// Run batch operations from JSON.
-    oc_batch { path: String, commands: String, json: Option<bool> },
+    oc_batch {
+        path: String,
+        commands: String,
+        json: Option<bool>,
+    },
 
     /// Export document as HTML.
-    oc_export_html { path: String, browser: Option<bool> },
+    oc_export_html {
+        path: String,
+        browser: Option<bool>,
+    },
+
+    /// Run a packaged Office workflow.
+    oc_workflow {
+        request: office_workflows::WorkflowRequest,
+    },
 
     // ===== Browser (CDP) =====
-
-    browser_list_tabs { port: Option<u16> },
-    browser_new_tab { url: String, port: Option<u16> },
-    browser_navigate { url: String, port: Option<u16> },
-    browser_get_content { port: Option<u16> },
-    browser_screenshot { port: Option<u16> },
-    browser_interactables { port: Option<u16> },
-    browser_click { selector: String, port: Option<u16> },
-    browser_type { text: String, port: Option<u16> },
-    browser_evaluate { script: String, port: Option<u16> },
-    browser_fill { fields: Vec<form_fill::FormField>, url: Option<String>, port: Option<u16> },
+    browser_list_tabs {
+        port: Option<u16>,
+    },
+    browser_new_tab {
+        url: String,
+        port: Option<u16>,
+    },
+    browser_navigate {
+        url: String,
+        port: Option<u16>,
+    },
+    browser_get_content {
+        port: Option<u16>,
+    },
+    browser_screenshot {
+        port: Option<u16>,
+    },
+    browser_interactables {
+        port: Option<u16>,
+    },
+    browser_click {
+        selector: String,
+        port: Option<u16>,
+    },
+    browser_type {
+        text: String,
+        port: Option<u16>,
+    },
+    browser_evaluate {
+        script: String,
+        port: Option<u16>,
+    },
+    browser_fill {
+        fields: Vec<form_fill::FormField>,
+        url: Option<String>,
+        port: Option<u16>,
+    },
 
     // ===== Form Fill =====
-
-    form_fill { request: form_fill::FormFillRequest },
+    form_fill {
+        request: form_fill::FormFillRequest,
+    },
 }
 
 fn make_browser(port: u16) -> browser::CdpBrowser {
@@ -179,6 +267,20 @@ impl Tool for AppTool {
                         "url": { "type": "string" },
                         "fields": { "$ref": "#/properties/fields" },
                         "submit": { "type": "boolean" },
+                        "submit_selector": { "type": "string" },
+                        "wait_after_submit_ms": { "type": "integer" },
+                        "dry_run": { "type": "boolean" },
+                        "capture_screenshots": { "type": "boolean" },
+                        "submit_requires_approval": { "type": "boolean" },
+                        "submit_approved": { "type": "boolean" },
+                        "ambiguity_threshold": { "type": "number" },
+                        "workflow": { "type": "string" },
+                        "input_path": { "type": "string" },
+                        "output_path": { "type": "string" },
+                        "csv_path": { "type": "string" },
+                        "notes": { "type": "string" },
+                        "dry_run": { "type": "boolean" },
+                        "max_items": { "type": "integer" }
                     }
                 }
             }
@@ -190,10 +292,10 @@ impl Tool for AppTool {
 
         match input {
             // ===== OfficeCLI / Office =====
-
-            AppInput::oc_check => {
-                Ok(ToolOutput::new(format!("OfficeCLI installed: {}", officecli::is_installed())))
-            }
+            AppInput::oc_check => Ok(ToolOutput::new(format!(
+                "OfficeCLI installed: {}",
+                officecli::is_installed()
+            ))),
 
             AppInput::oc_version => {
                 let v = officecli::version()?;
@@ -210,61 +312,102 @@ impl Tool for AppTool {
                 Ok(ToolOutput::new(out))
             }
 
-            AppInput::oc_stats { path } => {
-                match officecli::stats(&path) {
-                    Ok(s) => Ok(ToolOutput::new(serde_json::to_string_pretty(&s)?)),
-                    Err(e) => Ok(ToolOutput::new(format!("Stats unavailable: {}", e))),
-                }
-            }
+            AppInput::oc_stats { path } => match officecli::stats(&path) {
+                Ok(s) => Ok(ToolOutput::new(serde_json::to_string_pretty(&s)?)),
+                Err(e) => Ok(ToolOutput::new(format!("Stats unavailable: {}", e))),
+            },
 
-            AppInput::oc_validate { path } => {
-                match officecli::validate(&path) {
-                    Ok(v) => Ok(ToolOutput::new(serde_json::to_string_pretty(&v)?)),
-                    Err(e) => Ok(ToolOutput::new(format!("Validation failed: {}", e))),
-                }
-            }
+            AppInput::oc_validate { path } => match officecli::validate(&path) {
+                Ok(v) => Ok(ToolOutput::new(serde_json::to_string_pretty(&v)?)),
+                Err(e) => Ok(ToolOutput::new(format!("Validation failed: {}", e))),
+            },
 
             AppInput::oc_text { path, start, end } => {
                 let out = officecli::text(&path, start, end)?;
                 Ok(ToolOutput::new(out))
             }
 
-            AppInput::oc_get { path, doc_path, depth, json } => {
+            AppInput::oc_get {
+                path,
+                doc_path,
+                depth,
+                json,
+            } => {
                 let out = officecli::get(&path, &doc_path, depth, json.unwrap_or(false))?;
                 Ok(ToolOutput::new(out))
             }
 
-            AppInput::oc_query { path, selector, json } => {
+            AppInput::oc_query {
+                path,
+                selector,
+                json,
+            } => {
                 let out = officecli::query(&path, &selector, json.unwrap_or(false))?;
                 Ok(ToolOutput::new(out))
             }
 
-            AppInput::oc_set { path, doc_path, props } => {
-                let props_ref: Vec<(&str, &str)> = props.iter()
+            AppInput::oc_set {
+                path,
+                doc_path,
+                props,
+            } => {
+                let props_ref: Vec<(&str, &str)> = props
+                    .iter()
                     .map(|(k, v)| (k.as_str(), v.as_str()))
                     .collect();
                 let out = officecli::set(&path, &doc_path, &props_ref)?;
                 Ok(ToolOutput::new(out))
             }
 
-            AppInput::oc_add { path, parent, element_type, props } => {
-                let props_ref: Vec<(&str, &str)> = props.iter()
+            AppInput::oc_add {
+                path,
+                parent,
+                element_type,
+                props,
+            } => {
+                let props_ref: Vec<(&str, &str)> = props
+                    .iter()
                     .map(|(k, v)| (k.as_str(), v.as_str()))
                     .collect();
                 let out = officecli::add(&path, &parent, &element_type, &props_ref)?;
                 Ok(ToolOutput::new(out))
             }
 
-            AppInput::oc_format { path, doc_path, find, props, regex } => {
-                let props_ref: Vec<(&str, &str)> = props.iter()
+            AppInput::oc_format {
+                path,
+                doc_path,
+                find,
+                props,
+                regex,
+            } => {
+                let props_ref: Vec<(&str, &str)> = props
+                    .iter()
                     .map(|(k, v)| (k.as_str(), v.as_str()))
                     .collect();
-                let out = officecli::format_text(&path, &doc_path, &find, &props_ref, regex.unwrap_or(false))?;
+                let out = officecli::format_text(
+                    &path,
+                    &doc_path,
+                    &find,
+                    &props_ref,
+                    regex.unwrap_or(false),
+                )?;
                 Ok(ToolOutput::new(out))
             }
 
-            AppInput::oc_replace { path, doc_path, find, replacement, regex } => {
-                let out = officecli::replace(&path, &doc_path, &find, &replacement, regex.unwrap_or(false))?;
+            AppInput::oc_replace {
+                path,
+                doc_path,
+                find,
+                replacement,
+                regex,
+            } => {
+                let out = officecli::replace(
+                    &path,
+                    &doc_path,
+                    &find,
+                    &replacement,
+                    regex.unwrap_or(false),
+                )?;
                 Ok(ToolOutput::new(out))
             }
 
@@ -283,7 +426,11 @@ impl Tool for AppTool {
                 Ok(ToolOutput::new(out))
             }
 
-            AppInput::oc_batch { path, commands, json } => {
+            AppInput::oc_batch {
+                path,
+                commands,
+                json,
+            } => {
                 let out = officecli::batch(&path, &commands, json.unwrap_or(false))?;
                 Ok(ToolOutput::new(out))
             }
@@ -293,8 +440,12 @@ impl Tool for AppTool {
                 Ok(ToolOutput::new(out))
             }
 
-            // ===== Browser (CDP) =====
+            AppInput::oc_workflow { request } => {
+                let out = office_workflows::run_workflow(&request)?;
+                Ok(ToolOutput::new(serde_json::to_string_pretty(&out)?))
+            }
 
+            // ===== Browser (CDP) =====
             AppInput::browser_list_tabs { port } => {
                 let port = port.unwrap_or(9222);
                 let b = make_browser(port);
@@ -359,7 +510,8 @@ impl Tool for AppTool {
                     placeholder: None,
                     required: false,
                     visible: true,
-                }]).await?;
+                }])
+                .await?;
                 Ok(ToolOutput::new("Typed"))
             }
 
@@ -388,11 +540,13 @@ impl Tool for AppTool {
                     })
                     .collect();
                 b.fill_form(&cdp_fields).await?;
-                Ok(ToolOutput::new(format!("Filled {} field(s)", cdp_fields.len())))
+                Ok(ToolOutput::new(format!(
+                    "Filled {} field(s)",
+                    cdp_fields.len()
+                )))
             }
 
             // ===== Form Fill =====
-
             AppInput::form_fill { request } => {
                 let mut b = make_browser(9222);
                 let result = form_fill::fill_form(&mut b, &request).await?;

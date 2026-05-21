@@ -1,5 +1,6 @@
+use std::collections::{HashMap, VecDeque};
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -80,7 +81,11 @@ impl ImportanceScorer {
         }
 
         let keywords = if self.patterns.urgent_keywords.is_empty() {
-            vec!["urgent".to_string(), "important".to_string(), "deadline".to_string()]
+            vec![
+                "urgent".to_string(),
+                "important".to_string(),
+                "deadline".to_string(),
+            ]
         } else {
             self.patterns.urgent_keywords.clone()
         };
@@ -106,6 +111,9 @@ impl ImportanceScorer {
 pub struct NotificationDetector {
     scorer: ImportanceScorer,
     check_interval: Duration,
+    pending: Arc<Mutex<VecDeque<RawNotification>>>,
+    dedupe_window: Duration,
+    min_score: f32,
 }
 
 impl NotificationDetector {
@@ -113,6 +121,26 @@ impl NotificationDetector {
         Self {
             scorer,
             check_interval,
+            pending: Arc::new(Mutex::new(VecDeque::new())),
+            dedupe_window: Duration::from_secs(30),
+            min_score: 1.0,
+        }
+    }
+
+    /// Push an externally observed notification into the detector queue.
+    pub fn ingest_notification(&self, notification: RawNotification) {
+        if let Ok(mut queue) = self.pending.lock() {
+            queue.push_back(notification);
+        }
+    }
+
+    fn drain_pending_notifications(
+        pending: &Arc<Mutex<VecDeque<RawNotification>>>,
+    ) -> Vec<RawNotification> {
+        if let Ok(mut queue) = pending.lock() {
+            queue.drain(..).collect()
+        } else {
+            Vec::new()
         }
     }
 
@@ -120,16 +148,60 @@ impl NotificationDetector {
         let (tx, rx) = mpsc::unbounded_channel();
         let scorer = self.scorer.clone();
         let interval = self.check_interval;
+        let dedupe_window = self.dedupe_window;
+        let min_score = self.min_score;
+        let pending = self.pending.clone();
         tokio::spawn(async move {
+            let mut last_emitted: HashMap<String, Instant> = HashMap::new();
             loop {
-                // Phase 1 baseline: source integration arrives in next iteration.
-                // The detector stays idle but keeps the event channel active.
-                let _ = (&tx, &scorer);
+                let mut notifications = Self::drain_pending_notifications(&pending);
+                notifications.extend(platform::poll_notifications());
+
+                for raw in notifications {
+                    let key = notification_key(&raw);
+                    if let Some(last) = last_emitted.get(&key)
+                        && Instant::now().duration_since(*last) < dedupe_window
+                    {
+                        continue;
+                    }
+
+                    let importance = scorer.score(&raw);
+                    if importance < min_score {
+                        continue;
+                    }
+
+                    let important = ImportantNotification {
+                        app: raw.app.clone(),
+                        title: raw.title.clone(),
+                        preview: raw.preview.clone(),
+                        importance,
+                    };
+                    if tx.send(important).is_ok() {
+                        last_emitted.insert(key, Instant::now());
+                    } else {
+                        return;
+                    }
+                }
+
                 tokio::time::sleep(interval).await;
             }
         });
         rx
     }
+}
+
+fn notification_key(notification: &RawNotification) -> String {
+    format!(
+        "{}|{}|{}|{}",
+        notification.app.to_ascii_lowercase(),
+        notification.title.to_ascii_lowercase(),
+        notification.preview.to_ascii_lowercase(),
+        notification
+            .sender
+            .as_deref()
+            .unwrap_or_default()
+            .to_ascii_lowercase()
+    )
 }
 
 #[derive(Debug, Clone)]
@@ -304,7 +376,7 @@ fn should_emit_update(
 }
 
 mod platform {
-    use super::WindowContext;
+    use super::{RawNotification, WindowContext};
 
     #[cfg(windows)]
     mod windows_impl {
@@ -326,10 +398,9 @@ mod platform {
             UnhookWinEvent, WINEVENTPROC,
         };
         use windows::Win32::UI::WindowsAndMessaging::{
-            EVENT_OBJECT_FOCUS, EVENT_SYSTEM_FOREGROUND, WINEVENT_OUTOFCONTEXT,
+            EVENT_OBJECT_FOCUS, EVENT_SYSTEM_FOREGROUND, GetClassNameW, GetCursorPos,
+            GetForegroundWindow, GetWindowTextW, GetWindowThreadProcessId, WINEVENT_OUTOFCONTEXT,
             WINEVENT_SKIPOWNPROCESS,
-            GetClassNameW, GetCursorPos, GetForegroundWindow, GetWindowTextW,
-            GetWindowThreadProcessId,
         };
         use windows::core::PWSTR;
 
@@ -460,7 +531,8 @@ mod platform {
 
                 let window_title = window_text(hwnd);
                 let window_class = window_class(hwnd);
-                let app_name = process_name_for_window(hwnd).unwrap_or_else(|| "unknown".to_string());
+                let app_name =
+                    process_name_for_window(hwnd).unwrap_or_else(|| "unknown".to_string());
 
                 let mut cursor = POINT::default();
                 let _ = GetCursorPos(&mut cursor);
@@ -478,6 +550,37 @@ mod platform {
                     cursor_position: (cursor.x, cursor.y),
                 })
             }
+        }
+
+        pub fn poll_notifications() -> Vec<RawNotification> {
+            let Some(context) = capture_window_context() else {
+                return Vec::new();
+            };
+
+            let app = context.app_name.to_ascii_lowercase();
+            let app_is_message_surface = app.contains("outlook")
+                || app.contains("teams")
+                || app.contains("slack")
+                || app.contains("discord")
+                || app.contains("chrome")
+                || app.contains("msedge");
+
+            if !app_is_message_surface {
+                return Vec::new();
+            }
+
+            let preview = context.text_content.unwrap_or_default();
+            if context.window_title.trim().is_empty() && preview.trim().is_empty() {
+                return Vec::new();
+            }
+
+            vec![RawNotification {
+                app: context.app_name,
+                title: context.window_title,
+                preview,
+                sender: None,
+                cc_only: false,
+            }]
         }
 
         fn window_text(hwnd: HWND) -> String {
@@ -609,19 +712,25 @@ mod platform {
         pub fn capture_window_context() -> Option<WindowContext> {
             None
         }
+
+        pub fn poll_notifications() -> Vec<RawNotification> {
+            Vec::new()
+        }
     }
 
     pub use windows_impl::{
         ComGuard, capture_window_context, ensure_automation_available, focus_event_epoch,
-        install_focus_change_hook,
+        install_focus_change_hook, poll_notifications,
     };
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        ContextType, DesktopMonitor, ImportanceScorer, RawNotification, UserPatterns, WindowContext,
+        ContextType, DesktopMonitor, ImportanceScorer, NotificationDetector, RawNotification,
+        UserPatterns, WindowContext,
     };
+    use std::time::Duration;
 
     #[test]
     fn context_detection_maps_known_processes() {
@@ -674,5 +783,29 @@ mod tests {
             cc_only: false,
         });
         assert!(score >= 90.0);
+    }
+
+    #[tokio::test]
+    async fn notification_detector_emits_ingested_events() {
+        let scorer = ImportanceScorer::new(UserPatterns {
+            vip_senders: vec![],
+            urgent_keywords: vec!["urgent".to_string()],
+        });
+        let detector = NotificationDetector::new(scorer, Duration::from_millis(20));
+        detector.ingest_notification(RawNotification {
+            app: "Outlook".to_string(),
+            title: "urgent: budget".to_string(),
+            preview: "Need response today".to_string(),
+            sender: Some("pm@company.com".to_string()),
+            cc_only: false,
+        });
+
+        let mut rx = detector.monitor_notifications().await;
+        let event = tokio::time::timeout(Duration::from_secs(1), rx.recv())
+            .await
+            .expect("detector timeout")
+            .expect("event");
+        assert_eq!(event.app, "Outlook");
+        assert!(event.importance > 0.0);
     }
 }
