@@ -49,8 +49,8 @@ use std::sync::{OnceLock, mpsc};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-const DEFAULT_WINDOW_WIDTH: f64 = 1280.0;
-const DEFAULT_WINDOW_HEIGHT: f64 = 800.0;
+const DEFAULT_WINDOW_WIDTH: f64 = 420.0;
+const DEFAULT_WINDOW_HEIGHT: f64 = 680.0;
 const OUTER_PADDING: f32 = 8.0;
 const GAP: f32 = 6.0;
 const STATUS_BAR_HEIGHT: f32 = 30.0;
@@ -280,12 +280,13 @@ async fn run() -> Result<()> {
         .context("failed to create event loop")?;
     let event_loop_proxy = event_loop.create_proxy();
     startup_trace.mark("event loop created");
-    let mut window_builder = WindowBuilder::new()
-        .with_title("Jcode Desktop")
-        .with_inner_size(LogicalSize::new(
-            DEFAULT_WINDOW_WIDTH,
-            DEFAULT_WINDOW_HEIGHT,
-        ));
+    let mut window_builder =
+        WindowBuilder::new()
+            .with_title("AI Agent")
+            .with_inner_size(LogicalSize::new(
+                DEFAULT_WINDOW_WIDTH,
+                DEFAULT_WINDOW_HEIGHT,
+            ));
 
     if fullscreen {
         window_builder = window_builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
@@ -2899,6 +2900,9 @@ fn to_key_input(key: &Key, modifiers: ModifiersState) -> KeyInput {
                 && (text.eq_ignore_ascii_case("p") || text.eq_ignore_ascii_case("o")) =>
         {
             KeyInput::OpenSessionSwitcher
+        }
+        Key::Character(text) if modifiers.control_key() && text.eq_ignore_ascii_case("t") => {
+            KeyInput::OpenTasksTab
         }
         Key::Character(text) if modifiers.control_key() && text.eq_ignore_ascii_case("r") => {
             KeyInput::RefreshSessions

@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 
+[[bin]]
+name = "iagent-desktop"
+path = "src/main.rs"
+
 [dependencies]
 ab_glyph = "0.2.32"
 anyhow = "1"

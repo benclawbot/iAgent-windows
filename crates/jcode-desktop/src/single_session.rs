@@ -5,8 +5,11 @@ use crate::{
 };
 
 use pulldown_cmark::{Options, Parser};
+use serde_json::Value;
 use std::collections::hash_map::DefaultHasher;
+use std::fs;
 use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
 use workspace::{KeyInput, KeyOutcome};
 
 pub(crate) const SINGLE_SESSION_FONT_FAMILY: &str = "JetBrainsMono Nerd Font";
@@ -33,6 +36,8 @@ pub(crate) const HANDWRITTEN_WELCOME_PHRASES: &[&str] = &["Hello there"];
 
 const DESKTOP_SLASH_COMMANDS: &[(&str, &str)] = &[
     ("/help", "show desktop shortcuts and slash commands"),
+    ("/chat", "show the chat prompt tab"),
+    ("/tasks", "show background task progress"),
     ("/clear", "clear the visible desktop transcript"),
     ("/new", "reset to a fresh desktop session"),
     ("/sessions", "open the recent session switcher"),
@@ -108,6 +113,7 @@ pub(crate) struct SingleSessionApp {
     pub(crate) model_picker: ModelPickerState,
     pub(crate) session_switcher: SessionSwitcherState,
     pub(crate) stdin_response: Option<StdinResponseState>,
+    active_tab: SingleSessionActiveTab,
     welcome_name: Option<String>,
     recovery_session_count: usize,
     queued_drafts: Vec<(String, Vec<(String, String)>)>,
@@ -145,6 +151,21 @@ pub(crate) struct SelectionLineSegment {
     pub(crate) line: usize,
     pub(crate) start_column: usize,
     pub(crate) end_column: usize,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub(crate) enum SingleSessionActiveTab {
+    Chat,
+    Tasks,
+}
+
+impl SingleSessionActiveTab {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Chat => "Chat",
+            Self::Tasks => "Tasks",
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -217,6 +238,15 @@ pub(crate) struct StdinResponseState {
     pub(crate) is_password: bool,
     pub(crate) tool_call_id: String,
     pub(crate) input: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct TaskTabRow {
+    pub(crate) title: String,
+    pub(crate) status: String,
+    pub(crate) percent: Option<u8>,
+    pub(crate) detail: Option<String>,
+    sort_key: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -652,6 +682,7 @@ impl SingleSessionApp {
             model_picker: ModelPickerState::default(),
             session_switcher: SessionSwitcherState::default(),
             stdin_response: None,
+            active_tab: SingleSessionActiveTab::Chat,
             welcome_name,
             recovery_session_count: 0,
             queued_drafts: Vec::new(),
@@ -727,6 +758,7 @@ impl SingleSessionApp {
         self.model_picker = ModelPickerState::default();
         self.session_switcher = SessionSwitcherState::default();
         self.stdin_response = None;
+        self.active_tab = SingleSessionActiveTab::Chat;
         self.welcome_name = desktop_welcome_name();
         self.welcome_hero_phrase_index = welcome_phrase_index(&self.welcome_name);
         self.recovery_session_count = 0;
@@ -743,8 +775,9 @@ impl SingleSessionApp {
 
     pub(crate) fn status_title(&self) -> String {
         let title = self.title();
+        let tab = self.active_tab.label();
         format!(
-            "Jcode Desktop · single session · {title} · Enter send · Shift+Enter newline · Ctrl+Enter queue · Ctrl+P sessions · Ctrl+Shift+M models · Ctrl+Shift+S info · Ctrl+; spawn · Esc interrupt · --workspace for Niri layout"
+            "AI Agent · single session · {tab} · {title} · Enter send · Shift+Enter newline · Ctrl+Enter queue · Ctrl+T tasks/chat · Ctrl+P sessions · Ctrl+Shift+M models · Ctrl+Shift+S info · Ctrl+; spawn · Esc interrupt"
         )
     }
 
@@ -778,11 +811,11 @@ impl SingleSessionApp {
     }
 
     pub(crate) fn has_background_work(&self) -> bool {
-        self.has_activity_indicator()
+        self.has_activity_indicator() || self.active_tab == SingleSessionActiveTab::Tasks
     }
 
     pub(crate) fn has_frame_animation(&self) -> bool {
-        self.has_activity_indicator()
+        self.has_activity_indicator() || task_tab_has_running_tasks()
     }
 
     fn current_session_id(&self) -> Option<&str> {
@@ -810,6 +843,10 @@ impl SingleSessionApp {
 
     pub(crate) fn composer_text(&self) -> String {
         format!("{}{}", self.composer_prompt(), self.draft)
+    }
+
+    pub(crate) fn active_tab(&self) -> SingleSessionActiveTab {
+        self.active_tab
     }
 
     #[cfg(test)]
@@ -873,7 +910,11 @@ impl SingleSessionApp {
                     .unwrap_or_else(|| format!(" · model {model}"))
             })
             .unwrap_or_default();
-        format!("{status}{images}{queued}{stdin}{model}{scroll} · {mode}")
+        let tab = match self.active_tab {
+            SingleSessionActiveTab::Chat => String::new(),
+            SingleSessionActiveTab::Tasks => " · Tasks tab".to_string(),
+        };
+        format!("{status}{images}{queued}{stdin}{model}{scroll} · {mode}{tab}")
     }
 
     #[cfg(test)]
@@ -910,6 +951,7 @@ impl SingleSessionApp {
 
         match key {
             KeyInput::SpawnPanel => KeyOutcome::SpawnSession,
+            KeyInput::OpenTasksTab => self.toggle_tasks_tab(),
             KeyInput::OpenSessionSwitcher => self.open_session_switcher(),
             KeyInput::OpenModelPicker => self.open_model_picker(),
             KeyInput::HotkeyHelp => {
@@ -1080,7 +1122,47 @@ impl SingleSessionApp {
             .clamp(SINGLE_SESSION_MIN_TEXT_SCALE, SINGLE_SESSION_MAX_TEXT_SCALE);
     }
 
+    fn toggle_tasks_tab(&mut self) -> KeyOutcome {
+        self.active_tab = match self.active_tab {
+            SingleSessionActiveTab::Chat => SingleSessionActiveTab::Tasks,
+            SingleSessionActiveTab::Tasks => SingleSessionActiveTab::Chat,
+        };
+        self.show_help = false;
+        self.show_session_info = false;
+        self.model_picker.close();
+        self.session_switcher.close();
+        self.scroll_body_to_bottom();
+        self.status = Some(match self.active_tab {
+            SingleSessionActiveTab::Chat => "showing chat".to_string(),
+            SingleSessionActiveTab::Tasks => "showing task progress".to_string(),
+        });
+        KeyOutcome::Redraw
+    }
+
+    fn show_chat_tab(&mut self) -> KeyOutcome {
+        self.active_tab = SingleSessionActiveTab::Chat;
+        self.show_help = false;
+        self.show_session_info = false;
+        self.model_picker.close();
+        self.session_switcher.close();
+        self.scroll_body_to_bottom();
+        self.status = Some("showing chat".to_string());
+        KeyOutcome::Redraw
+    }
+
+    fn show_tasks_tab(&mut self) -> KeyOutcome {
+        self.active_tab = SingleSessionActiveTab::Tasks;
+        self.show_help = false;
+        self.show_session_info = false;
+        self.model_picker.close();
+        self.session_switcher.close();
+        self.scroll_body_to_bottom();
+        self.status = Some("showing task progress".to_string());
+        KeyOutcome::Redraw
+    }
+
     fn open_model_picker(&mut self) -> KeyOutcome {
+        self.active_tab = SingleSessionActiveTab::Chat;
         self.show_help = false;
         self.show_session_info = false;
         self.session_switcher.close();
@@ -1091,6 +1173,7 @@ impl SingleSessionApp {
     }
 
     fn open_model_picker_preview(&mut self, filter: String) -> KeyOutcome {
+        self.active_tab = SingleSessionActiveTab::Chat;
         self.show_help = false;
         self.show_session_info = false;
         self.session_switcher.close();
@@ -1160,6 +1243,7 @@ impl SingleSessionApp {
     }
 
     fn open_session_switcher(&mut self) -> KeyOutcome {
+        self.active_tab = SingleSessionActiveTab::Chat;
         self.show_help = false;
         self.show_session_info = false;
         self.model_picker.close();
@@ -1381,6 +1465,9 @@ impl SingleSessionApp {
                 self.current_session_id(),
             );
         }
+        if self.active_tab == SingleSessionActiveTab::Tasks {
+            return task_tab_styled_lines();
+        }
         self.body_styled_lines_without_inline_widgets()
     }
 
@@ -1558,6 +1645,10 @@ impl SingleSessionApp {
         self.session_switcher.filter.hash(&mut hasher);
         self.session_switcher.selected.hash(&mut hasher);
         self.stdin_response.hash(&mut hasher);
+        self.active_tab.hash(&mut hasher);
+        if self.active_tab == SingleSessionActiveTab::Tasks {
+            task_tab_cache_fingerprint().hash(&mut hasher);
+        }
         self.welcome_name.hash(&mut hasher);
         self.recovery_session_count.hash(&mut hasher);
         self.welcome_timeline.hash(&mut hasher);
@@ -1593,6 +1684,10 @@ impl SingleSessionApp {
         self.session_switcher.filter.hash(&mut hasher);
         self.session_switcher.selected.hash(&mut hasher);
         self.stdin_response.hash(&mut hasher);
+        self.active_tab.hash(&mut hasher);
+        if self.active_tab == SingleSessionActiveTab::Tasks {
+            task_tab_cache_fingerprint().hash(&mut hasher);
+        }
         self.welcome_name.hash(&mut hasher);
         self.recovery_session_count.hash(&mut hasher);
         self.welcome_timeline.hash(&mut hasher);
@@ -1607,6 +1702,7 @@ impl SingleSessionApp {
 
     pub(crate) fn is_welcome_timeline_visible(&self) -> bool {
         self.welcome_timeline
+            && self.active_tab == SingleSessionActiveTab::Chat
             && !self.show_help
             && !self.session_switcher.open
             && self.stdin_response.is_none()
@@ -1625,6 +1721,7 @@ impl SingleSessionApp {
             && self.status.is_none()
             && self.error.is_none()
             && self.pending_images.is_empty()
+            && self.active_tab == SingleSessionActiveTab::Chat
             && !self.show_help
             && !self.model_picker.open
             && !self.session_switcher.open
@@ -1960,6 +2057,7 @@ impl SingleSessionApp {
         {
             return outcome;
         }
+        self.active_tab = SingleSessionActiveTab::Chat;
         let images = std::mem::take(&mut self.pending_images);
         self.record_user_submit(&message);
         let Some(session) = &self.session else {
@@ -1989,16 +2087,30 @@ impl SingleSessionApp {
                 self.draft.clear();
                 self.draft_cursor = 0;
                 self.input_undo_stack.clear();
+                self.active_tab = SingleSessionActiveTab::Chat;
                 self.show_help = true;
                 self.status = Some("showing desktop slash commands".to_string());
                 self.scroll_body_to_bottom();
                 KeyOutcome::Redraw
+            }
+            "/chat" => {
+                self.draft.clear();
+                self.draft_cursor = 0;
+                self.input_undo_stack.clear();
+                self.show_chat_tab()
+            }
+            "/tasks" | "/task" => {
+                self.draft.clear();
+                self.draft_cursor = 0;
+                self.input_undo_stack.clear();
+                self.show_tasks_tab()
             }
             "/clear" => {
                 self.messages.clear();
                 self.streaming_response.clear();
                 self.error = None;
                 self.is_processing = false;
+                self.active_tab = SingleSessionActiveTab::Chat;
                 self.draft.clear();
                 self.draft_cursor = 0;
                 self.input_undo_stack.clear();
@@ -2935,6 +3047,183 @@ fn session_card_search_text(session: &workspace::SessionCard) -> String {
     text.to_lowercase()
 }
 
+fn task_tab_styled_lines() -> Vec<SingleSessionStyledLine> {
+    task_tab_styled_lines_from_rows(&load_task_tab_rows())
+}
+
+pub(crate) fn task_tab_styled_lines_from_rows(rows: &[TaskTabRow]) -> Vec<SingleSessionStyledLine> {
+    let mut lines = vec![
+        styled_line("Tasks", SingleSessionLineStyle::OverlayTitle),
+        styled_line("Chat  |  Tasks", SingleSessionLineStyle::Meta),
+        blank_styled_line(),
+    ];
+
+    if rows.is_empty() {
+        lines.push(styled_line(
+            "No background tasks yet",
+            SingleSessionLineStyle::Overlay,
+        ));
+        lines.push(styled_line(
+            "Tasks started by the agent will appear here with progress and status.",
+            SingleSessionLineStyle::Meta,
+        ));
+        return lines;
+    }
+
+    let running_count = rows.iter().filter(|row| row.status == "running").count();
+    lines.push(styled_line(
+        format!("{} task(s) · {} running", rows.len(), running_count),
+        SingleSessionLineStyle::Status,
+    ));
+    lines.push(blank_styled_line());
+
+    for row in rows.iter().take(8) {
+        let status = if row.status == "completed" {
+            "Done".to_string()
+        } else {
+            row.status.clone()
+        };
+        let percent = row
+            .percent
+            .map(|percent| format!(" {percent}%"))
+            .unwrap_or_default();
+        lines.push(styled_line(
+            format!("{}{}", compact_tool_text(&row.title, 56), percent),
+            SingleSessionLineStyle::OverlayTitle,
+        ));
+        if let Some(percent) = row.percent {
+            lines.push(styled_line(
+                format!("{} {}", task_progress_bar(percent, 24), status),
+                if row.status == "running" {
+                    SingleSessionLineStyle::Tool
+                } else {
+                    SingleSessionLineStyle::Status
+                },
+            ));
+        } else {
+            lines.push(styled_line(status, SingleSessionLineStyle::Status));
+        }
+        if let Some(detail) = &row.detail {
+            lines.push(styled_line(
+                compact_tool_text(detail, 72),
+                SingleSessionLineStyle::Meta,
+            ));
+        }
+        lines.push(blank_styled_line());
+    }
+    lines
+}
+
+fn load_task_tab_rows() -> Vec<TaskTabRow> {
+    let dir = task_status_dir();
+    let Ok(entries) = fs::read_dir(dir) else {
+        return Vec::new();
+    };
+    let mut rows = entries
+        .filter_map(Result::ok)
+        .filter_map(|entry| {
+            let path = entry.path();
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.ends_with(".status.json"))
+                .then_some(path)
+        })
+        .filter_map(|path| {
+            fs::read_to_string(path)
+                .ok()
+                .and_then(|content| serde_json::from_str::<Value>(&content).ok())
+                .and_then(|value| task_tab_row_from_status_json(&value))
+        })
+        .collect::<Vec<_>>();
+    rows.sort_by(|a, b| b.sort_key.cmp(&a.sort_key));
+    rows
+}
+
+pub(crate) fn task_tab_row_from_status_json(value: &Value) -> Option<TaskTabRow> {
+    let task_id = json_string(value, "task_id")?;
+    let title = json_string(value, "display_name")
+        .or_else(|| json_string(value, "tool_name"))
+        .unwrap_or_else(|| task_id.clone());
+    let status = json_string(value, "status").unwrap_or_else(|| "unknown".to_string());
+    let progress = value.get("progress");
+    let percent = progress
+        .and_then(|progress| progress.get("percent"))
+        .and_then(Value::as_f64)
+        .map(|percent| percent.round().clamp(0.0, 100.0) as u8);
+    let detail = progress
+        .and_then(|progress| progress.get("message"))
+        .and_then(Value::as_str)
+        .filter(|message| !message.trim().is_empty())
+        .map(str::to_string)
+        .or_else(|| json_string(value, "error"))
+        .or_else(|| json_string(value, "completed_at"));
+    let sort_key = json_string(value, "started_at").unwrap_or(task_id);
+    Some(TaskTabRow {
+        title,
+        status,
+        percent,
+        detail,
+        sort_key,
+    })
+}
+
+fn json_string(value: &Value, key: &str) -> Option<String> {
+    value
+        .get(key)
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|text| !text.is_empty())
+        .map(str::to_string)
+}
+
+fn task_progress_bar(percent: u8, width: usize) -> String {
+    let width = width.max(4);
+    let filled = ((percent as usize * width) + 50) / 100;
+    format!(
+        "[{}{}]",
+        "#".repeat(filled.min(width)),
+        "-".repeat(width.saturating_sub(filled))
+    )
+}
+
+fn task_tab_cache_fingerprint() -> u64 {
+    let mut hasher = DefaultHasher::new();
+    let Ok(entries) = fs::read_dir(task_status_dir()) else {
+        return 0;
+    };
+    let mut files = entries
+        .filter_map(Result::ok)
+        .filter_map(|entry| {
+            let path = entry.path();
+            let name = path.file_name()?.to_str()?.to_string();
+            if !name.ends_with(".status.json") {
+                return None;
+            }
+            let metadata = path.metadata().ok()?;
+            let modified = metadata
+                .modified()
+                .ok()
+                .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|duration| duration.as_millis())
+                .unwrap_or(0);
+            Some((name, metadata.len(), modified))
+        })
+        .collect::<Vec<_>>();
+    files.sort();
+    files.hash(&mut hasher);
+    hasher.finish()
+}
+
+fn task_tab_has_running_tasks() -> bool {
+    load_task_tab_rows()
+        .iter()
+        .any(|row| row.status.eq_ignore_ascii_case("running"))
+}
+
+fn task_status_dir() -> PathBuf {
+    std::env::temp_dir().join("iagent-bg-tasks")
+}
+
 fn session_info_inline_styled_lines(app: &SingleSessionApp) -> Vec<SingleSessionStyledLine> {
     let (user_count, assistant_count, tool_count, system_count, meta_count) =
         session_message_role_counts(&app.messages);
@@ -3307,6 +3596,7 @@ const SINGLE_SESSION_HELP_SECTIONS: &[HelpSection] = &[
             ("Ctrl+Shift+M", "open model/account picker"),
             ("Ctrl+M/N", "switch to next/previous model"),
             ("Ctrl+P/O", "open recent session switcher"),
+            ("Ctrl+T", "toggle Chat and Tasks tabs"),
             ("Ctrl+Shift+S", "toggle inline session info/stats"),
         ],
     },
