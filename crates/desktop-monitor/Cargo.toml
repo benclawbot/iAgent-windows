@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 anyhow = "1"
+dirs = "5"
 regex = "1"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt", "sync", "time"] }

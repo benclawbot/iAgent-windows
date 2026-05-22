@@ -1172,3 +1172,5 @@ mod tests {
         assert!(event.preview.contains("[REDACTED_TOKEN]"));
     }
 }
+
+pub mod file_ops;
