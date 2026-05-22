@@ -854,7 +854,7 @@ impl Server {
         self.spawn_registry_metadata_publisher(registry_info);
 
         // Spawn WebSocket gateway for iOS/web clients (if enabled)
-        let _gateway_handle = self.spawn_gateway(runtime);
+        let _gateway_handle = self.spawn_gateway(runtime).await;
 
         // Startup recovery can be expensive in multi-session reloads. Run it
         // only after the replacement daemon is already accepting reconnects.
@@ -1771,7 +1771,7 @@ impl Server {
     /// Spawn the WebSocket gateway if enabled in config.
     /// Returns a task handle that accepts gateway clients and feeds them
     /// into handle_client just like Unix socket connections.
-    fn spawn_gateway(&self, runtime: ServerRuntime) -> Option<tokio::task::JoinHandle<()>> {
+    async fn spawn_gateway(&self, runtime: ServerRuntime) -> Option<tokio::task::JoinHandle<()>> {
         let config = if let Some(override_config) = &self.gateway_config_override {
             override_config.clone()
         } else {

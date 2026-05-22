@@ -172,6 +172,16 @@ impl CompactionManager {
         self.token_budget = budget;
     }
 
+    /// Request compaction on the next agent turn.
+    pub fn set_should_compact(&mut self, should_compact: bool) {
+        if should_compact {
+            self.observed_input_tokens = Some(self.token_budget as u64);
+            self.suppress_compaction_until_new_message = false;
+        } else {
+            self.observed_input_tokens = None;
+        }
+    }
+
     /// Get current token budget
     pub fn token_budget(&self) -> usize {
         self.token_budget
@@ -836,7 +846,7 @@ impl CompactionManager {
 
         // Spawn background task that notifies via Bus when done
         self.pending_task = Some(tokio::spawn({
-            let trigger = mode_label.clone();
+            let mode_label_for_task = mode_label.clone();
             async move {
                 let start = std::time::Instant::now();
                 let result =
@@ -845,7 +855,7 @@ impl CompactionManager {
                 let duration_ms = start.elapsed().as_millis() as u64;
                 log_info!(
                     "Compaction ({}) finished in {:.2}s ({} messages summarized)",
-                    mode_label,
+                    mode_label_for_task,
                     duration_ms as f64 / 1000.0,
                     msg_count,
                 );

@@ -12,7 +12,7 @@ use crate::compaction::CompactionManager;
 use crate::tool::{Tool, ToolContext, ToolOutput};
 use anyhow::Result;
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -65,8 +65,8 @@ impl Tool for CompactionTool {
         let input: CompactionInput = serde_json::from_value(input)?;
 
         match input {
-            CompactionInput::status => self.show_status(ctx.session_id).await,
-            CompactionInput::trigger => self.trigger_compaction(ctx.session_id).await,
+            CompactionInput::status => self.show_status(&ctx.session_id).await,
+            CompactionInput::trigger => self.trigger_compaction(&ctx.session_id).await,
         }
     }
 }

@@ -18,6 +18,8 @@ use std::path::PathBuf;
 use std::sync::{LazyLock, RwLock};
 use std::time::SystemTime;
 
+use crate::goal_judge;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ConfigCacheFingerprint {
     path: Option<PathBuf>,

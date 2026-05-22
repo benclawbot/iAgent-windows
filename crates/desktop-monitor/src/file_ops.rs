@@ -13,9 +13,7 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
-
-#[cfg(target_os = "windows")]
-use std::os::windows::fs::MetadataExt;
+use serde::Serialize;
 
 // ---------------------------------------------------------------------------
 // XDG / Platform helpers
@@ -23,14 +21,17 @@ use std::os::windows::fs::MetadataExt;
 
 /// Get the user's home directory.
 pub fn home_dir() -> PathBuf {
-    dirs::home_dir().unwrap_or_else(|| PathBuf::from(env!("HOME")))
+    dirs::home_dir()
+        .or_else(|| std::env::var_os("HOME").map(PathBuf::from))
+        .or_else(|| std::env::var_os("USERPROFILE").map(PathBuf::from))
+        .unwrap_or_else(|| PathBuf::from("."))
 }
 
 /// Resolve XDG directories for Linux, fall back to macOS/Windows conventions.
-pub fn xdg_dir(env_key: &str, fallback: &str) -> Option<PathBuf> {
+pub fn xdg_dir(_env_key: &str, fallback: &str) -> Option<PathBuf> {
     #[cfg(target_os = "linux")]
     {
-        std::env::var(env_key)
+        std::env::var(_env_key)
             .ok()
             .map(PathBuf::from)
             .and_then(|p| if p.exists() { Some(p) } else { None })
@@ -200,7 +201,7 @@ pub fn get_file_info(path: &Path) -> Result<FileInfo> {
     })
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct FileInfo {
     pub name: String,
     pub is_dir: bool,
@@ -297,7 +298,7 @@ pub fn list_dir(path: &Path, include_hidden: bool) -> Result<Vec<DirEntry>> {
     Ok(entries)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct DirEntry {
     pub name: String,
     pub is_dir: bool,
@@ -457,7 +458,7 @@ pub fn find_files(
     Ok(results)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SearchResult {
     pub name: String,
     pub path: PathBuf,
@@ -504,15 +505,17 @@ fn walkdir(root: &Path) -> Result<Vec<SearchResult>> {
     Ok(entries)
 }
 
-/// Get disk usage for a path (Linux-specific implementation).
+/// Get disk usage for a path.
+#[cfg(unix)]
 pub fn disk_usage(path: &Path) -> Result<DiskUsage> {
-    use std::fs;
+    use std::ffi::CString;
+    use std::os::unix::ffi::OsStrExt;
 
-    // On Linux, use statvfs for accurate filesystem stats
-    let path_str = path.to_string_lossy();
+    let path_cstr = CString::new(path.as_os_str().as_bytes())
+        .map_err(|_| anyhow!("Path contains an interior NUL byte: {}", path.display()))?;
     let statvfs: libc::statvfs = unsafe {
         let mut stat: libc::statvfs = std::mem::zeroed();
-        if libc::statvfs(path_str.as_ptr() as *const _, &mut stat) != 0 {
+        if libc::statvfs(path_cstr.as_ptr(), &mut stat) != 0 {
             return Err(anyhow!("Failed to get filesystem stats for {}", path.display()));
         }
         stat
@@ -534,7 +537,50 @@ pub fn disk_usage(path: &Path) -> Result<DiskUsage> {
     })
 }
 
-#[derive(Debug, Clone)]
+#[cfg(windows)]
+pub fn disk_usage(path: &Path) -> Result<DiskUsage> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows::core::PCWSTR;
+    use windows::Win32::Storage::FileSystem::GetDiskFreeSpaceExW;
+
+    let mut wide_path: Vec<u16> = path.as_os_str().encode_wide().collect();
+    wide_path.push(0);
+
+    let mut free_available = 0u64;
+    let mut total = 0u64;
+    let mut total_free = 0u64;
+    unsafe {
+        GetDiskFreeSpaceExW(
+            PCWSTR(wide_path.as_ptr()),
+            Some(&mut free_available),
+            Some(&mut total),
+            Some(&mut total_free),
+        )
+        .map_err(|err| anyhow!("Failed to get filesystem stats for {}: {err}", path.display()))?;
+    }
+
+    let used = total.saturating_sub(total_free);
+    Ok(DiskUsage {
+        total,
+        used,
+        free: free_available,
+        percent_used: if total > 0 {
+            (used as f64 / total as f64) * 100.0
+        } else {
+            0.0
+        },
+    })
+}
+
+#[cfg(not(any(unix, windows)))]
+pub fn disk_usage(path: &Path) -> Result<DiskUsage> {
+    Err(anyhow!(
+        "Disk usage is not supported on this platform for {}",
+        path.display()
+    ))
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct DiskUsage {
     pub total: u64,
     pub used: u64,

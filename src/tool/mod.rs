@@ -39,9 +39,11 @@ mod write;
 
 use crate::compaction::CompactionManager;
 use crate::goal_judge::GoalJudge;
-use crate::provider::Provider;
+use crate::message::Message;
+use crate::provider::{EventStream, Provider};
 use crate::skill::SkillRegistry;
 use anyhow::Result;
+use async_trait::async_trait;
 use jcode_message_types::ToolDefinition;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -51,6 +53,29 @@ use tokio::sync::RwLock;
 pub(crate) use jcode_tool_core::intent_schema_property;
 pub use jcode_tool_core::{StdinInputRequest, Tool, ToolContext, ToolExecutionMode};
 pub use jcode_tool_types::{ToolImage, ToolOutput};
+
+struct NoopProvider;
+
+#[async_trait]
+impl Provider for NoopProvider {
+    async fn complete(
+        &self,
+        _messages: &[Message],
+        _tools: &[ToolDefinition],
+        _system: &str,
+        _resume_session_id: Option<&str>,
+    ) -> anyhow::Result<EventStream> {
+        Err(anyhow::anyhow!("NoopProvider does not execute completions"))
+    }
+
+    fn name(&self) -> &str {
+        "noop"
+    }
+
+    fn fork(&self) -> Arc<dyn Provider> {
+        Arc::new(NoopProvider)
+    }
+}
 
 /// Registry of available tools (Arc-wrapped for sharing)
 ///
@@ -108,7 +133,7 @@ impl Registry {
             tools: Arc::new(RwLock::new(HashMap::new())),
             skills: Arc::new(RwLock::new(SkillRegistry::default())),
             compaction: Arc::new(RwLock::new(CompactionManager::new())),
-            provider: Arc::new(crate::provider::DummyProvider),
+            provider: Arc::new(NoopProvider),
         }
     }
 

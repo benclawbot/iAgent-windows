@@ -53,7 +53,7 @@ impl RoutingDecision {
 }
 
 /// GoalJudge configuration for routing decisions.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct GoalJudgeConfig {
     /// Enable goal-based tool routing (default: false).
@@ -143,7 +143,7 @@ Respond with JSON in this exact format:
 Only output the JSON, no additional text."#,
             active_goal.id,
             active_goal.title,
-            active_goal.status.unwrap_or_default(),
+            active_goal.status.as_str(),
             tool_name,
             input_preview
         );

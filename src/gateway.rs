@@ -27,6 +27,7 @@ use tokio_tungstenite::tungstenite::Message;
 use crate::logging;
 use crate::process_memory;
 use crate::safety::SafetySystem;
+use crate::storage;
 use crate::tool::Registry;
 mod auth;
 mod registry;
@@ -35,7 +36,7 @@ use auth::{WsAuth, WsAuthSource, extract_ws_auth, ws_error_response};
 pub(crate) use auth::{is_valid_hex_token, parse_bearer_token, parse_query_token};
 pub use jcode_gateway_types::{PairedDevice, PairingCode};
 pub use registry::DeviceRegistry;
-use chrono::Utc;
+use chrono::{TimeZone, Utc};
 
 /// Default gateway port ("jc" on phone keypad = 52, but we use 7643)
 pub const DEFAULT_PORT: u16 = 7643;
