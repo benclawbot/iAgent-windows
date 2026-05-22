@@ -12,13 +12,13 @@ pub use jcode_config_types::{
     SessionPickerResumeAction, SwarmSpawnMode, UpdateChannel, WebSearchConfig, WebSearchEngine,
 };
 
+use crate::goal_judge;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::{LazyLock, RwLock};
 use std::time::SystemTime;
 
-use crate::goal_judge;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ConfigCacheFingerprint {

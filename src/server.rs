@@ -1797,11 +1797,13 @@ impl Server {
             .map(|r| r.safety().clone())
             .unwrap_or_else(|| Arc::new(crate::safety::SafetySystem::new()));
 
-        // Create a Registry for the gateway's /status endpoint
-        let registry = crate::tool::Registry::new(self.provider.fork()).await;
+        let provider = self.provider.fork();
 
         // Spawn the TCP/WebSocket listener
         tokio::spawn(async move {
+            // Create a Registry for the gateway's /status endpoint inside the
+            // async task; spawn_gateway itself is synchronous startup plumbing.
+            let registry = crate::tool::Registry::new(provider).await;
             if let Err(e) = crate::gateway::run_gateway(config, client_tx, safety_system, Arc::new(registry)).await {
                 log_error!(("Gateway error: {}", e));
             }

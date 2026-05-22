@@ -85,6 +85,7 @@ pub enum KeyInput {
     CopyLatestResponse,
     OpenModelPicker,
     OpenSessionSwitcher,
+    OpenTasksTab,
     ModelPickerMove(i32),
     CycleModel(i8),
     #[allow(dead_code)]
@@ -491,6 +492,7 @@ impl Workspace {
             | KeyInput::CycleModel(_)
             | KeyInput::OpenModelPicker
             | KeyInput::OpenSessionSwitcher
+            | KeyInput::OpenTasksTab
             | KeyInput::ToggleSessionInfo
             | KeyInput::ModelPickerMove(_)
             | KeyInput::AttachClipboardImage
@@ -618,6 +620,7 @@ impl Workspace {
             | KeyInput::CopyLatestResponse
             | KeyInput::OpenModelPicker
             | KeyInput::OpenSessionSwitcher
+            | KeyInput::OpenTasksTab
             | KeyInput::ToggleSessionInfo
             | KeyInput::ModelPickerMove(_)
             | KeyInput::CycleModel(_)

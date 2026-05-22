@@ -486,6 +486,66 @@ fn single_session_status_slash_opens_inline_session_info() {
 }
 
 #[test]
+fn single_session_defaults_to_chat_tab_with_task_tab_access() {
+    let mut app = SingleSessionApp::new(None);
+
+    assert_eq!(app.active_tab(), SingleSessionActiveTab::Chat);
+    assert!(app.status_title().contains("Chat"));
+
+    assert_eq!(app.handle_key(KeyInput::OpenTasksTab), KeyOutcome::Redraw);
+    assert_eq!(app.active_tab(), SingleSessionActiveTab::Tasks);
+    let tasks = app
+        .body_styled_lines()
+        .into_iter()
+        .map(|line| line.text)
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert!(tasks.contains("Tasks"));
+    assert!(tasks.contains("No background tasks yet"));
+    assert!(app.composer_status_line().contains("Tasks tab"));
+
+    assert_eq!(app.handle_key(KeyInput::OpenTasksTab), KeyOutcome::Redraw);
+    assert_eq!(app.active_tab(), SingleSessionActiveTab::Chat);
+}
+
+#[test]
+fn single_session_tasks_slash_opens_task_tab_without_sending_prompt() {
+    let mut app = SingleSessionApp::new(None);
+    app.handle_key(KeyInput::Character("/tasks".to_string()));
+
+    assert_eq!(app.handle_key(KeyInput::SubmitDraft), KeyOutcome::Redraw);
+    assert_eq!(app.active_tab(), SingleSessionActiveTab::Tasks);
+    assert!(app.draft.is_empty());
+    assert!(app.messages.is_empty());
+
+    app.handle_key(KeyInput::Character("/chat".to_string()));
+    assert_eq!(app.handle_key(KeyInput::SubmitDraft), KeyOutcome::Redraw);
+    assert_eq!(app.active_tab(), SingleSessionActiveTab::Chat);
+}
+
+#[test]
+fn task_status_json_formats_progress_rows_for_task_tab() {
+    let json = serde_json::json!({
+        "task_id": "task_1234567890",
+        "tool_name": "shell",
+        "display_name": "Indexing Codebase",
+        "status": "running",
+        "progress": {
+            "kind": "determinate",
+            "percent": 68.0,
+            "message": "Scanning crates"
+        }
+    });
+
+    let row = task_tab_row_from_status_json(&json).expect("task row");
+
+    assert_eq!(row.title, "Indexing Codebase");
+    assert_eq!(row.status, "running");
+    assert_eq!(row.percent, Some(68));
+    assert_eq!(row.detail.as_deref(), Some("Scanning crates"));
+}
+
+#[test]
 fn single_session_slash_model_with_argument_requests_model_switch() {
     let mut app = SingleSessionApp::new(None);
     app.draft = "/model gpt-5.5".to_string();

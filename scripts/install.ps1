@@ -70,6 +70,27 @@ function Write-Info($msg) { Write-Host $msg -ForegroundColor Blue }
 function Write-Err($msg) { Write-Host "error: $msg" -ForegroundColor Red; exit 1 }
 function Write-Warn($msg) { Write-Host "warning: $msg" -ForegroundColor Yellow }
 
+function Get-LatestReleaseWithRetry([string]$Repository, [int]$MaxAttempts = 4, [int]$BaseDelaySeconds = 2) {
+    $lastError = $null
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        try {
+            return Invoke-RestMethod -Uri "https://api.github.com/repos/$Repository/releases/latest" -TimeoutSec 20 -Headers @{
+                "User-Agent" = "iAgent-Windows-Installer"
+                "Accept" = "application/vnd.github+json"
+            }
+        } catch {
+            $lastError = $_
+            if ($attempt -lt $MaxAttempts) {
+                $delay = [Math]::Min(30, [int]($BaseDelaySeconds * [Math]::Pow(2, $attempt - 1)))
+                Write-Warn "Latest-release lookup attempt $attempt/$MaxAttempts failed: $($_.Exception.Message). Retrying in ${delay}s..."
+                Start-Sleep -Seconds $delay
+            }
+        }
+    }
+
+    throw $lastError
+}
+
 # ── OfficeCLI ──────────────────────────────────────────────────────────────────
 # Office document automation for Word (.docx), Excel (.xlsx), PowerPoint (.pptx).
 # Installed to $InstallDir so it's alongside iagent.exe and already on PATH.
@@ -605,9 +626,9 @@ function Stop-IagentDockProcesses([string]$TargetAppDir) {
 function Install-IagentDockApp([string]$TargetAppDir) {
     Write-Info "Installing iAgent desktop dock..."
 
-    $frontendZipUrl = "https://github.com/benclawbot/iagent/archive/refs/heads/main.zip"
+    $frontendZipUrl = "https://github.com/$Repo/archive/refs/heads/main.zip"
     $dockTempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("iagent-dock-" + [Guid]::NewGuid().ToString("N"))
-    $dockZipPath = Join-Path $dockTempDir "iagent-main.zip"
+    $dockZipPath = Join-Path $dockTempDir "dock-main.zip"
     $extractDir = Join-Path $dockTempDir "extract"
 
     New-Item -ItemType Directory -Path $dockTempDir -Force | Out-Null
@@ -615,9 +636,26 @@ function Install-IagentDockApp([string]$TargetAppDir) {
         Invoke-WebRequest -Uri $frontendZipUrl -OutFile $dockZipPath -UseBasicParsing
         Expand-Archive -Path $dockZipPath -DestinationPath $extractDir -Force
 
-        $extractedRoot = Join-Path $extractDir "iagent-main"
-        if (-not (Test-Path -LiteralPath (Join-Path $extractedRoot "iagent-py\pyproject.toml"))) {
-            Write-Err "Downloaded dock archive did not contain iagent-py"
+        $zipRoot = Get-ChildItem -LiteralPath $extractDir -Directory | Select-Object -First 1
+        if (-not $zipRoot) {
+            Write-Err "Downloaded dock archive could not be extracted"
+        }
+        $extractedRoot = $zipRoot.FullName
+
+        # New repo layout: app/iagent-py + app/launch-iagent.ps1
+        # Legacy layout fallback: iagent-py + launch-iagent.ps1 at root.
+        $dockSourceDir = Join-Path $extractedRoot "app"
+        $usesLegacyLayout = $false
+        if (-not (Test-Path -LiteralPath (Join-Path $dockSourceDir "iagent-py\pyproject.toml"))) {
+            if (Test-Path -LiteralPath (Join-Path $extractedRoot "iagent-py\pyproject.toml")) {
+                $dockSourceDir = $extractedRoot
+                $usesLegacyLayout = $true
+            } else {
+                Write-Err "Downloaded dock archive did not contain iagent-py"
+            }
+        }
+        if (-not (Test-Path -LiteralPath (Join-Path $dockSourceDir "launch-iagent.ps1"))) {
+            Write-Err "Downloaded dock archive did not contain launch-iagent.ps1"
         }
 
         $targetParent = Split-Path -Parent $TargetAppDir
@@ -626,7 +664,12 @@ function Install-IagentDockApp([string]$TargetAppDir) {
             Stop-IagentDockProcesses -TargetAppDir $TargetAppDir
             Remove-Item -LiteralPath $TargetAppDir -Recurse -Force
         }
-        Move-Item -LiteralPath $extractedRoot -Destination $TargetAppDir -Force
+
+        if ($usesLegacyLayout) {
+            Move-Item -LiteralPath $extractedRoot -Destination $TargetAppDir -Force
+        } else {
+            Move-Item -LiteralPath $dockSourceDir -Destination $TargetAppDir -Force
+        }
     } finally {
         Remove-Item -Path $dockTempDir -Recurse -Force -ErrorAction SilentlyContinue
     }
@@ -711,6 +754,64 @@ function New-IagentDockLauncher([string]$IagentExePath, [string]$TargetAppDir, [
     }
 }
 
+function Write-DockPostInstallSelfCheck([string]$TargetInstallDir, [string]$TargetAppDir, $DockLauncher, [bool]$DockWasSkipped) {
+    Write-Host ""
+    Write-Info "Post-install self-check (dock runtime):"
+
+    if ($DockWasSkipped) {
+        Write-Info "  SKIPPED: Dock setup was skipped by parameter."
+        return
+    }
+
+    $checks = @(
+        @{
+            Label = "dock launcher VBS"
+            Path  = if ($DockLauncher) { $DockLauncher.VbsPath } else { $null }
+        },
+        @{
+            Label = "dock launcher PS1"
+            Path  = if ($DockLauncher) { $DockLauncher.Ps1Path } else { $null }
+        },
+        @{
+            Label = "dock app launcher"
+            Path  = Join-Path $TargetAppDir "launch-iagent.ps1"
+        },
+        @{
+            Label = "python runtime project"
+            Path  = Join-Path $TargetAppDir "iagent-py\pyproject.toml"
+        },
+        @{
+            Label = "worker package"
+            Path  = Join-Path $TargetAppDir "worker\package.json"
+        }
+    )
+
+    $allOk = $true
+    foreach ($check in $checks) {
+        $path = $check.Path
+        $ok = $path -and (Test-Path -LiteralPath $path)
+        $status = if ($ok) { "OK" } else { "MISSING" }
+        if (-not $ok) { $allOk = $false }
+        Write-Host ("  {0}: {1} ({2})" -f $status, $check.Label, $path)
+    }
+
+    $launchScript = Join-Path $TargetAppDir "launch-iagent.ps1"
+    if (Test-Path -LiteralPath $launchScript) {
+        $launchText = Get-Content -LiteralPath $launchScript -Raw
+        $hasUvLaunch = $launchText -match "run\s+python(\.exe)?\s+-m\s+iagent"
+        $hasWorkerRef = $launchText -match "worker"
+        Write-Host ("  {0}: launch command uses uv/python iagent" -f ($(if ($hasUvLaunch) { "OK" } else { "WARN" })))
+        Write-Host ("  {0}: launch script references worker runtime" -f ($(if ($hasWorkerRef) { "OK" } else { "WARN" })))
+        if (-not $hasUvLaunch) { $allOk = $false }
+    }
+
+    if ($allOk) {
+        Write-Info "  Result: dock runtime layout looks complete."
+    } else {
+        Write-Warn "  Result: dock runtime layout is incomplete; review missing entries above."
+    }
+}
+
 function Get-IagentWindowsArtifact {
     $candidates = @()
 
@@ -750,7 +851,7 @@ if (-not $Version) {
 
     Write-Info "Fetching latest release..."
     try {
-        $Release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
+        $Release = Get-LatestReleaseWithRetry -Repository $Repo
         $Version = $Release.tag_name
     } catch {
         Write-Warn "Failed to determine latest release version ($($_.Exception.Message))."
@@ -928,6 +1029,7 @@ if ($SkipDesktopShortcut) {
 }
 
 Set-SetupHintsState -AlacrittyConfigured:(Test-AlacrittyInstalled) -HotkeyConfigured:$configuredHotkey
+Write-DockPostInstallSelfCheck -TargetInstallDir $InstallDir -TargetAppDir $AppDir -DockLauncher $dockLauncher -DockWasSkipped:$SkipDockSetup.IsPresent
 
 Write-Host ""
 Write-Info "iAgent $Version installed successfully!"

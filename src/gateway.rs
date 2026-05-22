@@ -13,6 +13,7 @@
 //! frames by a relay task.
 
 use anyhow::Result;
+use chrono::{TimeZone, Utc};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use futures::SinkExt;
 use futures::stream::StreamExt;
@@ -36,7 +37,6 @@ use auth::{WsAuth, WsAuthSource, extract_ws_auth, ws_error_response};
 pub(crate) use auth::{is_valid_hex_token, parse_bearer_token, parse_query_token};
 pub use jcode_gateway_types::{PairedDevice, PairingCode};
 pub use registry::DeviceRegistry;
-use chrono::{TimeZone, Utc};
 
 /// Default gateway port ("jc" on phone keypad = 52, but we use 7643)
 pub const DEFAULT_PORT: u16 = 7643;

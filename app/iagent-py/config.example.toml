@@ -1,0 +1,64 @@
+﻿# iAgent Configuration
+# Save this as config.toml in your user config directory.
+# On Windows: %APPDATA%\iAgent\config.toml
+
+# =============================================================================
+# API KEYS
+# =============================================================================
+
+# REQUIRED: MiniMax API key for AI responses (vision + text)
+# Get yours at: https://platform.minimax.chat
+# Free tier available.
+minimax_api_key = ""
+
+# OPTIONAL: ElevenLabs API key for premium voice output
+# Leave blank to use Piper (local, free, no API key needed)
+eleven_labs_api_key = ""
+eleven_labs_voice_id = ""
+
+# OPTIONAL: Cloudflare Worker URL for AssemblyAI transcription token
+# Only needed if AssemblyAI requires a proxy for CORS.
+# Format: https://your-worker.your-subdomain.workers.dev
+# Leave blank to use AssemblyAI directly with assemblyai_api_key below.
+# worker_url = ""
+
+# OPTIONAL: Direct AssemblyAI API key for transcription token fetch
+# Used when worker_url is not set.
+# Get one at: https://www.assemblyai.com
+# assemblyai_api_key = ""
+
+# =============================================================================
+# BEHAVIOR
+# =============================================================================
+
+# Global hotkey — hold to record, release to send
+# "ctrl+alt"  = hold Left/Right Ctrl + Alt
+# "right_ctrl" = hold Right Ctrl only (avoids conflicts with Ctrl+Alt+key shortcuts)
+hotkey = "ctrl+alt"
+
+# Text-to-speech provider: "piper" (local, free) or "elevenlabs" (cloud, premium)
+# piper is default and requires no API key.
+# elevenlabs requires eleven_labs_api_key above.
+tts_provider = "piper"
+
+# Log level: DEBUG, INFO, WARNING, ERROR
+log_level = "INFO"
+
+# Safety: when false (recommended), iAgent never types into the active window.
+# [TYPE:...] actions are captured as drafts and shown via tray notification only.
+allow_foreground_typing = false
+
+# OPTIONAL: absolute path to jcode executable.
+# If omitted, iAgent resolves in this order:
+# 1) IAGENT_JCODE_BIN env var
+# 2) jcode on PATH
+# 3) backend/jcode/target/(release|debug)/jcode(.exe) from this repo
+# jcode_path = "C:\\Users\\YourName\\iagent\\backend\\jcode\\target\\release\\jcode.exe"
+
+# =============================================================================
+# KNOWLEDGE BASE (optional)
+# =============================================================================
+
+# Path to a folder of .txt/.md files that iAgent reads for context.
+# Leave blank to use %APPDATA%\iAgent\knowledge\ if that folder exists.
+# knowledge_dir = "C:\Users\YourName\iagent-knowledge"

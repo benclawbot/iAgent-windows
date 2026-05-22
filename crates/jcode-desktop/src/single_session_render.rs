@@ -2673,7 +2673,13 @@ pub(crate) fn single_session_text_areas_for_state(
     let typography = single_session_typography_for_scale(ui_scale);
     let line_height = typography.body_size * typography.body_line_height;
     let inline_widget_top = if inline_widget_line_count > 0 {
-        body_bottom as f32 + 8.0
+        let default_top = body_bottom as f32 + 8.0;
+        if welcome_chrome_visible {
+            let (_, hero_max) = glyph_welcome_hero_bounds(size, ui_scale);
+            default_top.max(hero_max[1] + welcome_chrome_offset_pixels + 8.0)
+        } else {
+            default_top
+        }
     } else {
         0.0
     };

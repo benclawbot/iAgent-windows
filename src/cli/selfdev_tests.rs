@@ -325,7 +325,7 @@ fn test_selfdev_build_command_can_target_all() {
     assert!(
         build
             .display
-            .contains("-p jcode-desktop --bin jcode-desktop")
+            .contains("-p jcode-desktop --bin iagent-desktop")
     );
 }
 
@@ -347,6 +347,6 @@ fn test_selfdev_build_command_can_target_desktop_only() {
     assert!(
         build
             .display
-            .contains("-p jcode-desktop --bin jcode-desktop")
+            .contains("-p jcode-desktop --bin iagent-desktop")
     );
 }
