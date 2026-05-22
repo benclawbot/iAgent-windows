@@ -605,9 +605,9 @@ function Stop-IagentDockProcesses([string]$TargetAppDir) {
 function Install-IagentDockApp([string]$TargetAppDir) {
     Write-Info "Installing iAgent desktop dock..."
 
-    $frontendZipUrl = "https://github.com/benclawbot/iagent/archive/refs/heads/main.zip"
+    $frontendZipUrl = "https://github.com/$Repo/archive/refs/heads/main.zip"
     $dockTempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("iagent-dock-" + [Guid]::NewGuid().ToString("N"))
-    $dockZipPath = Join-Path $dockTempDir "iagent-main.zip"
+    $dockZipPath = Join-Path $dockTempDir "dock-main.zip"
     $extractDir = Join-Path $dockTempDir "extract"
 
     New-Item -ItemType Directory -Path $dockTempDir -Force | Out-Null
@@ -615,9 +615,26 @@ function Install-IagentDockApp([string]$TargetAppDir) {
         Invoke-WebRequest -Uri $frontendZipUrl -OutFile $dockZipPath -UseBasicParsing
         Expand-Archive -Path $dockZipPath -DestinationPath $extractDir -Force
 
-        $extractedRoot = Join-Path $extractDir "iagent-main"
-        if (-not (Test-Path -LiteralPath (Join-Path $extractedRoot "iagent-py\pyproject.toml"))) {
-            Write-Err "Downloaded dock archive did not contain iagent-py"
+        $zipRoot = Get-ChildItem -LiteralPath $extractDir -Directory | Select-Object -First 1
+        if (-not $zipRoot) {
+            Write-Err "Downloaded dock archive could not be extracted"
+        }
+        $extractedRoot = $zipRoot.FullName
+
+        # New repo layout: app/iagent-py + app/launch-iagent.ps1
+        # Legacy layout fallback: iagent-py + launch-iagent.ps1 at root.
+        $dockSourceDir = Join-Path $extractedRoot "app"
+        $usesLegacyLayout = $false
+        if (-not (Test-Path -LiteralPath (Join-Path $dockSourceDir "iagent-py\pyproject.toml"))) {
+            if (Test-Path -LiteralPath (Join-Path $extractedRoot "iagent-py\pyproject.toml")) {
+                $dockSourceDir = $extractedRoot
+                $usesLegacyLayout = $true
+            } else {
+                Write-Err "Downloaded dock archive did not contain iagent-py"
+            }
+        }
+        if (-not (Test-Path -LiteralPath (Join-Path $dockSourceDir "launch-iagent.ps1"))) {
+            Write-Err "Downloaded dock archive did not contain launch-iagent.ps1"
         }
 
         $targetParent = Split-Path -Parent $TargetAppDir
@@ -626,7 +643,12 @@ function Install-IagentDockApp([string]$TargetAppDir) {
             Stop-IagentDockProcesses -TargetAppDir $TargetAppDir
             Remove-Item -LiteralPath $TargetAppDir -Recurse -Force
         }
-        Move-Item -LiteralPath $extractedRoot -Destination $TargetAppDir -Force
+
+        if ($usesLegacyLayout) {
+            Move-Item -LiteralPath $extractedRoot -Destination $TargetAppDir -Force
+        } else {
+            Move-Item -LiteralPath $dockSourceDir -Destination $TargetAppDir -Force
+        }
     } finally {
         Remove-Item -Path $dockTempDir -Recurse -Force -ErrorAction SilentlyContinue
     }
