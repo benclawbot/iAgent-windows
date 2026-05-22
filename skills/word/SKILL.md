@@ -1,6 +1,9 @@
 ---
 name: word
 description: Open, read, revise, and add comments to Word documents (.docx) via COM automation on Windows.
+implementation-status: implemented
+uses-tool: app
+tool-actions: [oc_word_open, oc_word_read, oc_word_comment, oc_word_revision, oc_word_feedback, oc_word_export_pdf]
 triggers:
   - "open word document"
   - "read word document"

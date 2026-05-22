@@ -19,18 +19,23 @@
 //!
 //! Chrome/Edge must be launched with `--remote-debugging-port=9222`.
 
+use crate::skill::SkillRegistry;
 use crate::tool::{Tool, ToolContext, ToolOutput};
 use anyhow::Result;
 use app_integrations::{browser, form_fill, office_workflows, officecli};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
-pub struct AppTool;
+pub struct AppTool {
+    skills_registry: Arc<RwLock<SkillRegistry>>,
+}
 
 impl AppTool {
-    pub fn new() -> Self {
-        Self
+    pub fn new(skills_registry: Arc<RwLock<SkillRegistry>>) -> Self {
+        Self { skills_registry }
     }
 
     /// Returns true if OfficeCLI is available on this system.
@@ -202,6 +207,13 @@ enum AppInput {
     form_fill {
         request: form_fill::FormFillRequest,
     },
+
+    // ===== Skill Script =====
+    skill_script {
+        skill: String,
+        script: String,
+        args: Option<String>,
+    },
 }
 
 fn make_browser(port: u16) -> browser::CdpBrowser {
@@ -260,6 +272,10 @@ impl Tool for AppTool {
                 "script": { "type": "string" },
                 "text": { "type": "string" },
                 "fields": { "type": "array" },
+                // skill_script params
+                "skill": { "type": "string" },
+                "script": { "type": "string" },
+                "args": { "type": "string" },
                 // form fill params
                 "request": {
                     "type": "object",
@@ -551,6 +567,44 @@ impl Tool for AppTool {
                 let mut b = make_browser(9222);
                 let result = form_fill::fill_form(&mut b, &request).await?;
                 Ok(ToolOutput::new(serde_json::to_string(&result)?))
+            }
+
+            // ===== Skill Script =====
+            AppInput::skill_script { skill, script, args } => {
+                use crate::tool::bash::BashTool;
+                let registry = self.skills_registry.read().await;
+                let skill_entry = registry
+                    .get(&skill)
+                    .ok_or_else(|| anyhow::anyhow!("Skill '{}' not found", skill))?;
+                let scripts_dir = skill_entry
+                    .scripts_dir()
+                    .ok_or_else(|| anyhow::anyhow!("No scripts directory for skill '{}'", skill))?;
+                let script_path = scripts_dir.join(&script);
+                if !script_path.exists() {
+                    return Err(anyhow::anyhow!(
+                        "Script '{}' not found in skill '{}' at {}",
+                        script,
+                        skill,
+                        script_path.display()
+                    ));
+                }
+                let script_content = std::fs::read_to_string(&script_path)?;
+                let args_str = args.unwrap_or_default();
+                let command = if args_str.is_empty() {
+                    script_content
+                } else {
+                    format!("{} {}", script_content, args_str)
+                };
+                let working_dir = scripts_dir.display().to_string();
+                BashTool::new()
+                    .execute(
+                        json!({
+                            "command": command,
+                            "workingDir": working_dir
+                        }),
+                        _ctx,
+                    )
+                    .await
             }
         }
     }

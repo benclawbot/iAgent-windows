@@ -1,6 +1,9 @@
 ---
 name: form-fill
 description: Automatically fill web forms using browser automation and data from memory/documents.
+implementation-status: implemented
+uses-tool: app
+tool-actions: [form_fill]
 triggers:
   - "fill out a form"
   - "fill form with data"
@@ -13,6 +16,41 @@ triggers:
 ## Overview
 
 Fill web forms by combining browser automation with data retrieved from the user's memory graph or provided documents. The agent first retrieves relevant information (name, address, passport data, etc.) from memory, then navigates to the form URL and fills it programmatically. Available when both `browser` and `memory` toolsets are enabled.
+
+## Tool: `app` — Action: `form_fill`
+
+Fills web forms using browser automation (CDP) with structured requests. Combines browser control with optional memory data retrieval.
+
+**Action:** `form_fill`
+
+**Parameters:**
+- `request` (object, required): Form fill request
+  - `url` (string, optional): URL to navigate to before filling
+  - `fields` (array, required): Array of field objects
+    - `selector` (string, optional): CSS selector
+    - `name` (string, optional): Field name attribute
+    - `id` (string, optional): Field ID attribute
+    - `label` (string, optional): Label text to match
+    - `placeholder` (string, optional): Placeholder text
+    - `value` (string, required): Value to fill
+    - `checked` (boolean, optional): For checkboxes/radios
+  - `submit` (boolean, optional): Whether to submit after filling
+  - `submit_selector` (string, optional): CSS selector for submit button
+  - `wait_after_submit_ms` (number, optional): Wait after submit (ms)
+  - `dry_run` (boolean, optional): Plan only, don't mutate
+  - `capture_screenshots` (boolean, optional): Capture before/after screenshots
+  - `submit_requires_approval` (boolean, optional): Block submit until approved
+  - `submit_approved` (boolean, optional): Approval token
+  - `ambiguity_threshold` (number, optional): Confidence threshold (default: 0.8)
+
+**Returns:** `FormFillResult` with:
+- `success`: Whether all fields filled successfully
+- `filled_fields`: List of field selectors filled
+- `errors`: Any errors encountered
+- `plan`: Field resolution details for each field
+- `requires_user_choice`: True if any field needs disambiguation
+- `approval_required`: True if submit blocked pending approval
+- `submit_performed`: Whether submit was executed
 
 ## Modes
 

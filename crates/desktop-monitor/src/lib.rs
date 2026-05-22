@@ -9,7 +9,6 @@ use anyhow::Result as AnyhowResult;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
-
 pub type DesktopMonitorResult<T> = AnyhowResult<T>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -1172,5 +1171,4 @@ mod tests {
         assert!(event.preview.contains("[REDACTED_TOKEN]"));
     }
 }
-
 pub mod file_ops;

@@ -1790,9 +1790,19 @@ impl Server {
         let (client_tx, client_rx) =
             tokio::sync::mpsc::unbounded_channel::<crate::gateway::GatewayClient>();
 
+        // Get SafetySystem from ambient_runner, or create a new one
+        let safety_system = self
+            .ambient_runner
+            .as_ref()
+            .map(|r| r.safety().clone())
+            .unwrap_or_else(|| Arc::new(crate::safety::SafetySystem::new()));
+
+        // Create a Registry for the gateway's /status endpoint
+        let registry = crate::tool::Registry::new(self.provider.fork()).await;
+
         // Spawn the TCP/WebSocket listener
         tokio::spawn(async move {
-            if let Err(e) = crate::gateway::run_gateway(config, client_tx).await {
+            if let Err(e) = crate::gateway::run_gateway(config, client_tx, safety_system, Arc::new(registry)).await {
                 log_error!(("Gateway error: {}", e));
             }
         });

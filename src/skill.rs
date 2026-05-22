@@ -467,6 +467,28 @@ impl Skill {
         Ok(std::fs::read_to_string(file_path)?)
     }
 
+    /// Run a script from the skill's scripts directory.
+    /// Returns the script content and working directory for execution.
+    pub fn run_script(&self, script_name: &str) -> Result<(String, Option<String>)> {
+        let scripts_dir = self.scripts_dir()
+            .ok_or_else(|| anyhow::anyhow!("No scripts directory for skill '{}'", self.name))?;
+        let script_path = scripts_dir.join(script_name);
+
+        if !script_path.exists() {
+            anyhow::bail!(
+                "Script '{}' not found in skill '{}' at {}",
+                script_name,
+                self.name,
+                script_path.display()
+            );
+        }
+
+        let content = std::fs::read_to_string(&script_path)?;
+        let working_dir = Some(scripts_dir.display().to_string());
+
+        Ok((content, working_dir))
+    }
+
     pub fn as_memory_entry(&self) -> crate::memory::MemoryEntry {
         let now = Utc::now() - chrono::Duration::days(365);
         crate::memory::MemoryEntry {

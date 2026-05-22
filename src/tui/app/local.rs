@@ -218,6 +218,10 @@ pub(super) fn handle_bus_event(
             true
         }
         Ok(BusEvent::CompactionFinished) => app.poll_compaction_completion(),
+        Ok(BusEvent::CompactionStarted { trigger }) => {
+            app.set_status_notice(format!("Compacting ({})…", trigger));
+            true
+        }
         Ok(BusEvent::SidePanelUpdated(update)) => {
             if update.session_id == app.session.id {
                 app.set_side_panel_snapshot(update.snapshot);

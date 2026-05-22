@@ -8,6 +8,7 @@
 //! - Uses system trash instead of permanent deletion
 
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -30,8 +31,9 @@ pub fn xdg_dir(env_key: &str, fallback: &str) -> Option<PathBuf> {
     #[cfg(target_os = "linux")]
     {
         std::env::var(env_key)
+            .ok()
             .map(PathBuf::from)
-            .filter(|p| p.exists())
+            .and_then(|p| if p.exists() { Some(p) } else { None })
     }
     #[cfg(not(target_os = "linux"))]
     {
@@ -389,7 +391,7 @@ pub fn copy_file(src: &Path, dst: &Path) -> Result<PathBuf> {
         for entry in fs::read_dir(src)? {
             let entry = entry?;
             let src_entry = entry.path();
-            let dst_entry = final_dst.join(entry.file_name()?);
+            let dst_entry = final_dst.join(entry.file_name().clone());
             copy_file(&src_entry, &dst_entry)?;
         }
     } else {
@@ -461,6 +463,7 @@ pub struct SearchResult {
     pub path: PathBuf,
     pub size: u64,
     pub extension: String,
+    pub is_dir: bool,
 }
 
 fn walkdir(root: &Path) -> Result<Vec<SearchResult>> {
@@ -489,6 +492,7 @@ fn walkdir(root: &Path) -> Result<Vec<SearchResult>> {
                         path: entry.path(),
                         size: metadata.len(),
                         extension: ext,
+                        is_dir: false,
                     });
                 }
             }
@@ -500,11 +504,22 @@ fn walkdir(root: &Path) -> Result<Vec<SearchResult>> {
     Ok(entries)
 }
 
-/// Get disk usage for a path.
+/// Get disk usage for a path (Linux-specific implementation).
 pub fn disk_usage(path: &Path) -> Result<DiskUsage> {
-    let metadata = fs::metadata(path)?;
-    let total = metadata.total_space().unwrap_or(0);
-    let free = metadata.available_space().unwrap_or(0);
+    use std::fs;
+
+    // On Linux, use statvfs for accurate filesystem stats
+    let path_str = path.to_string_lossy();
+    let statvfs: libc::statvfs = unsafe {
+        let mut stat: libc::statvfs = std::mem::zeroed();
+        if libc::statvfs(path_str.as_ptr() as *const _, &mut stat) != 0 {
+            return Err(anyhow!("Failed to get filesystem stats for {}", path.display()));
+        }
+        stat
+    };
+
+    let total = statvfs.f_blocks.saturating_mul(statvfs.f_frsize as u64);
+    let free = statvfs.f_bavail.saturating_mul(statvfs.f_frsize as u64);
     let used = total.saturating_sub(free);
 
     Ok(DiskUsage {

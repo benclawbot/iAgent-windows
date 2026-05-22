@@ -39,6 +39,7 @@ pub mod env;
 pub mod gateway;
 pub mod gmail;
 pub mod goal;
+pub mod goal_judge;
 pub mod id;
 pub mod import;
 pub mod login_qr;

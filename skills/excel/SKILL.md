@@ -1,6 +1,9 @@
 ---
 name: excel
 description: Open, read, write, and analyze Excel spreadsheets (.xlsx) via COM automation on Windows.
+implementation-status: implemented
+uses-tool: app
+tool-actions: [oc_excel_open, oc_excel_read, oc_excel_write, oc_excel_formula, oc_excel_summarize, oc_excel_sheets]
 triggers:
   - "open spreadsheet"
   - "read excel range"

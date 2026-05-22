@@ -204,6 +204,7 @@ pub struct AmbientTranscript {
 const AUTO_ALLOWED: &[&str] = &[
     "read",
     "glob",
+    "file",
     "grep",
     "ls",
     "memory",
@@ -213,6 +214,7 @@ const AUTO_ALLOWED: &[&str] = &[
     "conversation_search",
     "session_search",
     "codesearch",
+    "compaction",
 ];
 
 const EDIT_LOCAL: &[&str] = &[

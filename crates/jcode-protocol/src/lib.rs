@@ -891,6 +891,10 @@ pub enum ServerEvent {
     #[serde(rename = "memory_activity")]
     MemoryActivity { activity: MemoryActivitySnapshot },
 
+    /// Compaction started in the background (shows "Compacting..." to remote clients)
+    #[serde(rename = "compaction_started")]
+    CompactionStarted { trigger: String },
+
     /// Context compaction occurred (background summary or emergency drop)
     #[serde(rename = "compaction")]
     Compaction {

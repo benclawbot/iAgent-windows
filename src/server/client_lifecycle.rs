@@ -1228,6 +1228,11 @@ pub(super) async fn handle_client(
                             });
                         }
                     }
+                    Ok(BusEvent::CompactionStarted { trigger }) => {
+                        let _ = client_event_tx.send(ServerEvent::CompactionStarted {
+                            trigger,
+                        });
+                    }
                     Ok(BusEvent::CompactionFinished) => {
                         let agent = Arc::clone(&agent);
                         let tx = client_event_tx.clone();

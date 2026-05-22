@@ -6,12 +6,14 @@ mod bash;
 mod batch;
 mod bg;
 mod browser;
+mod compaction;
 mod codesearch;
 mod communicate;
 mod conversation_search;
 mod debug_socket;
 mod edit;
 mod glob;
+mod file_ops;
 mod gmail;
 mod goal;
 mod grep;
@@ -36,6 +38,7 @@ mod websearch;
 mod write;
 
 use crate::compaction::CompactionManager;
+use crate::goal_judge::GoalJudge;
 use crate::provider::Provider;
 use crate::skill::SkillRegistry;
 use anyhow::Result;
@@ -57,6 +60,7 @@ pub struct Registry {
     tools: Arc<RwLock<HashMap<String, Arc<dyn Tool>>>>,
     skills: Arc<RwLock<SkillRegistry>>,
     compaction: Arc<RwLock<CompactionManager>>,
+    provider: Arc<dyn Provider>,
 }
 
 impl Clone for Registry {
@@ -67,6 +71,7 @@ impl Clone for Registry {
             // Each clone gets a fresh CompactionManager to prevent parallel
             // subagents from corrupting each other's message history
             compaction: Arc::new(RwLock::new(CompactionManager::new())),
+            provider: self.provider.clone(),
         }
     }
 }
@@ -103,6 +108,7 @@ impl Registry {
             tools: Arc::new(RwLock::new(HashMap::new())),
             skills: Arc::new(RwLock::new(SkillRegistry::default())),
             compaction: Arc::new(RwLock::new(CompactionManager::new())),
+            provider: Arc::new(crate::provider::DummyProvider),
         }
     }
 
@@ -144,6 +150,7 @@ impl Registry {
                 apply_patch::ApplyPatchTool::new,
             );
             Self::insert_tool_timed(&mut m, &mut timings, "glob", glob::GlobTool::new);
+            Self::insert_tool_timed(&mut m, &mut timings, "file", file_ops::FileOpsTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "grep", grep::GrepTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "ls", ls::LsTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "bash", bash::BashTool::new);
@@ -214,6 +221,7 @@ impl Registry {
             "skill_script",
             skill_script::SkillScriptTool::new(skills.clone()),
         );
+
         tools
     }
 
@@ -230,6 +238,7 @@ impl Registry {
             tools: Arc::new(RwLock::new(HashMap::new())),
             skills: skills.clone(),
             compaction: compaction.clone(),
+            provider: provider.clone(),
         };
         let registry_struct_ms = registry_struct_start.elapsed().as_millis();
 
@@ -252,9 +261,17 @@ impl Registry {
         Self::insert_tool(
             &mut tools_map,
             "conversation_search",
-            conversation_search::ConversationSearchTool::new(compaction),
+            conversation_search::ConversationSearchTool::new(compaction.clone()),
         );
-        Self::insert_tool(&mut tools_map, "app", app::AppTool::new());
+
+        // CompactionTool for viewing/manually triggering compaction
+        Self::insert_tool(
+            &mut tools_map,
+            "compaction",
+            compaction::CompactionTool::new(compaction.clone()),
+        );
+
+        Self::insert_tool(&mut tools_map, "app", app::AppTool::new(skills.clone()));
         let session_tools_ms = session_tools_start.elapsed().as_millis();
 
         let write_start = std::time::Instant::now();
@@ -366,6 +383,47 @@ impl Registry {
 
         // Drop the lock before executing
         drop(tools);
+
+        // Goal judge routing: get routing decision before proceeding
+        let goal_judge = GoalJudge::new();
+        let decision = goal_judge
+            .make_routing_decision(
+                self.provider.clone(),
+                resolved_name,
+                &input,
+                &ctx.session_id,
+                ctx.working_dir.as_deref(),
+            )
+            .await?;
+
+        // Handle routing decision
+        match &decision {
+            crate::goal_judge::RoutingDecision::Block { reason } => {
+                anyhow::bail!("Tool execution blocked by goal judge: {}", reason);
+            }
+            crate::goal_judge::RoutingDecision::Redirect { alternative, reason } => {
+                log_info!((
+                    "[goal_judge] redirecting tool '{}' to '{}': {}",
+                    resolved_name,
+                    alternative,
+                    reason
+                ));
+                // Return a redirect response that the agent can act on
+                return Ok(ToolOutput::new(format!(
+                    "REDIRECT: tool '{}' redirected to '{}' - {}",
+                    resolved_name, alternative, reason
+                ))
+                .with_metadata(serde_json::json!({
+                    "redirected": true,
+                    "original_tool": resolved_name,
+                    "alternative": alternative,
+                    "reason": reason
+                })));
+            }
+            crate::goal_judge::RoutingDecision::Proceed => {
+                // Continue with normal execution
+            }
+        }
 
         let started_at = std::time::Instant::now();
         let result = tool.execute(input.clone(), ctx).await;

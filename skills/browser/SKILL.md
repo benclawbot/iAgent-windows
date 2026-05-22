@@ -1,6 +1,9 @@
 ---
 name: browser
 description: Navigate web pages, fill forms, click elements, extract content, and take screenshots using headless browser automation.
+implementation-status: implemented
+uses-tool: app
+tool-actions: [oc_browser_navigate, oc_browser_snapshot, oc_browser_click, oc_browser_type, oc_browser_press, oc_browser_scroll, oc_browser_screenshot]
 triggers:
   - "open a webpage"
   - "fill out a form"

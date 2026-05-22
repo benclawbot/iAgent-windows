@@ -290,5 +290,6 @@ codegen-units = 256
 
 [dev-dependencies]
 async-stream = "0.3"
+cargo-llvm-cov = "0.6"
 
 [build-dependencies]

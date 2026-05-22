@@ -11,6 +11,7 @@ pub use jcode_config_types::{
     NamedProviderType, NativeScrollbarConfig, ProviderConfig, SafetyConfig,
     SessionPickerResumeAction, SwarmSpawnMode, UpdateChannel, WebSearchConfig, WebSearchEngine,
 };
+
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -186,6 +187,9 @@ pub struct Config {
 
     /// Auto-judge configuration
     pub autojudge: AutoJudgeConfig,
+
+    /// Goal judge routing configuration
+    pub goal_judge: goal_judge::GoalJudgeConfig,
 }
 
 /// External dictation / speech-to-text integration.

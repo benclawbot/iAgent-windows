@@ -1,6 +1,9 @@
 ---
 name: powerpoint
 description: Open, read, modify, and export PowerPoint presentations (.pptx) via COM automation on Windows.
+implementation-status: implemented
+uses-tool: app
+tool-actions: [oc_pptx_open, oc_pptx_read, oc_pptx_count, oc_pptx_add_slide, oc_pptx_set_text, oc_pptx_comment, oc_pptx_generate, oc_pptx_export_pdf, oc_pptx_suggest]
 triggers:
   - "open presentation"
   - "read slide content"
