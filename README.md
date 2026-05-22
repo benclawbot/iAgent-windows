@@ -4,6 +4,9 @@
 
 ### Autonomous AI Agent Runtime for Windows
 
+[![Build Status](https://github.com/benclawbot/iAgent-windows/actions/workflows/ci.yml/badge.svg)](https://github.com/benclawbot/iAgent-windows/actions)
+[![License](https://img.shields.io/github/license/benclawbot/iAgent-windows)](LICENSE)
+
 Persistent desktop AI orchestration with local execution, ambient workflows, provider routing, memory systems, and tool-driven automation.
 iAgent is a next generation autonomous AI agent platform fully integrated into Windows as an ambient agent providing suggestions and minimally intrusive chat dock to help you accomplish more in your tasks, think co-working and full agentic building/researching activities. It can also interact easily with office Tools (Word, Excel, Powerpoint), web Tools (search for you, fill forms,...). It learns you preferences, evolves thanks to its deep memory layer.
 It's always available, has computer use and full agentic capabilities (with swarm agents) but remains in the background for you to focus on what you need to achieve!
@@ -45,6 +48,85 @@ The platform combines:
 - tooling orchestration
 - local-first execution
 - ambient automation
+
+---
+
+# Prerequisites
+
+Before installing or building iAgent, ensure you have:
+
+## Required Tools
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| **Rust** | 1.70+ | Compile the Rust runtime |
+| **Git** | any recent | Clone and manage repository |
+| **PowerShell** | 5.1+ | Windows launcher scripts |
+
+## Required API Keys
+
+iAgent requires at least one LLM provider API key:
+
+| Provider | Environment Variable | Signup |
+|----------|---------------------|--------|
+| OpenAI | `OPENAI_API_KEY` | https://platform.openai.com |
+| OpenRouter | `OPENROUTER_API_KEY` | https://openrouter.ai |
+| Gemini | `GEMINI_API_KEY` | https://aistudio.google.com |
+
+For GitHub operations (optional): Generate a PAT at https://github.com/settings/tokens
+
+---
+
+# Configuration
+
+## Environment Variables
+
+Create a `.env` file or set environment variables:
+
+```bash
+# Required: At least one provider API key
+OPENAI_API_KEY=sk-...
+# OR
+OPENROUTER_API_KEY=sk-or-...
+
+# Optional: Provider selection (default: openai)
+IAGENT_PROVIDER=openai
+
+# Optional: Model selection (default: gpt-4o)
+IAGENT_MODEL=gpt-4o
+
+# Optional: Residential proxy for GitHub operations (prevents bot detection)
+HTTPS_PROXY=http://user:pass@proxyhost:port
+HTTP_PROXY=http://user:pass@proxyhost:port
+
+# Optional: Log level (default: info)
+RUST_LOG=info
+```
+
+## Provider Selection
+
+```bash
+# Use OpenAI
+IAGENT_PROVIDER=openai
+
+# Use OpenRouter
+IAGENT_PROVIDER=openrouter
+
+# Use Gemini
+IAGENT_PROVIDER=gemini
+```
+
+## Proxy Setup (Stealth Mode)
+
+If using automated GitHub operations, configure a residential proxy to avoid bot detection:
+
+```bash
+# Set proxy environment variables
+export HTTPS_PROXY=http://user:pass@proxyhost:port
+export HTTP_PROXY=http://user:pass@proxyhost:port
+```
+
+**Recommended proxy providers**: Luminati, SmartProxy, Oxylabs (residential rotating proxies)
 
 ---
 
@@ -274,39 +356,22 @@ The architecture prioritizes:
 
 ---
 
-# Repository Structure
-
-## Runtime
-
-- `src/main.rs` → backend entry point
-- `src/agent/*` → execution orchestration
-- `src/server/*` → local runtime server
-- `src/tool/*` → tool execution layer
-- `src/provider/*` → provider routing
-- `src/auth/*` → auth and token handling
-- `src/ambient/*` → background workflows
-
----
-
-# Workspace Crates
-
-| Crate | Purpose |
-|---|---|
-| `jcode-agent-runtime` | Runtime orchestration |
-| `jcode-memory-types` | Memory structures |
-| `jcode-storage` | Persistence layer |
-| `jcode-plan` | Planning engine |
-| `jcode-provider-openai` | OpenAI integration |
-| `jcode-provider-openrouter` | OpenRouter integration |
-| `jcode-provider-gemini` | Gemini integration |
-| `iagent-desktop` | Desktop integration |
-| `overlay-ui` | Overlay runtime |
-| `desktop-monitor` | Desktop monitoring |
-| `suggestion-engine` | Suggestion systems |
-
----
-
 # Installation
+
+## Prerequisites Check
+
+Before installing, verify your system:
+
+```bash
+# Check Rust version
+rustc --version
+
+# Check Git version
+git --version
+
+# Check PowerShell version
+$PSVersionTable.PSVersion
+```
 
 ## One-Command Install
 
@@ -346,6 +411,165 @@ cargo build --profile release-lto
 ```bash
 cargo run --bin iagent
 ```
+
+## Run with Environment
+
+```bash
+export OPENAI_API_KEY=sk-...
+cargo run --bin iagent
+```
+
+---
+
+# Testing
+
+## Run All Tests
+
+```bash
+cargo test
+```
+
+## Run Integration Tests
+
+```bash
+cargo test --test integration
+```
+
+## Run with Coverage
+
+```bash
+cargo tarpaulin --out Xml --out Html
+```
+
+## Self-Check Validation
+
+Verify your setup is correct:
+
+```bash
+cargo run --bin iagent -- --self-check
+```
+
+Expected output:
+```
+[i] Checking configuration...
+[i] Provider: openai ✓
+[i] API Key: set ✓
+[i] Log directory: accessible ✓
+[i] Self-check passed ✓
+```
+
+---
+
+# Troubleshooting
+
+## Common Issues
+
+### API Key Not Found
+
+**Error**: `Configuration error: No API key found`
+
+**Solution**: Set your API key before running:
+```bash
+# Linux/Mac
+export OPENAI_API_KEY=sk-...
+
+# Windows PowerShell
+$env:OPENAI_API_KEY="sk-..."
+
+# Windows CMD
+set OPENAI_API_KEY=sk-...
+```
+
+### Provider Connection Failed
+
+**Error**: `Connection failed: timeout reaching provider`
+
+**Solution**: Check your internet connection and API key validity. For proxy users, verify proxy settings.
+
+### Browser Automation Not Working
+
+**Error**: `Browser not found on port 9222`
+
+**Solution**: Launch Chrome with debugging enabled:
+```powershell
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222
+```
+
+### GitHub Bot Detection
+
+**Error**: `API rate limit exceeded` or `Access blocked`
+
+**Solution**: Configure residential proxy to avoid bot detection:
+```bash
+export HTTPS_PROXY=http://user:pass@proxyhost:port
+```
+
+### Rust Build Errors
+
+**Error**: `linker command not found` or compilation failures
+
+**Solution**: Install Visual Studio Build Tools (Windows) or GCC (Linux/Mac):
+```powershell
+# Windows: Install via Visual Studio Installer
+# Linux
+sudo apt install build-essential
+```
+
+## Diagnostic Mode
+
+Run with debug logging to diagnose issues:
+
+```bash
+RUST_LOG=debug cargo run --bin iagent
+```
+
+## Log Files
+
+Find logs at:
+
+| Platform | Log Location |
+|----------|-------------|
+| Windows | `%LOCALAPPDATA%\iAgent\logs\` |
+| Linux | `~/.local/share/iAgent/logs/` |
+| macOS | `~/Library/Logs/iAgent/` |
+
+## Get Help
+
+If issues persist:
+1. Check existing issues: https://github.com/benclawbot/iAgent-windows/issues
+2. Create new issue with log output and system info
+
+---
+
+# Repository Structure
+
+## Runtime
+
+- `src/main.rs` → backend entry point
+- `src/agent/*` → execution orchestration
+- `src/server/*` → local runtime server
+- `src/tool/*` → tool execution layer
+- `src/provider/*` → provider routing
+- `src/auth/*` → auth and token handling
+- `src/ambient/*` → background workflows
+
+---
+
+# Workspace Crates
+
+| Crate | Purpose |
+|---|---|
+| `jcode-agent-runtime` | Runtime orchestration |
+| `jcode-memory-types` | Memory structures |
+| `jcode-storage` | Persistence layer |
+| `jcode-plan` | Planning engine |
+| `jcode-provider-openai` | OpenAI integration |
+| `jcode-provider-openrouter` | OpenRouter integration |
+| `jcode-provider-gemini` | Gemini integration |
+| `iagent-desktop` | Desktop integration |
+| `overlay-ui` | Overlay runtime |
+| `desktop-monitor` | Desktop monitoring |
+| `suggestion-engine` | Suggestion systems |
 
 ---
 
