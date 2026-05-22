@@ -114,9 +114,9 @@ pub fn selfdev_build_command_for_target(
     };
     let specs = match target {
         SelfDevBuildTarget::Tui => vec![("jcode", "jcode")],
-        SelfDevBuildTarget::Desktop => vec![("jcode-desktop", "jcode-desktop")],
+        SelfDevBuildTarget::Desktop => vec![("jcode-desktop", "iagent-desktop")],
         SelfDevBuildTarget::All | SelfDevBuildTarget::Auto => {
-            vec![("jcode", "jcode"), ("jcode-desktop", "jcode-desktop")]
+            vec![("jcode", "jcode"), ("jcode-desktop", "iagent-desktop")]
         }
     };
     let wrapper = repo_dir.join("scripts").join("dev_cargo.sh");

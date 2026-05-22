@@ -7,15 +7,13 @@
 //! - Protected directories cannot be deleted
 //! - Uses system trash instead of permanent deletion
 
-use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{env, fs};
 
 use anyhow::{anyhow, Result};
-
-#[cfg(target_os = "windows")]
-use std::os::windows::fs::MetadataExt;
+use serde::Serialize;
 
 // ---------------------------------------------------------------------------
 // XDG / Platform helpers
@@ -23,14 +21,17 @@ use std::os::windows::fs::MetadataExt;
 
 /// Get the user's home directory.
 pub fn home_dir() -> PathBuf {
-    dirs::home_dir().unwrap_or_else(|| PathBuf::from(env!("HOME")))
+    dirs::home_dir()
+        .or_else(|| env::var_os("USERPROFILE").map(PathBuf::from))
+        .or_else(|| env::var_os("HOME").map(PathBuf::from))
+        .unwrap_or_else(|| PathBuf::from("."))
 }
 
 /// Resolve XDG directories for Linux, fall back to macOS/Windows conventions.
-pub fn xdg_dir(env_key: &str, fallback: &str) -> Option<PathBuf> {
+pub fn xdg_dir(_env_key: &str, fallback: &str) -> Option<PathBuf> {
     #[cfg(target_os = "linux")]
     {
-        std::env::var(env_key)
+        std::env::var(_env_key)
             .ok()
             .map(PathBuf::from)
             .and_then(|p| if p.exists() { Some(p) } else { None })
@@ -200,7 +201,7 @@ pub fn get_file_info(path: &Path) -> Result<FileInfo> {
     })
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct FileInfo {
     pub name: String,
     pub is_dir: bool,
@@ -297,7 +298,7 @@ pub fn list_dir(path: &Path, include_hidden: bool) -> Result<Vec<DirEntry>> {
     Ok(entries)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct DirEntry {
     pub name: String,
     pub is_dir: bool,
@@ -457,7 +458,7 @@ pub fn find_files(
     Ok(results)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SearchResult {
     pub name: String,
     pub path: PathBuf,
@@ -504,15 +505,17 @@ fn walkdir(root: &Path) -> Result<Vec<SearchResult>> {
     Ok(entries)
 }
 
-/// Get disk usage for a path (Linux-specific implementation).
+/// Get disk usage for a path.
+#[cfg(target_os = "linux")]
 pub fn disk_usage(path: &Path) -> Result<DiskUsage> {
-    use std::fs;
+    use std::ffi::CString;
 
     // On Linux, use statvfs for accurate filesystem stats
-    let path_str = path.to_string_lossy();
+    let path_str = CString::new(path.to_string_lossy().as_bytes())
+        .map_err(|_| anyhow!("path contains an interior NUL: {}", path.display()))?;
     let statvfs: libc::statvfs = unsafe {
         let mut stat: libc::statvfs = std::mem::zeroed();
-        if libc::statvfs(path_str.as_ptr() as *const _, &mut stat) != 0 {
+        if libc::statvfs(path_str.as_ptr(), &mut stat) != 0 {
             return Err(anyhow!("Failed to get filesystem stats for {}", path.display()));
         }
         stat
@@ -534,7 +537,29 @@ pub fn disk_usage(path: &Path) -> Result<DiskUsage> {
     })
 }
 
-#[derive(Debug, Clone)]
+#[cfg(not(target_os = "linux"))]
+pub fn disk_usage(path: &Path) -> Result<DiskUsage> {
+    let used = if path.is_file() {
+        fs::metadata(path)?.len()
+    } else {
+        let mut total = 0u64;
+        for entry in walkdir(path)? {
+            if !entry.is_dir {
+                total = total.saturating_add(entry.size);
+            }
+        }
+        total
+    };
+
+    Ok(DiskUsage {
+        total: used,
+        used,
+        free: 0,
+        percent_used: if used > 0 { 100.0 } else { 0.0 },
+    })
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct DiskUsage {
     pub total: u64,
     pub used: u64,

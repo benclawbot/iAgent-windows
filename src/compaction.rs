@@ -845,7 +845,7 @@ impl CompactionManager {
                 let duration_ms = start.elapsed().as_millis() as u64;
                 log_info!(
                     "Compaction ({}) finished in {:.2}s ({} messages summarized)",
-                    mode_label,
+                    trigger,
                     duration_ms as f64 / 1000.0,
                     msg_count,
                 );

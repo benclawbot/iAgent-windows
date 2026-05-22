@@ -107,7 +107,9 @@ fn test_safety_transcript() {
 /// Test safety system: summary generation
 #[test]
 fn test_safety_summary_generation() {
-    use iagent::safety::{ActionLog, ActionTier, SafetySystem};
+    use iagent::safety::{
+        ActionLog, ActionTier, PolicyDisposition, RiskLevel, SafetySystem,
+    };
 
     let safety = SafetySystem::new();
 
@@ -116,6 +118,12 @@ fn test_safety_summary_generation() {
         action_type: "memory_consolidation".to_string(),
         description: "Merged 2 duplicate memories".to_string(),
         tier: ActionTier::AutoAllowed,
+        risk_level: Some(RiskLevel::ReadOnly),
+        disposition: Some(PolicyDisposition::AutoAllow),
+        undo_token: None,
+        screenshot_before: None,
+        screenshot_after: None,
+        screenshot_diff: None,
         details: None,
         timestamp: chrono::Utc::now(),
     });
@@ -124,6 +132,12 @@ fn test_safety_summary_generation() {
         action_type: "memory_prune".to_string(),
         description: "Pruned 1 stale memory".to_string(),
         tier: ActionTier::AutoAllowed,
+        risk_level: Some(RiskLevel::ReadOnly),
+        disposition: Some(PolicyDisposition::AutoAllow),
+        undo_token: None,
+        screenshot_before: None,
+        screenshot_after: None,
+        screenshot_diff: None,
         details: None,
         timestamp: chrono::Utc::now(),
     });

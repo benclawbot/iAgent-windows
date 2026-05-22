@@ -299,7 +299,7 @@ The architecture prioritizes:
 | `jcode-provider-openai` | OpenAI integration |
 | `jcode-provider-openrouter` | OpenRouter integration |
 | `jcode-provider-gemini` | Gemini integration |
-| `jcode-desktop` | Desktop integration |
+| `iagent-desktop` | Desktop integration |
 | `overlay-ui` | Overlay runtime |
 | `desktop-monitor` | Desktop monitoring |
 | `suggestion-engine` | Suggestion systems |

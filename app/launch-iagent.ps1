@@ -6,6 +6,9 @@ $iagentDir = Join-Path $repoRoot "iagent-py"
 $npmCmd = (Get-Command npm -ErrorAction SilentlyContinue).Source
 $uvCmd = (Get-Command uv -ErrorAction SilentlyContinue).Source
 $workerConfig = "wrangler.local.toml"
+if (-not (Test-Path -LiteralPath (Join-Path $workerDir $workerConfig))) {
+  $workerConfig = "wrangler.toml"
+}
 $runtimeConfig = Join-Path $env:APPDATA "iAgent\config.toml"
 
 $workerUrl = ""
@@ -18,7 +21,13 @@ if (Test-Path -LiteralPath $runtimeConfig) {
 
 try {
   $iagentProcs = Get-CimInstance Win32_Process | Where-Object {
-    $_.Name -eq "python.exe" -and $_.CommandLine -like "*-m uv run python -m iagent*"
+    ($_.Name -eq "uv.exe" -and $_.CommandLine -match "run\s+python(\.exe)?\s+-m\s+iagent") -or
+    (
+      ($_.Name -eq "python.exe" -or $_.Name -eq "pythonw.exe") -and (
+        $_.CommandLine -match "uv(\.exe)?\s+run\s+python(\.exe)?\s+-m\s+iagent" -or
+        $_.CommandLine -match "python(\.exe)?\s+-m\s+iagent"
+      )
+    )
   }
 } catch {
   # If process introspection is blocked, default to launching.

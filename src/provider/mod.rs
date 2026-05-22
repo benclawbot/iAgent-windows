@@ -33,6 +33,7 @@ use account_failover::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
+use jcode_message_types::StreamEvent;
 #[cfg(test)]
 use jcode_provider_core::FailoverDecision;
 use std::sync::{Arc, RwLock};
@@ -108,6 +109,39 @@ use self::state::ProviderState;
 pub(crate) use self::state::{
     ProviderModelSelectionSource, ProviderRuntimeState, ProviderStateEvent,
 };
+
+/// Inert provider used only for registries that must exist before a real
+/// provider-backed session is attached.
+pub struct DummyProvider;
+
+#[async_trait]
+impl Provider for DummyProvider {
+    async fn complete(
+        &self,
+        _messages: &[Message],
+        _tools: &[ToolDefinition],
+        _system: &str,
+        _resume_session_id: Option<&str>,
+    ) -> Result<EventStream> {
+        Ok(Box::pin(futures::stream::once(async {
+            Err::<StreamEvent, anyhow::Error>(anyhow::anyhow!(
+                "dummy provider cannot complete requests"
+            ))
+        })))
+    }
+
+    fn name(&self) -> &str {
+        "dummy"
+    }
+
+    fn model(&self) -> String {
+        "dummy".to_string()
+    }
+
+    fn fork(&self) -> Arc<dyn Provider> {
+        Arc::new(DummyProvider)
+    }
+}
 
 /// MultiProvider wraps multiple providers and allows seamless model switching
 pub struct MultiProvider {

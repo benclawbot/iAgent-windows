@@ -65,8 +65,8 @@ impl Tool for CompactionTool {
         let input: CompactionInput = serde_json::from_value(input)?;
 
         match input {
-            CompactionInput::status => self.show_status(ctx.session_id).await,
-            CompactionInput::trigger => self.trigger_compaction(ctx.session_id).await,
+            CompactionInput::status => self.show_status(&ctx.session_id).await,
+            CompactionInput::trigger => self.trigger_compaction(&ctx.session_id).await,
         }
     }
 }
@@ -121,7 +121,7 @@ impl CompactionTool {
     }
 
     async fn trigger_compaction(&self, _session_id: &str) -> Result<ToolOutput> {
-        let mut manager = self.compaction.write().await;
+        let manager = self.compaction.read().await;
         let stats = manager.stats_with(&[]);
 
         if stats.is_compacting {
@@ -135,13 +135,10 @@ impl CompactionTool {
             )));
         }
 
-        // Signal compaction - actual compaction happens async in the agent loop
-        manager.set_should_compact(true);
-
         Ok(ToolOutput::new(json!({
-            "status": "triggered",
+            "status": "available_on_next_agent_turn",
             "messages_to_compact": stats.active_messages,
-            "note": "Compaction will process on next agent turn. Large sessions may take a moment."
+            "note": "Manual compaction requires the active agent message history and provider; it will be evaluated by the agent loop when context pressure is high."
         }).to_string()))
     }
 }

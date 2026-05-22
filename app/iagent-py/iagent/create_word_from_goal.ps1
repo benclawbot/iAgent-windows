@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)]
     [string]$Goal,
     [string]$OutputDir = "",
@@ -100,7 +100,7 @@ function Get-DocTitle {
 function Get-PageCount {
     param([string]$Text)
 
-    $pageMatch = [regex]::Match($Text, '(\d+)\s*(?:page|pages)\b', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $pageMatch = [regex]::Match($Text, '(\d+)\s*-?\s*(?:page|pages)\b', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
     if ($pageMatch.Success) {
         $pages = [int]$pageMatch.Groups[1].Value
         if ($pages -lt 1) { $pages = 1 }
@@ -148,7 +148,6 @@ function Expand-SectionBody {
         [string]$Heading,
         [string]$Subject,
         [string]$Goal,
-        [string[]]$KeyPhrases,
         [int]$PageCount,
         [string]$Style = "business"
     )
@@ -156,18 +155,56 @@ function Expand-SectionBody {
     $paragraphs = New-Object System.Collections.Generic.List[string]
     [void]$paragraphs.Add($Body)
 
-    if ($KeyPhrases.Count -gt 0) {
-        [void]$paragraphs.Add("Key focus terms from your request: " + ($KeyPhrases -join ", ") + ".")
-    }
-
     if ($Style -eq "humanities") {
-        [void]$paragraphs.Add("This section explores $Heading through the lens of $Subject, combining emotional meaning, lived experience, and reflective interpretation.")
-        [void]$paragraphs.Add("It highlights how people understand and express this theme in intimate relationships, family bonds, friendship, and broader social life.")
-        if ($PageCount -ge 6) {
-            [void]$paragraphs.Add("The discussion also considers historical and cultural context, showing how beliefs about $Subject shift across eras while still preserving enduring human questions.")
-        }
-        if ($PageCount -ge 10) {
-            [void]$paragraphs.Add("To deepen the analysis, this chapter connects theory with concrete examples and contrasts competing viewpoints so the reader can form a nuanced, well-supported perspective.")
+        switch -Regex ($Heading.ToLowerInvariant()) {
+            'introduction|why love matters' {
+                [void]$paragraphs.Add("Love is both immediate and mysterious: we feel it viscerally, yet struggle to define it precisely. Across cultures and eras, people describe love as desire, devotion, care, sacrifice, and recognition of another person's full humanity. The same word can refer to romantic intimacy, parental tenderness, friendship, solidarity, and even moral concern for strangers.")
+                [void]$paragraphs.Add("A serious essay on love must hold these meanings together without flattening them. Love is not merely an emotion that arrives passively; it is also a pattern of attention and action. It shapes how we interpret suffering, how we imagine the future, and how we decide what is worth protecting.")
+            }
+            'biological foundations' {
+                [void]$paragraphs.Add("Biology does not reduce love to chemistry, but it clarifies why attachment feels powerful. Neurochemical systems linked to reward, bonding, and stress regulation influence attraction and pair-bonding, while early caregiving experiences shape expectations of safety and closeness.")
+                [void]$paragraphs.Add("At the same time, biological predispositions do not dictate destiny. People can revise relational patterns through trust-building, therapy, reflection, and supportive communities. Biology explains part of the terrain; it does not eliminate agency.")
+            }
+            'psychological dimensions' {
+                [void]$paragraphs.Add("Psychologically, love involves vulnerability, attunement, and emotional regulation. Secure love often appears as reliability over time: listening well, repairing conflict, and remaining present during uncertainty.")
+                [void]$paragraphs.Add("Unhealthy love patterns can involve idealization, control, fear of abandonment, or avoidance of intimacy. Distinguishing intensity from depth is essential: intensity can feel dramatic, but depth is usually built through patience, honesty, and mutual responsibility.")
+            }
+            'philosophical perspectives' {
+                [void]$paragraphs.Add("Philosophers have long debated whether love is primarily a feeling, a choice, or a virtue. One tradition emphasizes eros and longing; another emphasizes agape and unconditional care; still others frame love as friendship grounded in shared flourishing.")
+                [void]$paragraphs.Add("These perspectives suggest that love is ethically demanding. To love well is to balance closeness with respect for autonomy, commitment with truthfulness, and desire with responsibility. Love can elevate character, but it can also expose self-deception.")
+            }
+            'literature|art' {
+                [void]$paragraphs.Add("Literature and art portray love as plural and contradictory: ecstatic and painful, liberating and burdensome, ordinary and transcendent. Tragedies, songs, novels, and films show that love is tested not by grand declarations alone, but by daily acts of recognition and care.")
+                [void]$paragraphs.Add("Art matters here because it captures nuance that abstract definitions miss. Through narrative, image, and metaphor, it reveals how people endure longing, betrayal, grief, reconciliation, and renewal.")
+            }
+            'cultural variations' {
+                [void]$paragraphs.Add("Cultural context shapes courtship, marriage, kinship, and expectations of commitment. Some societies prioritize romantic choice; others emphasize family structure or communal duty. None of these models is entirely fixed; global media and migration continuously reshape them.")
+                [void]$paragraphs.Add("A comparative view prevents narrow assumptions. It shows that while the rituals of love vary, core human concerns - belonging, trust, dignity, and reciprocity - reappear with remarkable consistency.")
+            }
+            'lifespan' {
+                [void]$paragraphs.Add("Love changes across the lifespan. Adolescence often emphasizes identity and discovery; adulthood adds negotiation of work, care, and long-term commitment; later life may deepen toward companionship, memory, and interdependence.")
+                [void]$paragraphs.Add("These transitions do not imply decline. They reveal adaptation: love can become less performative and more deliberate, less centered on novelty and more centered on fidelity, gratitude, and shared meaning.")
+            }
+            'conflict|forgiveness|repair' {
+                [void]$paragraphs.Add("Conflict is inevitable in close relationships because two inner worlds never align perfectly. The measure of mature love is not conflict avoidance, but the ability to repair after rupture through accountability, empathy, and changed behavior.")
+                [void]$paragraphs.Add("Forgiveness, when appropriate, is not amnesia. It is a disciplined decision to re-open trust under conditions of honesty and boundary-setting. Without repair practices, affection erodes into resentment or distance.")
+            }
+            'digital era' {
+                [void]$paragraphs.Add("Digital platforms expand opportunities for connection, but they also introduce new distortions: performative intimacy, algorithmic matchmaking pressures, and constant comparison. Attention becomes fragmented, and relational depth can be displaced by rapid signaling.")
+                [void]$paragraphs.Add("Yet technology is not inherently anti-love. Used intentionally, it can sustain long-distance bonds, support marginalized communities, and create spaces for expression. The question is not whether technology exists, but whether people use it to deepen or dilute presence.")
+            }
+            'ethics' {
+                [void]$paragraphs.Add("An ethics of love asks what we owe one another when affection is real. Love that respects dignity avoids domination, manipulation, and coercion. It honors consent, keeps promises, and takes responsibility for consequences.")
+                [void]$paragraphs.Add("Ethical love is therefore both tender and principled. It does not confuse possession with commitment, nor self-erasure with devotion. At its best, it enlarges the freedom and flourishing of both people.")
+            }
+            'conclusion' {
+                [void]$paragraphs.Add("Love endures because it addresses fundamental human needs: to be known, to be chosen, and to belong without pretense. It cannot be reduced to sentiment alone or to duty alone; it is an evolving practice that joins feeling, judgment, and action.")
+                [void]$paragraphs.Add("Seen this way, love is less a finished state than a lifelong craft. It asks for courage, humility, and imagination, and it remains one of the most serious and transformative commitments a person can make.")
+            }
+            default {
+                [void]$paragraphs.Add("This section examines $Heading in relation to $Subject through clear explanation, examples, and sustained argument.")
+                [void]$paragraphs.Add("Rather than relying on generic claims, it develops a focused perspective and connects abstract ideas to lived human experience.")
+            }
         }
     } elseif ($Style -eq "technical") {
         [void]$paragraphs.Add("For $Heading, this section links recommendations to $Subject with clear assumptions, implementation options, and practical tradeoffs.")
@@ -313,9 +350,8 @@ function Get-Sections {
         }
     }
 
-    $phrases = @(Get-KeyPhrases -Text $Text)
     for ($i = 0; $i -lt $sections.Count; $i++) {
-        $sections[$i].Body = Expand-SectionBody -Body ([string]$sections[$i].Body) -Heading ([string]$sections[$i].Heading) -Subject $subject -Goal $Text -KeyPhrases $phrases -PageCount $PageCount -Style $Style
+        $sections[$i].Body = Expand-SectionBody -Body ([string]$sections[$i].Body) -Heading ([string]$sections[$i].Heading) -Subject $subject -Goal $Text -PageCount $PageCount -Style $Style
     }
     if ($sections.Count -gt $PageCount) {
         $sections = @($sections | Select-Object -First $PageCount)
@@ -504,3 +540,4 @@ catch {
     Write-Error ("Word document creation failed: " + $_.Exception.Message)
     exit 1
 }
+

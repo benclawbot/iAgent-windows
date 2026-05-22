@@ -247,7 +247,7 @@ def run() -> int:
 
     def _stop_related_processes() -> None:
         """Best-effort stop of sibling iAgent/worker processes started externally."""
-        worker_dir = str(Path(__file__).resolve().parent.parent / "worker")
+        worker_dir = str(Path(__file__).resolve().parent.parent.parent / "worker")
         script = (
             f"$workerDir='{worker_dir}'; "
             f"$selfPid={os.getpid()}; "
@@ -256,7 +256,11 @@ def run() -> int:
             "($_.Name -eq 'node.exe' -and $_.CommandLine -like '*wrangler dev*' "
             "-and $_.CommandLine -like \"*$workerDir*\") "
             "-or "
-            "($_.Name -eq 'python.exe' -and $_.CommandLine -like '* -m uv run python -m iagent*' "
+            "($_.Name -eq 'uv.exe' -and $_.CommandLine -match 'run\\s+python(\\.exe)?\\s+-m\\s+iagent') "
+            "-or "
+            "(($_.Name -eq 'python.exe' -or $_.Name -eq 'pythonw.exe') "
+            "-and ($_.CommandLine -match 'uv(\\.exe)?\\s+run\\s+python(\\.exe)?\\s+-m\\s+iagent' "
+            "-or $_.CommandLine -match 'python(\\.exe)?\\s+-m\\s+iagent') "
             "-and $_.ProcessId -ne $selfPid) "
             "} | "
             "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
@@ -349,7 +353,7 @@ def run() -> int:
             (
                 "Word",
                 ("microsoft word", "word doc", "word document", "docx", ".docx"),
-                "create_word_from_goal.ps1",
+                "create_document_from_goal.py",
             ),
             (
                 "Excel",
@@ -381,7 +385,6 @@ def run() -> int:
         # Default behavior for Office artifact requests is to open the result
         # immediately so the user can review it.
         open_when_done = explicit_open or not explicit_no_open
-        # Keep Word generation on the stable PowerShell builder path.
         app_name, script_path = builder
         if not script_path.is_file():
             tray_icon.notify(
@@ -391,19 +394,31 @@ def run() -> int:
             return None
         title_hint_match = re.search(r'titled\\s+"([^"]+)"', goal_clean, re.IGNORECASE)
         title_hint = title_hint_match.group(1) if title_hint_match else "Office Artifact"
-        display = f"powershell -File {script_path.name} <goal: {title_hint[:60]}>"
-        args = [
-            "powershell.exe",
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            str(script_path),
-            "-Goal",
-            goal_clean,
-        ]
-        if open_when_done:
-            args.append("-OpenWhenDone")
+        if script_path.suffix.lower() == ".py":
+            display = f"python -m iagent.{script_path.stem} <goal: {title_hint[:60]}>"
+            args = [
+                sys.executable,
+                "-m",
+                f"iagent.{script_path.stem}",
+                "--goal",
+                goal_clean,
+            ]
+            if open_when_done:
+                args.append("--open-when-done")
+        else:
+            display = f"powershell -File {script_path.name} <goal: {title_hint[:60]}>"
+            args = [
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(script_path),
+                "-Goal",
+                goal_clean,
+            ]
+            if open_when_done:
+                args.append("-OpenWhenDone")
         try:
             task_id = command_runner.enqueue_exec(
                 args,

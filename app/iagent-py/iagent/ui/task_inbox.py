@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QColor, QFont, QGuiApplication, QIcon, QPainter, QPainterPath, QPen, QPixmap, QRegion, QTextOption
+from PySide6.QtGui import QAction, QColor, QFont, QGuiApplication, QIcon, QPainter, QPainterPath, QPen, QPixmap, QRegion
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -82,12 +82,6 @@ class TaskRobotBadge(QWidget):
         super().show()
         self._move_bottom_right()
         self._move_timer.start()
-
-    def resizeEvent(self, event) -> None:  # noqa: ANN001
-        super().resizeEvent(event)
-        shape = QPainterPath()
-        shape.addRoundedRect(0, 0, float(self.width()), float(self.height()), 26.0, 26.0)
-        self.setMask(QRegion(shape.toFillPolygon().toPolygon()))
 
     def resizeEvent(self, event) -> None:  # noqa: ANN001
         super().resizeEvent(event)
@@ -418,6 +412,9 @@ class AssistantPromptDock(QWidget):
         self._busy_timer = QTimer(self)
         self._busy_timer.setInterval(180)
         self._busy_timer.timeout.connect(self._tick_busy)
+        self._auto_hide_timer = QTimer(self)
+        self._auto_hide_timer.setInterval(250)
+        self._auto_hide_timer.timeout.connect(self._check_auto_hide)
         self._add_chat_bubble(
             "assistant",
             "Good morning. I'm ready to assist you today. What would you like to focus on?",
@@ -429,8 +426,10 @@ class AssistantPromptDock(QWidget):
         self._move_timer.start()
         self._install_outside_click_filter()
         self.activateWindow()
+        QTimer.singleShot(250, self._auto_hide_timer.start)
 
     def hideEvent(self, event) -> None:  # noqa: ANN001
+        self._auto_hide_timer.stop()
         self._remove_outside_click_filter()
         super().hideEvent(event)
 
@@ -522,6 +521,16 @@ class AssistantPromptDock(QWidget):
                 self.hide()
         return super().eventFilter(watched, event)
 
+    def _check_auto_hide(self) -> None:
+        if not self.isVisible() or self._suspend_auto_hide:
+            return
+        active = QApplication.activeWindow()
+        if active is self or self.isActiveWindow():
+            return
+        if active is not None and self.isAncestorOf(active):
+            return
+        self.hide()
+
     def set_task_records(self, tasks: list[TaskRecord]) -> None:
         while self._task_rows_layout.count() > 1:
             item = self._task_rows_layout.takeAt(0)
@@ -609,30 +618,22 @@ class AssistantPromptDock(QWidget):
 
     def _add_chat_bubble(self, role: str, message: str) -> None:
         bubble_text = self._soft_wrap_long_tokens(message)
-        bubble = QTextEdit()
-        bubble.setReadOnly(True)
-        bubble.setFrameStyle(0)
-        bubble.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        bubble.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        bubble.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
-        bubble.setWordWrapMode(QTextOption.WrapMode.WrapAtWordBoundaryOrAnywhere)
+        bubble = QLabel()
+        bubble.setTextFormat(Qt.TextFormat.PlainText)
+        bubble.setWordWrap(True)
         bubble.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        bubble.setPlainText(bubble_text)
-        bubble.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         bubble_max_width = max(220, int(self.width() * 0.74))
-        bubble.setFixedWidth(bubble_max_width)
-        doc = bubble.document()
-        doc.setTextWidth(max(80, bubble_max_width - 22))
-        bubble_height = int(doc.size().height()) + 14
-        bubble.setFixedHeight(max(34, bubble_height))
+        bubble.setMaximumWidth(bubble_max_width)
+        bubble.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
+        bubble.setText(bubble_text)
         if role == "user":
             bubble.setStyleSheet(
-                "QTextEdit { background: #1d6dc6; color: #ffffff; border-radius: 12px; border: none; padding: 8px; font: 10pt 'Segoe UI'; }"
+                "QLabel { background: #1d6dc6; color: #ffffff; border-radius: 12px; border: none; padding: 8px; font: 10pt 'Segoe UI'; }"
             )
             is_user = True
         else:
             bubble.setStyleSheet(
-                "QTextEdit { background: #edf2f4; color: #27323b; border-radius: 12px; border: none; padding: 8px; font: 10pt 'Segoe UI'; }"
+                "QLabel { background: #edf2f4; color: #27323b; border-radius: 12px; border: none; padding: 8px; font: 10pt 'Segoe UI'; }"
             )
             is_user = False
         container = QWidget()
@@ -646,6 +647,7 @@ class AssistantPromptDock(QWidget):
             container_layout.addStretch(1)
         self._chat_layout.insertWidget(max(0, self._chat_layout.count() - 1), container)
         QTimer.singleShot(0, lambda c=container: self._scroll_to_message_start(c))
+        QTimer.singleShot(50, lambda c=container: self._scroll_to_message_start(c))
 
     def _scroll_to_message_start(self, container: QWidget) -> None:
         bar = self._chat_scroll.verticalScrollBar()
