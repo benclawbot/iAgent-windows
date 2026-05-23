@@ -4,9 +4,6 @@
 
 ### Autonomous AI Agent Runtime for Windows
 
-[![Build Status](https://github.com/benclawbot/iAgent-windows/actions/workflows/ci.yml/badge.svg)](https://github.com/benclawbot/iAgent-windows/actions)
-[![License](https://img.shields.io/github/license/benclawbot/iAgent-windows)](LICENSE)
-
 Persistent desktop AI orchestration with local execution, ambient workflows, provider routing, memory systems, and tool-driven automation.
 iAgent is a next generation autonomous AI agent platform fully integrated into Windows as an ambient agent providing suggestions and minimally intrusive chat dock to help you accomplish more in your tasks, think co-working and full agentic building/researching activities. It can also interact easily with office Tools (Word, Excel, Powerpoint), web Tools (search for you, fill forms,...). It learns you preferences, evolves thanks to its deep memory layer.
 It's always available, has computer use and full agentic capabilities (with swarm agents) but remains in the background for you to focus on what you need to achieve!
