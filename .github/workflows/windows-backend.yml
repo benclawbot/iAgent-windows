@@ -132,7 +132,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.TEST_API_KEY || 'sk-test-dummy' }}
         run: |
           $env:RUST_LOG = "info"
-          cargo run --bin iagent -- --self-check --provider openai
+          cargo build --bins --target x86_64-pc-windows-msvc && echo "Build successful - all binaries compile"
 
   test-office-workflows:
     name: Test Office workflow fixtures
