@@ -612,6 +612,6 @@ See repository license for details.
 
 <div align="center">
 
-### Build agents that don't just chat — but execute, orchestrate, remember, and evolve.
+### Build agents that don't just chat — but observe, assist, execute, orchestrate, remember, and evolve along with you.
 
 </div>
