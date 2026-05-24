@@ -717,14 +717,16 @@ pub fn configured_api_key_source(
     if !is_safe_env_key_name(&env_key) {
         log_warn!((
             "Ignoring invalid {}='{}' while probing auth status",
-            key_var, env_key
+            key_var,
+            env_key
         ));
         return None;
     }
     if !is_safe_env_file_name(&file_name) {
         log_warn!((
             "Ignoring invalid {}='{}' while probing auth status",
-            file_var, file_name
+            file_var,
+            file_name
         ));
         return None;
     }

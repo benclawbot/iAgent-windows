@@ -362,7 +362,7 @@ fn handle_image_file(path: &Path, file_path: &str) -> Result<ToolOutput> {
         format!("{:.1} MB", file_size as f64 / 1024.0 / 1024.0)
     };
 
-    let mut terminal_displayed = false;
+    let terminal_displayed = false;
     #[cfg(feature = "terminal-ui")]
     let protocol = ImageProtocol::detect();
     #[cfg(feature = "terminal-ui")]

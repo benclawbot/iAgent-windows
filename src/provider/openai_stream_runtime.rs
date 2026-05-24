@@ -125,7 +125,8 @@ pub(super) async fn stream_response(
             crate::provider::record_model_unavailable_for_account(model_name, &reason);
             log_warn!((
                 "Recorded OpenAI model '{}' as unavailable: {}",
-                model_name, reason
+                model_name,
+                reason
             ));
         }
 
@@ -268,7 +269,8 @@ pub(super) async fn try_persistent_ws_continuation(
     if input_item_count <= state.last_input_item_count {
         log_info!((
             "Input items didn't grow ({} <= {}); conversation may have been compacted, reconnecting",
-            input_item_count, state.last_input_item_count
+            input_item_count,
+            state.last_input_item_count
         ));
         *guard = None;
         return PersistentWsResult::NotAvailable;
@@ -998,7 +1000,8 @@ fn maybe_record_runtime_model_unavailable_from_stream_error(model: &str, message
         crate::provider::record_model_unavailable_for_account(model, &reason);
         log_warn!((
             "Recorded OpenAI model '{}' as unavailable from stream error: {}",
-            model, reason
+            model,
+            reason
         ));
     }
 }

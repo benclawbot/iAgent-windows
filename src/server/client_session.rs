@@ -934,7 +934,9 @@ pub(super) async fn handle_resume_session(
         if can_take_over_live_session {
             log_info!((
                 "Taking over live session {} on connection {} by superseding {}",
-                session_id, client_connection_id, conflict.client_id
+                session_id,
+                client_connection_id,
+                conflict.client_id
             ));
 
             let (disconnect_tx, debug_client_id, transferred_processing, transferred_tool_name) = {
@@ -995,7 +997,9 @@ pub(super) async fn handle_resume_session(
             } else {
                 log_warn!((
                     "Rejecting duplicate live attach for session {} on connection {} because {} is already attached",
-                    session_id, client_connection_id, conflict.client_id
+                    session_id,
+                    client_connection_id,
+                    conflict.client_id
                 ));
             }
             let _ = client_event_tx.send(ServerEvent::Error {

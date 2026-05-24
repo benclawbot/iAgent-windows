@@ -96,7 +96,9 @@ impl Tool for TodoTool {
         .map_err(|err| {
             log_warn!((
                 "[tool:todo] operation failed operation={} session_id={} error={}",
-                operation, ctx.session_id, err
+                operation,
+                ctx.session_id,
+                err
             ));
             err
         })

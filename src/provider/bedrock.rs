@@ -265,7 +265,8 @@ impl BedrockProvider {
             if catalog.region.as_deref() != configured_region.as_deref() {
                 log_info!((
                     "Ignoring Bedrock model cache for region {:?}; configured region is {:?}",
-                    catalog.region, configured_region
+                    catalog.region,
+                    configured_region
                 ));
                 return;
             }

@@ -237,7 +237,8 @@ fn history_reload_recovery_snapshot(
         Ok(None) => {}
         Err(err) => log_warn!((
             "history_reload_recovery_snapshot: failed to claim server-owned recovery intent for session={}: {}",
-            session_id, err
+            session_id,
+            err
         )),
     }
 
@@ -292,7 +293,8 @@ fn infer_persisted_session_interrupted_by_reload(session_id: &str) -> bool {
         Err(err) => {
             log_warn!((
                 "history_reload_recovery_snapshot: could not inspect persisted session {} for reload interruption fallback: {}",
-                session_id, err
+                session_id,
+                err
             ));
             return false;
         }

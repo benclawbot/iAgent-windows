@@ -1602,10 +1602,7 @@ impl App {
                 Ok(true) => spawned += 1,
                 Ok(false) => failed.push(session_id.clone()),
                 Err(e) => {
-                    log_error!((
-                        "Failed to spawn session {}: {}",
-                        session_id, e
-                    ));
+                    log_error!(("Failed to spawn session {}: {}", session_id, e));
                     failed.push(session_id.clone());
                 }
             }

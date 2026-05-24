@@ -150,7 +150,6 @@ jcode-provider-core = { path = "crates/jcode-provider-core" }
 jcode-provider-openai = { path = "crates/jcode-provider-openai" }
 jcode-provider-openrouter = { path = "crates/jcode-provider-openrouter" }
 jcode-provider-gemini = { path = "crates/jcode-provider-gemini" }
-jcode-desktop = { path = "crates/jcode-desktop" }
 iagent-settings = { path = "crates/iagent-settings" }
 
 desktop-monitor = { path = "crates/desktop-monitor" }

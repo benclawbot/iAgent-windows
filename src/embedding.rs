@@ -238,10 +238,7 @@ pub fn maybe_unload_if_idle(idle_for: Duration) -> bool {
     }
 
     if unloaded {
-        log_info!((
-            "Unloaded embedding model after {}s idle",
-            idle_secs
-        ));
+        log_info!(("Unloaded embedding model after {}s idle", idle_secs));
         crate::runtime_memory_log::emit_event(
             crate::runtime_memory_log::RuntimeMemoryLogEvent::new(
                 "embedding_unloaded",
@@ -253,10 +250,7 @@ pub fn maybe_unload_if_idle(idle_for: Duration) -> bool {
 
         #[cfg(feature = "jemalloc")]
         if let Err(err) = crate::process_memory::purge_allocator() {
-            log_info!((
-                "jemalloc purge after model unload failed: {}",
-                err
-            ));
+            log_info!(("jemalloc purge after model unload failed: {}", err));
         }
 
         #[cfg(all(target_os = "linux", not(feature = "jemalloc")))]
@@ -304,10 +298,7 @@ pub fn unload_now() -> bool {
 
         #[cfg(feature = "jemalloc")]
         if let Err(err) = crate::process_memory::purge_allocator() {
-            log_info!((
-                "jemalloc purge after force unload failed: {}",
-                err
-            ));
+            log_info!(("jemalloc purge after force unload failed: {}", err));
         }
 
         #[cfg(all(target_os = "linux", not(feature = "jemalloc")))]

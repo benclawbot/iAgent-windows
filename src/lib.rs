@@ -1,4 +1,6 @@
 #![allow(
+    dead_code,
+    non_camel_case_types,
     unknown_lints,
     clippy::collapsible_match,
     clippy::manual_checked_ops,

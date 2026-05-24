@@ -107,9 +107,7 @@ fn test_safety_transcript() {
 /// Test safety system: summary generation
 #[test]
 fn test_safety_summary_generation() {
-    use iagent::safety::{
-        ActionLog, ActionTier, PolicyDisposition, RiskLevel, SafetySystem,
-    };
+    use iagent::safety::{ActionLog, ActionTier, PolicyDisposition, RiskLevel, SafetySystem};
 
     let safety = SafetySystem::new();
 

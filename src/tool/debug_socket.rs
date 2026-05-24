@@ -94,7 +94,10 @@ impl Tool for DebugSocketTool {
             Err(e) => {
                 log_warn!((
                     "[tool:debug_socket] command failed command={} session_id={} timeout_secs={} error={}",
-                    params.command, session_label, timeout_secs, e
+                    params.command,
+                    session_label,
+                    timeout_secs,
+                    e
                 ));
                 Ok(ToolOutput::new(format!("Error: {}", e)).with_title(title))
             }

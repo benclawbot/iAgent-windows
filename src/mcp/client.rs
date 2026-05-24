@@ -127,7 +127,9 @@ impl McpClient {
     pub async fn connect(name: String, config: &McpServerConfig) -> Result<Self> {
         log_info!((
             "MCP: Connecting to '{}' ({} {:?})",
-            name, config.command, config.args
+            name,
+            config.command,
+            config.args
         ));
 
         let mut env: HashMap<String, String> = std::env::vars().collect();
@@ -158,10 +160,7 @@ impl McpClient {
                     Ok(_) => {
                         let trimmed = line.trim();
                         if !trimmed.is_empty() {
-                            log_warn!((
-                                "MCP [{}] stderr: {}",
-                                server_name, trimmed
-                            ));
+                            log_warn!(("MCP [{}] stderr: {}", server_name, trimmed));
                         }
                     }
                     Err(_) => break,
@@ -211,10 +210,7 @@ impl McpClient {
                         } else {
                             let trimmed = line.trim();
                             if !trimmed.is_empty() {
-                                log_debug!((
-                                    "MCP [{}] non-JSON output: {}",
-                                    reader_name, trimmed
-                                ));
+                                log_debug!(("MCP [{}] non-JSON output: {}", reader_name, trimmed));
                             }
                         }
                     }

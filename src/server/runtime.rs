@@ -142,7 +142,8 @@ impl ServerRuntime {
                 runtime.increment_client_count().await;
                 log_info!((
                     "Gateway client connected: {} ({})",
-                    gw_client.device_name, gw_client.device_id
+                    gw_client.device_name,
+                    gw_client.device_id
                 ));
                 // Preserve prior behavior: gateway sessions do not nudge the
                 // ambient runner on disconnect.

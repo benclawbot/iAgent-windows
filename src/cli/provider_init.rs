@@ -16,12 +16,8 @@ use super::login::run_login_provider;
 use super::output;
 
 mod external_auth;
+pub(crate) use external_auth::maybe_run_external_auth_auto_import_flow;
 use external_auth::*;
-pub(crate) use external_auth::{
-    ExternalAuthReviewCandidate, format_external_auth_review_candidates_markdown,
-    maybe_run_external_auth_auto_import_flow, parse_external_auth_review_selection,
-    pending_external_auth_review_candidates, run_external_auth_auto_import_candidates,
-};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
 pub enum ProviderChoice {
@@ -1541,7 +1537,8 @@ async fn init_provider_with_options(
             } else {
                 log_info!((
                     "[TIMING] auto_provider_bootstrap: detect={}ms, external_import={}, supplemental=skipped, final_has_any=true",
-                    auto_detect_ms, reviewed_external_auth
+                    auto_detect_ms,
+                    reviewed_external_auth
                 ));
             }
 

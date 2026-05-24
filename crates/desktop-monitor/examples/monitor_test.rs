@@ -44,4 +44,3 @@ fn label(kind: ContextType) -> &'static str {
         ContextType::Unknown => "Unknown",
     }
 }
-

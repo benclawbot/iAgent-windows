@@ -605,7 +605,10 @@ pub(super) fn handle_disconnect(
     };
     log_warn!((
         "handle_disconnect: session={:?}, remote_session_id={:?}, reason={:?}, detail={}",
-        app.resume_session_id, app.remote_session_id, reason, detail
+        app.resume_session_id,
+        app.remote_session_id,
+        reason,
+        detail
     ));
     state.last_disconnect_reason = Some(detail.clone());
 

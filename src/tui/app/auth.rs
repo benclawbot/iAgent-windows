@@ -328,10 +328,7 @@ impl App {
                     let label_owned = label.to_string();
                     tokio::spawn(async move {
                         provider.invalidate_credentials().await;
-                        log_info!((
-                            "Switched to Anthropic account '{}'",
-                            label_owned
-                        ));
+                        log_info!(("Switched to Anthropic account '{}'", label_owned));
                     });
                 }
                 self.push_display_message(DisplayMessage::system(format!(
@@ -401,10 +398,7 @@ impl App {
                     let label_owned = label.to_string();
                     tokio::spawn(async move {
                         provider.invalidate_credentials().await;
-                        log_info!((
-                            "Switched to OpenAI account '{}'",
-                            label_owned
-                        ));
+                        log_info!(("Switched to OpenAI account '{}'", label_owned));
                     });
                 }
                 self.push_display_message(DisplayMessage::system(format!(
@@ -516,10 +510,7 @@ impl App {
                         }));
                     }
                     Err(e) => {
-                        log_info!((
-                            "OpenAI automatic callback did not complete: {}",
-                            e
-                        ));
+                        log_info!(("OpenAI automatic callback did not complete: {}", e));
                     }
                 }
             });
@@ -718,10 +709,7 @@ impl App {
                             }
                             Err(e) => {
                                 let message = format!("Gemini login failed: {}", e);
-                                log_info!((
-                                    "Gemini automatic callback did not complete: {}",
-                                    e
-                                ));
+                                log_info!(("Gemini automatic callback did not complete: {}", e));
                                 Bus::global().publish(BusEvent::LoginCompleted(LoginCompleted {
                                     provider: "gemini".to_string(),
                                     success: false,
@@ -731,10 +719,7 @@ impl App {
                         }
                     }
                     Err(e) => {
-                        log_info!((
-                            "Gemini automatic callback did not complete: {}",
-                            e
-                        ));
+                        log_info!(("Gemini automatic callback did not complete: {}", e));
                         Bus::global().publish(BusEvent::LoginCompleted(LoginCompleted {
                             provider: "gemini".to_string(),
                             success: false,
@@ -1150,10 +1135,7 @@ impl App {
                         }
                     }
                     Err(e) => {
-                        log_info!((
-                            "Antigravity automatic callback did not complete: {}",
-                            e
-                        ));
+                        log_info!(("Antigravity automatic callback did not complete: {}", e));
                     }
                 }
             });
@@ -2217,10 +2199,7 @@ impl App {
             Ok(Some(email)) => format!(" (email: {})", mask_email(&email)),
             Ok(None) => String::new(),
             Err(e) => {
-                log_warn!((
-                    "Claude login [{}] profile fetch failed: {}",
-                    label, e
-                ));
+                log_warn!(("Claude login [{}] profile fetch failed: {}", label, e));
                 String::new()
             }
         };

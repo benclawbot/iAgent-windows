@@ -485,11 +485,7 @@ fn get_cached_context_limit(model: &str) -> Option<usize> {
 pub fn populate_context_limits(models: HashMap<String, usize>) {
     if let Ok(mut cache) = CONTEXT_LIMIT_CACHE.write() {
         for (model, limit) in &models {
-            log_info!((
-                "Context limit cache: {} = {}k",
-                model,
-                limit / 1000
-            ));
+            log_info!(("Context limit cache: {} = {}k", model, limit / 1000));
             cache.insert(model.clone(), *limit);
         }
     }
@@ -860,7 +856,8 @@ pub fn refresh_openai_model_catalog_in_background(access_token: String, context:
             Err(e) => {
                 log_info!((
                     "Failed to refresh OpenAI model catalog from Codex API ({}): {}",
-                    context, e
+                    context,
+                    e
                 ));
             }
         }

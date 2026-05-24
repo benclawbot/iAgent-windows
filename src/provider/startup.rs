@@ -35,7 +35,8 @@ impl MultiProvider {
                     );
                     log_info!((
                         "Failed to refresh {} models after auth change: {}",
-                        provider_label, err
+                        provider_label,
+                        err
                     ));
                 }
             }
@@ -88,7 +89,8 @@ impl MultiProvider {
                     }
                     Err(err) => log_warn!((
                         "Failed to apply default provider profile '{}': {}",
-                        pref, err
+                        pref,
+                        err
                     )),
                 }
             }
@@ -255,10 +257,7 @@ impl MultiProvider {
                 } else {
                     Self::provider_key(forced).to_string()
                 };
-                log_info!((
-                    "Using forced provider '{}' from CLI/environment",
-                    display
-                ));
+                log_info!(("Using forced provider '{}' from CLI/environment", display));
             } else {
                 log_warn!((
                     "Forced provider '{}' is not configured; requests will fail until credentials are available",
@@ -316,7 +315,8 @@ impl MultiProvider {
             {
                 log_warn!((
                     "Failed to apply default_model '{}' from config: {}",
-                    model, e
+                    model,
+                    e
                 ));
             } else {
                 log_info!(("Applied default model '{}' from config", model));

@@ -257,7 +257,8 @@ impl Agent {
                     self.allowed_tools = Some(tools);
                     log_info!((
                         "Skill '{}' activated - restricted to tools: {:?}",
-                        skill_name, self.allowed_tools
+                        skill_name,
+                        self.allowed_tools
                     ));
                 }
             }

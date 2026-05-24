@@ -1,8 +1,8 @@
 #![cfg_attr(test, allow(clippy::await_holding_lock))]
 
-use anyhow::Result;
 #[cfg(feature = "terminal-ui")]
 use anyhow::Context;
+use anyhow::Result;
 
 #[cfg(feature = "terminal-ui")]
 const MAX_INTERACTIVE_SWARM_REPLAY_PANES: usize = 16;

@@ -1,14 +1,21 @@
 use anyhow::{Context, Result};
-use serde_json::{Value, json};
-use std::io::{self, BufRead, BufReader, Write};
+use serde_json::Value;
+#[cfg(test)]
+use serde_json::json;
+use std::io;
+#[cfg(unix)]
+use std::io::{BufRead, Write};
 #[cfg(unix)]
 use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::time::{Duration, Instant};
+#[cfg(unix)]
+use std::time::Duration;
 
+#[cfg(unix)]
 const SERVER_START_TIMEOUT: Duration = Duration::from_secs(10);
+#[cfg(unix)]
 const SERVER_CONNECT_RETRY_DELAY: Duration = Duration::from_millis(50);
 
 #[derive(Clone, Debug, Eq, PartialEq)]

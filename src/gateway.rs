@@ -14,13 +14,12 @@
 
 use anyhow::Result;
 use chrono::TimeZone;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use futures::SinkExt;
 use futures::stream::StreamExt;
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tokio::sync::broadcast;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpListener;
 use tokio_tungstenite::tungstenite::Message;
@@ -35,9 +34,9 @@ mod registry;
 use auth::{WsAuth, WsAuthSource, extract_ws_auth, ws_error_response};
 #[cfg(test)]
 pub(crate) use auth::{is_valid_hex_token, parse_bearer_token, parse_query_token};
+use chrono::Utc;
 pub use jcode_gateway_types::{PairedDevice, PairingCode};
 pub use registry::DeviceRegistry;
-use chrono::Utc;
 
 /// Default gateway port ("jc" on phone keypad = 52, but we use 7643)
 pub const DEFAULT_PORT: u16 = 7643;
@@ -114,7 +113,9 @@ impl GatewayState {
     }
 
     fn record_activity() {
-        Self::get().last_activity_secs.store(current_unix_secs(), Ordering::Relaxed);
+        Self::get()
+            .last_activity_secs
+            .store(current_unix_secs(), Ordering::Relaxed);
     }
 }
 
@@ -128,13 +129,17 @@ fn current_unix_secs() -> u64 {
 
 /// Increment connected client count on WebSocket connect
 fn ws_client_connected() {
-    GatewayState::get().connected_clients.fetch_add(1, Ordering::Relaxed);
+    GatewayState::get()
+        .connected_clients
+        .fetch_add(1, Ordering::Relaxed);
     GatewayState::record_activity();
 }
 
 /// Decrement connected client count on WebSocket disconnect
 fn ws_client_disconnected() {
-    GatewayState::get().connected_clients.fetch_sub(1, Ordering::Relaxed);
+    GatewayState::get()
+        .connected_clients
+        .fetch_sub(1, Ordering::Relaxed);
     GatewayState::record_activity();
 }
 
@@ -466,7 +471,8 @@ async fn handle_http(
             let uptime_secs = state.start_time.elapsed().as_secs();
             let connected_clients = state.connected_clients.load(Ordering::Relaxed);
             let last_activity_secs = state.last_activity_secs.load(Ordering::Relaxed);
-            let last_activity_iso = Utc.timestamp_opt(last_activity_secs as i64, 0)
+            let last_activity_iso = Utc
+                .timestamp_opt(last_activity_secs as i64, 0)
                 .single()
                 .map(|dt| dt.to_rfc3339())
                 .unwrap_or_else(|| "1970-01-01T00:00:00Z".to_string());
@@ -476,30 +482,21 @@ async fn handle_http(
             let total_sessions = std::fs::read_dir(
                 storage::jcode_dir()
                     .map(|d| d.join("sessions"))
-                    .unwrap_or_default()
-            ).ok()
-                .map(|entries| entries.filter_map(|e| e.ok()).count())
-                .unwrap_or(0);
+                    .unwrap_or_default(),
+            )
+            .ok()
+            .map(|entries| entries.filter_map(|e| e.ok()).count())
+            .unwrap_or(0);
 
             // Memory usage
             let mem_snapshot = process_memory::snapshot();
-            let memory_usage_mb = mem_snapshot
-                .rss_bytes
-                .map(|b| b / 1024 / 1024)
-                .unwrap_or(0);
+            let memory_usage_mb = mem_snapshot.rss_bytes.map(|b| b / 1024 / 1024).unwrap_or(0);
 
             // Queue depth from SafetySystem pending requests
-            let queue_depth = state
-                .safety_system
-                .pending_requests()
-                .len();
+            let queue_depth = state.safety_system.pending_requests().len();
 
             // Tools available from Registry
-            let tools_available = state
-                .registry
-                .tool_names()
-                .await
-                .len();
+            let tools_available = state.registry.tool_names().await.len();
 
             let body = serde_json::json!({
                 "status": "running",

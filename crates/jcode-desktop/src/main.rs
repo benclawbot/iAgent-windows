@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 mod animation;
 mod benchmarks;
 mod desktop_prefs;

@@ -143,10 +143,7 @@ impl McpManager {
                     }
                     Ok((name, Err(e))) => {
                         let error_msg = format!("{:#}", e);
-                        log_error!((
-                            "Failed to connect to MCP server '{}': {}",
-                            name, error_msg
-                        ));
+                        log_error!(("Failed to connect to MCP server '{}': {}", name, error_msg));
                         total_failures.push((name, error_msg));
                     }
                     Err(e) => {

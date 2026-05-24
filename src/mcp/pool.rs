@@ -89,10 +89,7 @@ impl SharedMcpPool {
                     }
                 }
                 Err(error_msg) => {
-                    log_error!((
-                        "Failed to connect to MCP server '{}': {}",
-                        name, error_msg
-                    ));
+                    log_error!(("Failed to connect to MCP server '{}': {}", name, error_msg));
                     failures.push((name, error_msg));
                 }
             }
@@ -330,7 +327,8 @@ impl SharedMcpPool {
                 .max(1);
             log_info!((
                 "MCP: Skipping reconnect to '{}' for {}s after recent failure",
-                name, retry_after
+                name,
+                retry_after
             ));
             return Err(format!(
                 "{} (retry suppressed for ~{}s after recent failure)",

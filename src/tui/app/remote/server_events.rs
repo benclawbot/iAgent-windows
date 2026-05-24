@@ -290,7 +290,8 @@ pub(in crate::tui::app) fn handle_server_event(
             let mut completed_current_message = false;
             log_info!((
                 "Client received Done id={}, current_message_id={:?}",
-                id, app.current_message_id
+                id,
+                app.current_message_id
             ));
             if app.current_message_id == Some(id) {
                 completed_current_message = true;
@@ -341,12 +342,14 @@ pub(in crate::tui::app) fn handle_server_event(
                 if is_stale {
                     log_info!((
                         "Ignoring stale Done id={} (current_message_id={:?}), likely from Subscribe/ResumeSession",
-                        id, app.current_message_id
+                        id,
+                        app.current_message_id
                     ));
                 } else {
                     log_info!((
                         "Ignoring unrelated Done id={} while processing current_message_id={:?}; preserving active/queued turn",
-                        id, app.current_message_id
+                        id,
+                        app.current_message_id
                     ));
                 }
             }
@@ -807,7 +810,8 @@ pub(in crate::tui::app) fn handle_server_event(
             {
                 log_info!((
                     "History payload requested reload recovery continuation: session={} was_interrupted={:?}",
-                    session_id, was_interrupted
+                    session_id,
+                    was_interrupted
                 ));
                 if let Some(notice) = reload_recovery.reconnect_notice {
                     app.reload_info.push(notice);
@@ -832,7 +836,8 @@ pub(in crate::tui::app) fn handle_server_event(
                 };
                 log_info!((
                     "History payload completed reload reconnect without continuation: session={} was_interrupted={:?}",
-                    session_id, was_interrupted
+                    session_id,
+                    was_interrupted
                 ));
                 app.push_display_message(DisplayMessage::system(message.to_string()));
             }

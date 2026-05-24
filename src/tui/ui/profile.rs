@@ -43,7 +43,10 @@ pub(super) fn record_profile(prepare: Duration, draw: Duration, total: Duration)
         let avg_total = state.total.as_secs_f64() * 1000.0 / frames;
         log_info!((
             "TUI perf: {:.1} fps | prepare {:.2}ms | draw {:.2}ms | total {:.2}ms",
-            frames, avg_prepare, avg_draw, avg_total
+            frames,
+            avg_prepare,
+            avg_draw,
+            avg_total
         ));
         state.frames = 0;
         state.prepare = Duration::from_secs(0);

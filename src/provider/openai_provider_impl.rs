@@ -289,10 +289,7 @@ impl Provider for OpenAIProvider {
                             let reason = summarize_websocket_fallback_reason(&error.to_string());
                             let fallback_reason =
                                 classify_websocket_fallback_reason(&error.to_string());
-                            log_warn!((
-                                "WebSocket fallback after {}ms: {}",
-                                elapsed_ms, error
-                            ));
+                            log_warn!(("WebSocket fallback after {}ms: {}", elapsed_ms, error));
                             emit_status_detail(&tx, format!("https fallback: {}", reason)).await;
                             force_https_for_request = true;
                             skip_backoff_once = true;
@@ -326,7 +323,8 @@ impl Provider for OpenAIProvider {
                             if is_retryable_error(&error_str) && attempt + 1 < MAX_RETRIES {
                                 log_info!((
                                     "Transient error after {}ms, will retry: {}",
-                                    elapsed_ms, error
+                                    elapsed_ms,
+                                    error
                                 ));
                                 last_error = Some(error);
                                 continue;

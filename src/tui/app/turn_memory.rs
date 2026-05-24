@@ -76,7 +76,8 @@ impl App {
         if let Err(err) = self.session.save() {
             log_warn!((
                 "Failed to persist memory injection for session {}: {}",
-                self.session.id, err
+                self.session.id,
+                err
             ));
         }
         self.push_display_message(DisplayMessage::memory(summary, display_prompt));
@@ -249,10 +250,7 @@ impl App {
                 }
 
                 if stored_count > 0 {
-                    log_info!((
-                        "Extracted {} memories from session",
-                        stored_count
-                    ));
+                    log_info!(("Extracted {} memories from session", stored_count));
                 }
             }
             Ok(_) => {

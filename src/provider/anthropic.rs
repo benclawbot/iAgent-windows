@@ -234,7 +234,8 @@ fn record_oauth_preflight_result(label: &str, result: Result<()>) -> bool {
         Err(err) => {
             log_warn!((
                 "Claude OAuth preflight {} failed; continuing because Claude Code treats this bootstrap traffic as nonessential: {:#}",
-                label, err
+                label,
+                err
             ));
             false
         }
@@ -650,7 +651,8 @@ impl AnthropicProvider {
                         if next.role != "user" {
                             log_warn!((
                                 "[anthropic] Message {} has tool_use but next message is {} (should be user)",
-                                i, next.role
+                                i,
+                                next.role
                             ));
                         } else {
                             let tool_results: std::collections::HashSet<&String> = next
@@ -677,10 +679,7 @@ impl AnthropicProvider {
                             }
                         }
                     } else {
-                        log_warn!((
-                            "[anthropic] Message {} has tool_use but no next message",
-                            i
-                        ));
+                        log_warn!(("[anthropic] Message {} has tool_use but no next message", i));
                     }
                 }
             }
@@ -956,10 +955,7 @@ impl Provider for AnthropicProvider {
 
         log_anthropic_canonical_input(&model, "anthropic_messages", &request, is_oauth, false);
 
-        log_info!((
-            "Anthropic transport: HTTPS SSE stream (oauth={})",
-            is_oauth
-        ));
+        log_info!(("Anthropic transport: HTTPS SSE stream (oauth={})", is_oauth));
 
         // Create channel for streaming events
         let (tx, rx) = mpsc::channel::<Result<StreamEvent>>(100);
@@ -1499,7 +1495,8 @@ async fn stream_response(
         if cache_read_input_tokens.is_some() || cache_creation_input_tokens.is_some() {
             log_info!((
                 "Prompt cache: read={:?} created={:?}",
-                cache_read_input_tokens, cache_creation_input_tokens
+                cache_read_input_tokens,
+                cache_creation_input_tokens
             ));
         }
         let _ = tx
@@ -1897,7 +1894,8 @@ fn add_message_cache_breakpoint(messages: &mut [ApiMessage]) {
         } else {
             log_info!((
                 "Conversation caching: no cacheable block in assistant message {} [{}]",
-                idx, label
+                idx,
+                label
             ));
         }
     }

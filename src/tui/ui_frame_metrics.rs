@@ -430,7 +430,8 @@ fn push_flicker_event(history: &mut FlickerFrameHistory, event: FlickerEvent) {
         } else {
             log_warn!((
                 "TUI_FLICKER_EVENT kind={} session={:?}",
-                event.kind, event.session_name
+                event.kind,
+                event.session_name
             ));
         }
     }
@@ -741,7 +742,9 @@ pub(crate) fn record_slow_frame_sample(sample: SlowFrameSample) {
         } else {
             log_warn!((
                 "TUI_SLOW_FRAME total_ms={:.2} prepare_ms={:.2} draw_ms={:.2}",
-                sample.total_ms, sample.prepare_ms, sample.draw_ms
+                sample.total_ms,
+                sample.prepare_ms,
+                sample.draw_ms
             ));
         }
     }

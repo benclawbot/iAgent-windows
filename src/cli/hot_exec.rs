@@ -2,9 +2,9 @@ use anyhow::Result;
 use std::path::Path;
 use std::process::Command as ProcessCommand;
 
-use crate::{build, update};
 #[cfg(feature = "terminal-ui")]
 use crate::tui::RunResult;
+use crate::{build, update};
 
 #[cfg(feature = "terminal-ui")]
 pub fn has_requested_action(run_result: &RunResult) -> bool {

@@ -126,7 +126,9 @@ pub(super) fn claim_pending_for_session(
     if record.status != ReloadRecoveryStatus::Pending {
         log_info!((
             "reload recovery store: skipping non-pending intent session={} reload_id={} status={:?}",
-            session_id, record.reload_id, record.status
+            session_id,
+            record.reload_id,
+            record.status
         ));
         return Ok(None);
     }

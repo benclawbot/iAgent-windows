@@ -365,10 +365,7 @@ impl Provider for CursorCliProvider {
         match fetch_available_models(&self.client, &api_key).await {
             Ok(models) => {
                 if !models.is_empty() {
-                    log_info!((
-                        "Discovered Cursor models: {}",
-                        models.join(", ")
-                    ));
+                    log_info!(("Discovered Cursor models: {}", models.join(", ")));
                     Self::persist_catalog(&models);
                     *self
                         .fetched_models

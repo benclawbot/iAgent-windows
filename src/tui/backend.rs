@@ -355,7 +355,8 @@ impl RemoteConnection {
                 Err(error) => {
                     log_warn!((
                         "Failed to serialize detached remote request {}: {}",
-                        label, error
+                        label,
+                        error
                     ));
                     return;
                 }
@@ -369,15 +370,13 @@ impl RemoteConnection {
             match tokio::time::timeout(DETACHED_REQUEST_TIMEOUT, write_future).await {
                 Ok(Ok(())) => {}
                 Ok(Err(error)) => {
-                    log_warn!((
-                        "Detached remote request {} failed: {}",
-                        label, error
-                    ));
+                    log_warn!(("Detached remote request {} failed: {}", label, error));
                 }
                 Err(_) => {
                     log_warn!((
                         "Detached remote request {} timed out after {:?}",
-                        label, DETACHED_REQUEST_TIMEOUT
+                        label,
+                        DETACHED_REQUEST_TIMEOUT
                     ));
                 }
             }
@@ -809,7 +808,8 @@ impl RemoteConnection {
                 Ok(0) => {
                     log_warn!((
                         "RemoteConnection::next_event: peer closed (session_id={:?}, client_instance_id={:?})",
-                        self.session_id, self.client_instance_id
+                        self.session_id,
+                        self.client_instance_id
                     ));
                     return RemoteRead::Disconnected(RemoteDisconnectReason::PeerClosed);
                 }
@@ -817,7 +817,8 @@ impl RemoteConnection {
                     if self.line_buffer.trim().is_empty() {
                         log_warn!((
                             "RemoteConnection::next_event: skipping blank line (session_id={:?}, client_instance_id={:?})",
-                            self.session_id, self.client_instance_id
+                            self.session_id,
+                            self.client_instance_id
                         ));
                         continue;
                     }
@@ -826,7 +827,10 @@ impl RemoteConnection {
                         Err(error) => {
                             log_warn!((
                                 "RemoteConnection::next_event: protocol error={} line={:?} (session_id={:?}, client_instance_id={:?})",
-                                error, self.line_buffer, self.session_id, self.client_instance_id
+                                error,
+                                self.line_buffer,
+                                self.session_id,
+                                self.client_instance_id
                             ));
                             return RemoteRead::Disconnected(RemoteDisconnectReason::Protocol(
                                 error.to_string(),
@@ -837,7 +841,9 @@ impl RemoteConnection {
                 Err(error) => {
                     log_warn!((
                         "RemoteConnection::next_event: io error={} (session_id={:?}, client_instance_id={:?})",
-                        error, self.session_id, self.client_instance_id
+                        error,
+                        self.session_id,
+                        self.client_instance_id
                     ));
                     return RemoteRead::Disconnected(RemoteDisconnectReason::Io(error.to_string()));
                 }

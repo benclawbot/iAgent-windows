@@ -3,7 +3,6 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{Value, json};
-use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::Duration;
@@ -132,7 +131,10 @@ impl Tool for OpenTool {
             Err(err) => {
                 log_warn!((
                     "[tool:open] failed to resolve target action={} session_id={} target={} error={}",
-                    action_name, ctx.session_id, requested_target, err
+                    action_name,
+                    ctx.session_id,
+                    requested_target,
+                    err
                 ));
                 return Err(err);
             }
@@ -145,7 +147,10 @@ impl Tool for OpenTool {
         .map_err(|err| {
             log_warn!((
                 "[tool:open] action failed action={} session_id={} target={} error={}",
-                action_name, ctx.session_id, requested_target, err
+                action_name,
+                ctx.session_id,
+                requested_target,
+                err
             ));
             err
         })?;

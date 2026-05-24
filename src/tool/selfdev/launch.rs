@@ -32,7 +32,8 @@ pub fn enter_selfdev_session(
             Err(err) => {
                 log_warn!((
                     "Failed to load parent session {} for self-dev enter; starting fresh session: {}",
-                    parent_session_id, err
+                    parent_session_id,
+                    err
                 ));
                 session::Session::create(None, Some("Self-development session".to_string()))
             }
@@ -83,7 +84,8 @@ pub fn schedule_selfdev_prompt_delivery(session_id: String, prompt: String) {
                 {
                     log_warn!((
                         "Failed to auto-deliver prompt to spawned self-dev session {}: {}",
-                        session_id, err
+                        session_id,
+                        err
                     ));
                 }
             }

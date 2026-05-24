@@ -6,14 +6,14 @@ mod bash;
 mod batch;
 mod bg;
 mod browser;
-mod compaction;
 mod codesearch;
 mod communicate;
+mod compaction;
 mod conversation_search;
 mod debug_socket;
 mod edit;
-mod glob;
 mod file_ops;
+mod glob;
 mod gmail;
 mod goal;
 mod grep;
@@ -401,7 +401,10 @@ impl Registry {
             crate::goal_judge::RoutingDecision::Block { reason } => {
                 anyhow::bail!("Tool execution blocked by goal judge: {}", reason);
             }
-            crate::goal_judge::RoutingDecision::Redirect { alternative, reason } => {
+            crate::goal_judge::RoutingDecision::Redirect {
+                alternative,
+                reason,
+            } => {
                 log_info!((
                     "[goal_judge] redirecting tool '{}' to '{}': {}",
                     resolved_name,

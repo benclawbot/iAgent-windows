@@ -268,7 +268,8 @@ impl App {
             if let Err(err) = self.session.save() {
                 log_error!((
                     "Failed to persist compaction state for session {}: {}",
-                    self.session.id, err
+                    self.session.id,
+                    err
                 ));
             }
         }
@@ -384,7 +385,8 @@ impl App {
         if let Err(err) = self.session.save() {
             log_warn!((
                 "Failed to persist provider session reset after compaction for session {}: {}",
-                self.session.id, err
+                self.session.id,
+                err
             ));
         }
         let message = if event.messages_dropped.is_some() {

@@ -2203,7 +2203,8 @@ impl App {
             Err(error) => {
                 log_warn!((
                     "Failed to persist pending session save for {}: {}",
-                    self.session.id, error
+                    self.session.id,
+                    error
                 ));
             }
         }

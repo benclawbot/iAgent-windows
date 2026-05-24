@@ -215,7 +215,9 @@ impl McpManagementTool {
             Err(e) => {
                 log_warn!((
                     "[tool:mcp] connect failed server={} session_id={} error={}",
-                    server_name, session_id, e
+                    server_name,
+                    session_id,
+                    e
                 ));
                 Ok(
                     ToolOutput::new(format!("Failed to connect to '{}': {}", server_name, e))

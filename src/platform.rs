@@ -91,7 +91,9 @@ pub fn raise_nofile_limit_best_effort(minimum_soft_limit: u64) {
         if unsafe { libc::setrlimit(libc::RLIMIT_NOFILE, &updated) } == 0 {
             log_info!((
                 "Raised RLIMIT_NOFILE soft limit from {} to {} (hard={})",
-                current, desired, hard
+                current,
+                desired,
+                hard
             ));
         } else {
             log_warn!((

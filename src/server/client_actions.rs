@@ -126,7 +126,8 @@ async fn run_scheduled_task_in_live_session_if_idle(
         {
             log_error!((
                 "Failed to run scheduled task immediately for live session {}: {}",
-                session_id, err
+                session_id,
+                err
             ));
         }
     });

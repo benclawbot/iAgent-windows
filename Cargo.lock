@@ -3046,7 +3046,6 @@ dependencies = [
  "jcode-compaction-core",
  "jcode-config-types",
  "jcode-core",
- "jcode-desktop",
  "jcode-embedding",
  "jcode-gateway-types",
  "jcode-import-core",

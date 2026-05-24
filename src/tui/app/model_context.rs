@@ -387,10 +387,7 @@ impl App {
                     ));
                 }
                 Err(reason) => {
-                    log_error!((
-                        "[auto_recover] hard_compact failed: {}",
-                        reason
-                    ));
+                    log_error!(("[auto_recover] hard_compact failed: {}", reason));
                     let truncated = manager.emergency_truncate_with(&mut provider_messages);
                     if truncated > 0 {
                         self.messages = provider_messages;

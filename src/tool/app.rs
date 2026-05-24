@@ -24,7 +24,7 @@ use crate::tool::{Tool, ToolContext, ToolOutput};
 use anyhow::Result;
 use app_integrations::{browser, form_fill, office_workflows, officecli};
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{Value, json};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -538,7 +538,11 @@ impl Tool for AppTool {
                 Ok(ToolOutput::new(result))
             }
 
-            AppInput::browser_fill { fields, url, port } => {
+            AppInput::browser_fill {
+                fields,
+                url: _,
+                port,
+            } => {
                 let port = port.unwrap_or(9222);
                 let b = make_browser(port);
                 use browser::CdpFormField;
@@ -570,7 +574,11 @@ impl Tool for AppTool {
             }
 
             // ===== Skill Script =====
-            AppInput::skill_script { skill, script, args } => {
+            AppInput::skill_script {
+                skill,
+                script,
+                args,
+            } => {
                 use crate::tool::bash::BashTool;
                 let registry = self.skills_registry.read().await;
                 let skill_entry = registry

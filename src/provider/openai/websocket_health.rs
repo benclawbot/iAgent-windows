@@ -270,7 +270,8 @@ pub(super) async fn record_websocket_success(
     if streak > 0 {
         log_info!((
             "OpenAI websocket health reset for model='{}' after successful stream (previous streak={})",
-            model, streak
+            model,
+            streak
         ));
     }
 }

@@ -7,7 +7,7 @@ use crate::tool::{Tool, ToolContext, ToolOutput};
 use anyhow::Result;
 use async_trait::async_trait;
 use desktop_monitor::file_ops;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{Value, json};
 
 pub struct FileOpsTool;
@@ -41,21 +41,13 @@ enum FileOpsInput {
     },
 
     /// Delete file (moves to system trash).
-    delete {
-        path: String,
-    },
+    delete { path: String },
 
     /// Move file to destination.
-    move_file {
-        src: String,
-        dst: String,
-    },
+    move_file { src: String, dst: String },
 
     /// Copy file to destination.
-    copy {
-        src: String,
-        dst: String,
-    },
+    copy { src: String, dst: String },
 
     /// Search for files by name/extension.
     find {
@@ -67,19 +59,13 @@ enum FileOpsInput {
     },
 
     /// Get file metadata.
-    info {
-        path: String,
-    },
+    info { path: String },
 
     /// Get disk usage for a path.
-    disk_usage {
-        path: String,
-    },
+    disk_usage { path: String },
 
     /// Resolve a path (handles shortcuts like desktop, downloads, ~).
-    resolve_path {
-        raw: String,
-    },
+    resolve_path { raw: String },
 }
 
 #[async_trait]
@@ -122,7 +108,10 @@ impl Tool for FileOpsTool {
         let input: FileOpsInput = serde_json::from_value(input)?;
 
         match input {
-            FileOpsInput::list { path, include_hidden } => {
+            FileOpsInput::list {
+                path,
+                include_hidden,
+            } => {
                 let resolved = file_ops::resolve_path(&path);
                 if !file_ops::is_safe_path(&resolved) {
                     return Ok(ToolOutput::new(format!("Path not safe: {}", path)));
@@ -140,7 +129,11 @@ impl Tool for FileOpsTool {
                 Ok(ToolOutput::new(content))
             }
 
-            FileOpsInput::write { path, content, append } => {
+            FileOpsInput::write {
+                path,
+                content,
+                append,
+            } => {
                 let resolved = file_ops::resolve_path(&path);
                 if !file_ops::is_safe_path(&resolved) {
                     return Ok(ToolOutput::new(format!("Path not safe: {}", path)));
@@ -165,7 +158,10 @@ impl Tool for FileOpsTool {
                     return Ok(ToolOutput::new(format!("Source path not safe: {}", src)));
                 }
                 if !file_ops::is_safe_path(&dst_resolved) {
-                    return Ok(ToolOutput::new(format!("Destination path not safe: {}", dst)));
+                    return Ok(ToolOutput::new(format!(
+                        "Destination path not safe: {}",
+                        dst
+                    )));
                 }
                 let result = file_ops::move_file(&src_resolved, &dst_resolved)?;
                 Ok(ToolOutput::new(format!("Moved to {}", result.display())))
@@ -178,7 +174,10 @@ impl Tool for FileOpsTool {
                     return Ok(ToolOutput::new(format!("Source path not safe: {}", src)));
                 }
                 if !file_ops::is_safe_path(&dst_resolved) {
-                    return Ok(ToolOutput::new(format!("Destination path not safe: {}", dst)));
+                    return Ok(ToolOutput::new(format!(
+                        "Destination path not safe: {}",
+                        dst
+                    )));
                 }
                 let result = file_ops::copy_file(&src_resolved, &dst_resolved)?;
                 Ok(ToolOutput::new(format!("Copied to {}", result.display())))

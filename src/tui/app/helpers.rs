@@ -518,10 +518,7 @@ pub(super) fn clipboard_image() -> Option<(String, String)> {
             .output()
     {
         let types = String::from_utf8_lossy(&output.stdout);
-        log_info!((
-            "clipboard_image: wl-paste types: {:?}",
-            types.trim()
-        ));
+        log_info!(("clipboard_image: wl-paste types: {:?}", types.trim()));
         let (mime, wl_type) = if types.lines().any(|t| t.trim() == "image/png") {
             ("image/png", "image/png")
         } else if types.lines().any(|t| t.trim() == "image/jpeg") {

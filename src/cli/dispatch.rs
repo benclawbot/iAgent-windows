@@ -8,11 +8,11 @@ use super::args::{
     AmbientCommand, Args, AuthCommand, Command, MemoryCommand, ModelCommand, ProviderCommand,
     RestartCommand, SessionCommand, TranscriptModeArg,
 };
+#[cfg(feature = "terminal-ui")]
+use crate::tui;
 use crate::{
     agent, auth, build, provider, provider_catalog, server, session, setup_hints, startup_profile,
 };
-#[cfg(feature = "terminal-ui")]
-use crate::tui;
 
 use super::{
     commands, debug, hot_exec, login, output, provider_init, selfdev, terminal, tui_launch,
@@ -821,8 +821,6 @@ pub(crate) async fn spawn_server(
             timeout.as_millis()
         );
     }
-
-    Ok(())
 }
 
 #[cfg(test)]

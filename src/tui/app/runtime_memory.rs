@@ -273,10 +273,7 @@ impl App {
         sample: &crate::runtime_memory_log::ClientRuntimeMemorySample,
     ) {
         if let Err(err) = crate::runtime_memory_log::append_client_sample(sample) {
-            log_info!((
-                "Client runtime memory logging sample failed: {}",
-                err
-            ));
+            log_info!(("Client runtime memory logging sample failed: {}", err));
             return;
         }
         let _ = crate::runtime_memory_log::prune_old_client_logs();

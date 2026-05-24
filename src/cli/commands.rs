@@ -1,14 +1,14 @@
 #![cfg_attr(test, allow(clippy::await_holding_lock))]
+#[cfg(feature = "terminal-ui")]
+use super::terminal::{cleanup_tui_runtime, init_tui_runtime};
+#[cfg(feature = "terminal-ui")]
+use crate::tui;
+use crate::{browser, gateway, memory, session, storage};
 use anyhow::Result;
 use serde::Serialize;
 use std::collections::BTreeSet;
 use std::io::{Read, Write};
 use std::net::ToSocketAddrs;
-use crate::{browser, gateway, memory, session, storage};
-#[cfg(feature = "terminal-ui")]
-use crate::tui;
-#[cfg(feature = "terminal-ui")]
-use super::terminal::{cleanup_tui_runtime, init_tui_runtime};
 mod provider_setup;
 mod report_info;
 mod restart;

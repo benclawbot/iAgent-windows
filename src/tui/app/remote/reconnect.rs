@@ -580,7 +580,9 @@ pub(in crate::tui::app) async fn handle_post_connect<B: ratatui::backend::Backen
 ) -> Result<PostConnectOutcome> {
     log_info!((
         "Reload check: session_to_resume={:?}, remote_session_id={:?}, reconnect_attempts={}",
-        session_to_resume, app.remote_session_id, state.reconnect_attempts
+        session_to_resume,
+        app.remote_session_id,
+        state.reconnect_attempts
     ));
     let hints = load_reload_reconnect_hints(app, session_to_resume);
     let has_reload_ctx_for_session = hints.reload_ctx_for_session.is_some();

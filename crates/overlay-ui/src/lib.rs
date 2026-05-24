@@ -125,7 +125,9 @@ mod tests {
             .expect("queue suggestions");
         let event = rx.recv().await.expect("event");
         match event {
-            OverlayEvent::Suggestions { cursor_position, .. } => {
+            OverlayEvent::Suggestions {
+                cursor_position, ..
+            } => {
                 assert_eq!(cursor_position, (1, 2));
             }
             _ => panic!("unexpected event type"),

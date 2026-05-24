@@ -650,10 +650,7 @@ impl CopilotApiProvider {
                 tokio::time::sleep(std::time::Duration::from_millis(delay)).await;
             }
 
-            log_info!((
-                "Copilot request: X-Initiator={} model={}",
-                initiator, model
-            ));
+            log_info!(("Copilot request: X-Initiator={} model={}", initiator, model));
 
             let bearer_token = match self.get_bearer_token().await {
                 Ok(t) => t,
@@ -706,10 +703,7 @@ impl CopilotApiProvider {
                 Err(e) => {
                     let error_str = e.to_string().to_lowercase();
                     if is_retryable_error(&error_str) && attempt + 1 < MAX_RETRIES {
-                        log_info!((
-                            "Transient Copilot error, will retry: {}",
-                            e
-                        ));
+                        log_info!(("Transient Copilot error, will retry: {}", e));
                         last_error = Some(anyhow::anyhow!("Copilot API request failed: {}", e));
                         continue;
                     }

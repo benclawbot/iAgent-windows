@@ -1,12 +1,11 @@
-use anyhow::Result;
 use std::panic;
 
 use crate::{id, session, telemetry};
 
 #[cfg(feature = "terminal-ui")]
-use std::io::{self, IsTerminal};
-#[cfg(feature = "terminal-ui")]
 use crate::tui;
+#[cfg(feature = "terminal-ui")]
+use std::io::{self, IsTerminal};
 
 #[cfg(feature = "terminal-ui")]
 pub struct TuiRuntimeState {
@@ -245,12 +244,12 @@ fn handle_termination_signal(sig: i32) -> ! {
 
     #[cfg(feature = "terminal-ui")]
     {
-    let _ = crossterm::terminal::disable_raw_mode();
-    let _ = crossterm::execute!(
-        std::io::stderr(),
-        crossterm::terminal::LeaveAlternateScreen,
-        crossterm::cursor::Show
-    );
+        let _ = crossterm::terminal::disable_raw_mode();
+        let _ = crossterm::execute!(
+            std::io::stderr(),
+            crossterm::terminal::LeaveAlternateScreen,
+            crossterm::cursor::Show
+        );
     }
 
     if let Some(session_id) = get_current_session() {
@@ -269,11 +268,7 @@ pub fn spawn_session_signal_watchers() {
             let mut stream = match signal(kind) {
                 Ok(s) => s,
                 Err(e) => {
-                    log_error!((
-                        "Failed to install {} handler: {}",
-                        signal_name(sig),
-                        e
-                    ));
+                    log_error!(("Failed to install {} handler: {}", signal_name(sig), e));
                     return;
                 }
             };

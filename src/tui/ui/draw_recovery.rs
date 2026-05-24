@@ -16,10 +16,7 @@ pub(super) fn render_recovered_panic_frame(
     let panic_count = DRAW_PANIC_COUNT.fetch_add(1, Ordering::Relaxed) + 1;
     let msg = panic_payload_to_string(payload);
     if panic_count <= 3 || panic_count.is_multiple_of(50) {
-        log_error!((
-            "Recovered TUI draw panic #{}: {}",
-            panic_count, msg
-        ));
+        log_error!(("Recovered TUI draw panic #{}: {}", panic_count, msg));
     }
     let area = frame.area().intersection(*frame.buffer_mut().area());
     if area.width == 0 || area.height == 0 {

@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, fs};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::Serialize;
 
 // ---------------------------------------------------------------------------
@@ -38,7 +38,10 @@ pub fn xdg_dir(_env_key: &str, fallback: &str) -> Option<PathBuf> {
     }
     #[cfg(not(target_os = "linux"))]
     {
-        home_dir().join(fallback).exists().then(|| home_dir().join(fallback))
+        home_dir()
+            .join(fallback)
+            .exists()
+            .then(|| home_dir().join(fallback))
     }
 }
 
@@ -129,7 +132,7 @@ pub fn is_safe_path(target: &Path) -> bool {
                     Err(_) => return false,
                 }
             } else {
-                return false
+                return false;
             }
         }
     };
@@ -184,20 +187,23 @@ pub fn format_size(bytes: u64) -> String {
 /// Get file metadata safely.
 pub fn get_file_info(path: &Path) -> Result<FileInfo> {
     let metadata = fs::metadata(path)?;
-    let modified = metadata
-        .modified()
-        .unwrap_or(SystemTime::UNIX_EPOCH);
-    let created = metadata
-        .created()
-        .unwrap_or(modified);
+    let modified = metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH);
+    let created = metadata.created().unwrap_or(modified);
 
     Ok(FileInfo {
-        name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
+        name: path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string(),
         is_dir: metadata.is_dir(),
         size: metadata.len(),
         created: unix_timestamp(created),
         modified: unix_timestamp(modified),
-        extension: path.extension().map(|e| e.to_string_lossy().to_string()).unwrap_or_default(),
+        extension: path
+            .extension()
+            .map(|e| e.to_string_lossy().to_string())
+            .unwrap_or_default(),
     })
 }
 
@@ -269,9 +275,7 @@ pub fn list_dir(path: &Path, include_hidden: bool) -> Result<Vec<DirEntry>> {
         let metadata = entry.metadata()?;
         let is_dir = metadata.is_dir();
         let size = if is_dir { 0 } else { metadata.len() };
-        let modified = metadata
-            .modified()
-            .unwrap_or(UNIX_EPOCH);
+        let modified = metadata.modified().unwrap_or(UNIX_EPOCH);
 
         entries.push(DirEntry {
             name,
@@ -356,7 +360,9 @@ pub fn write_file(path: &Path, content: &str, append: bool) -> Result<()> {
 
 /// Rename a file.
 pub fn rename(path: &Path, new_name: &str) -> Result<PathBuf> {
-    let parent = path.parent().ok_or_else(|| anyhow!("No parent directory"))?;
+    let parent = path
+        .parent()
+        .ok_or_else(|| anyhow!("No parent directory"))?;
     let new_path = parent.join(new_name);
 
     if new_path.exists() {
@@ -405,11 +411,17 @@ pub fn copy_file(src: &Path, dst: &Path) -> Result<PathBuf> {
 /// Delete file (moves to trash, doesn't permanently delete).
 pub fn delete_file(path: &Path) -> Result<String> {
     if is_protected(path) {
-        return Err(anyhow!("Cannot delete protected directory: {}", path.display()));
+        return Err(anyhow!(
+            "Cannot delete protected directory: {}",
+            path.display()
+        ));
     }
 
     move_to_trash(path)?;
-    Ok(format!("Moved to trash: {}", path.file_name().unwrap_or_default().to_string_lossy()))
+    Ok(format!(
+        "Moved to trash: {}",
+        path.file_name().unwrap_or_default().to_string_lossy()
+    ))
 }
 
 /// Search for files by name/extension with a max depth.
@@ -516,7 +528,10 @@ pub fn disk_usage(path: &Path) -> Result<DiskUsage> {
     let statvfs: libc::statvfs = unsafe {
         let mut stat: libc::statvfs = std::mem::zeroed();
         if libc::statvfs(path_str.as_ptr(), &mut stat) != 0 {
-            return Err(anyhow!("Failed to get filesystem stats for {}", path.display()));
+            return Err(anyhow!(
+                "Failed to get filesystem stats for {}",
+                path.display()
+            ));
         }
         stat
     };
