@@ -1,3 +1,4 @@
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[tokio::test]
 async fn communicate_assign_task_can_spawn_fallback_agent() {
     let _env_lock = crate::storage::lock_test_env();
@@ -416,6 +417,7 @@ async fn communicate_assign_next_can_spawn_if_needed_server_side() {
     server_task.abort();
 }
 
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[tokio::test]
 async fn communicate_fill_slots_tops_up_to_concurrency_limit() {
     let _env_lock = crate::storage::lock_test_env();
@@ -508,6 +510,7 @@ async fn communicate_fill_slots_tops_up_to_concurrency_limit() {
     server_task.abort();
 }
 
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[tokio::test]
 async fn communicate_assign_task_can_prefer_fresh_spawn_over_reuse() {
     let _env_lock = crate::storage::lock_test_env();
