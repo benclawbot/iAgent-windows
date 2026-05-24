@@ -777,6 +777,7 @@ pub(crate) async fn spawn_server(
     {
         let _child = server::spawn_server_notify(&mut cmd).await?;
         startup_profile::mark("server_ready");
+        return Ok(());
     }
     #[cfg(not(unix))]
     {

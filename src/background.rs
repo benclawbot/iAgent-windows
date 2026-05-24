@@ -921,8 +921,11 @@ impl BackgroundTaskManager {
     pub async fn cancel_with_grace(
         &self,
         task_id: &str,
-        _graceful_timeout: std::time::Duration,
+        graceful_timeout: std::time::Duration,
     ) -> Result<bool> {
+        #[cfg(not(unix))]
+        let _ = graceful_timeout;
+
         let mut tasks = self.tasks.write().await;
         if let Some(task) = tasks.remove(task_id) {
             task.handle.abort();

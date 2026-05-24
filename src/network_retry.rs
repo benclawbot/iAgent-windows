@@ -108,7 +108,7 @@ async fn wait_for_platform_change_or_delay(delay: Duration) {
     {
         if command_exists("ip").await {
             let fut = wait_for_command_output("ip", &["monitor", "link", "address", "route"]);
-            let _ = timeout(delay, fut).await;
+            let _ = tokio::time::timeout(delay, fut).await;
             return;
         }
     }
@@ -116,7 +116,7 @@ async fn wait_for_platform_change_or_delay(delay: Duration) {
     {
         if command_exists("route").await {
             let fut = wait_for_command_output("route", &["-n", "monitor"]);
-            let _ = timeout(delay, fut).await;
+            let _ = tokio::time::timeout(delay, fut).await;
             return;
         }
     }

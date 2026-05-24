@@ -466,7 +466,10 @@ async fn download_browser_binary() -> Result<()> {
     Ok(())
 }
 
-fn write_file_atomically(path: &PathBuf, bytes: &[u8], _executable: bool) -> Result<()> {
+fn write_file_atomically(path: &PathBuf, bytes: &[u8], executable: bool) -> Result<()> {
+    #[cfg(not(unix))]
+    let _ = executable;
+
     let parent = path
         .parent()
         .context("Target file has no parent directory")?;
