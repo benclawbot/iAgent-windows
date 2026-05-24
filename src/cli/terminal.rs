@@ -2,20 +2,6 @@ use std::panic;
 
 use crate::{id, session, telemetry};
 
-#[cfg(feature = "terminal-ui")]
-use crate::tui;
-#[cfg(feature = "terminal-ui")]
-use anyhow::Result;
-#[cfg(feature = "terminal-ui")]
-use std::io::{self, IsTerminal};
-
-#[cfg(feature = "terminal-ui")]
-pub struct TuiRuntimeState {
-    mouse_capture: bool,
-    keyboard_enhanced: bool,
-    focus_change: bool,
-}
-
 pub fn set_current_session(session_id: &str) {
     crate::set_current_session(session_id);
 }
@@ -94,90 +80,6 @@ pub fn show_crash_resume_hint() {
     eprintln!();
 }
 
-#[cfg(feature = "terminal-ui")]
-fn init_tui_terminal() -> Result<ratatui::DefaultTerminal> {
-    if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
-        anyhow::bail!("jcode TUI requires an interactive terminal (stdin/stdout must be a TTY)");
-    }
-    let is_resuming = std::env::var("JCODE_RESUMING").is_ok();
-    if is_resuming {
-        init_tui_terminal_resume()
-    } else {
-        std::panic::catch_unwind(std::panic::AssertUnwindSafe(ratatui::init)).map_err(|payload| {
-            anyhow::anyhow!(
-                "failed to initialize terminal: {}",
-                panic_payload_to_string(payload.as_ref())
-            )
-        })
-    }
-}
-
-#[cfg(feature = "terminal-ui")]
-pub fn init_tui_runtime() -> Result<(ratatui::DefaultTerminal, TuiRuntimeState)> {
-    let terminal = init_tui_terminal()?;
-    crate::tui::mermaid::install_jcode_mermaid_hooks();
-    crate::tui::markdown::install_jcode_markdown_hooks();
-    crate::tui::mermaid::init_picker();
-
-    let perf_policy = crate::perf::tui_policy();
-    let mouse_capture = perf_policy.enable_mouse_capture;
-    let focus_change = perf_policy.enable_focus_change;
-    let keyboard_enhanced = if perf_policy.enable_keyboard_enhancement {
-        tui::enable_keyboard_enhancement()
-    } else {
-        false
-    };
-
-    crossterm::execute!(std::io::stdout(), crossterm::event::EnableBracketedPaste)?;
-    if focus_change {
-        crossterm::execute!(std::io::stdout(), crossterm::event::EnableFocusChange)?;
-    }
-    if mouse_capture {
-        crossterm::execute!(std::io::stdout(), crossterm::event::EnableMouseCapture)?;
-    }
-
-    Ok((
-        terminal,
-        TuiRuntimeState {
-            mouse_capture,
-            keyboard_enhanced,
-            focus_change,
-        },
-    ))
-}
-
-#[cfg(feature = "terminal-ui")]
-pub fn cleanup_tui_runtime(state: &TuiRuntimeState, restore_terminal: bool) {
-    if restore_terminal {
-        let _ = crossterm::execute!(std::io::stdout(), crossterm::event::DisableBracketedPaste);
-        if state.focus_change {
-            let _ = crossterm::execute!(std::io::stdout(), crossterm::event::DisableFocusChange);
-        }
-        if state.mouse_capture {
-            let _ = crossterm::execute!(std::io::stdout(), crossterm::event::DisableMouseCapture);
-        }
-        if state.keyboard_enhanced {
-            tui::disable_keyboard_enhancement();
-        }
-        ratatui::restore();
-    }
-
-    crate::tui::mermaid::clear_image_state();
-}
-
-#[cfg(feature = "terminal-ui")]
-pub fn cleanup_tui_runtime_for_run_result(
-    state: &TuiRuntimeState,
-    run_result: &crate::tui::RunResult,
-    extra_exec: bool,
-) {
-    let will_exec = extra_exec
-        || run_result.reload_session.is_some()
-        || run_result.rebuild_session.is_some()
-        || run_result.update_session.is_some();
-    cleanup_tui_runtime(state, !will_exec);
-}
-
 pub fn print_session_resume_hint(session_id: &str) {
     let session_name = id::extract_session_name(session_id).unwrap_or(session_id);
     eprintln!();
@@ -187,24 +89,6 @@ pub fn print_session_resume_hint(session_id: &str) {
     );
     eprintln!("  jcode --resume {}", session_id);
     eprintln!();
-}
-
-#[cfg(feature = "terminal-ui")]
-fn init_tui_terminal_resume() -> Result<ratatui::DefaultTerminal> {
-    use ratatui::{Terminal, backend::CrosstermBackend};
-
-    crossterm::terminal::enable_raw_mode()
-        .map_err(|e| anyhow::anyhow!("failed to enable raw mode on resume: {}", e))?;
-
-    let backend = CrosstermBackend::new(io::stdout());
-    let mut terminal = Terminal::new(backend)
-        .map_err(|e| anyhow::anyhow!("failed to create terminal on resume: {}", e))?;
-
-    terminal
-        .clear()
-        .map_err(|e| anyhow::anyhow!("failed to clear terminal on resume: {}", e))?;
-
-    Ok(terminal)
 }
 
 #[cfg(unix)]
@@ -244,16 +128,6 @@ fn signal_crash_reason(sig: i32) -> String {
 fn handle_termination_signal(sig: i32) -> ! {
     mark_current_session_crashed(signal_crash_reason(sig));
 
-    #[cfg(feature = "terminal-ui")]
-    {
-        let _ = crossterm::terminal::disable_raw_mode();
-        let _ = crossterm::execute!(
-            std::io::stderr(),
-            crossterm::terminal::LeaveAlternateScreen,
-            crossterm::cursor::Show
-        );
-    }
-
     if let Some(session_id) = get_current_session() {
         print_session_resume_hint(&session_id);
     }
@@ -275,7 +149,7 @@ pub fn spawn_session_signal_watchers() {
                 }
             };
             if stream.recv().await.is_some() {
-                log_info!(("Received {} in TUI process", signal_name(sig)));
+                log_info!(("Received {} in client process", signal_name(sig)));
                 handle_termination_signal(sig);
             }
         });

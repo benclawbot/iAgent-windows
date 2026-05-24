@@ -314,9 +314,9 @@ fn test_selfdev_build_command_falls_back_to_cargo_when_wrapper_missing() {
 }
 
 #[test]
-fn test_selfdev_build_command_can_target_tui_only() {
+fn test_selfdev_build_command_can_target_backend_only() {
     let temp = tempfile::tempdir().expect("tempdir");
     let build =
-        build::selfdev_build_command_for_target(temp.path(), build::SelfDevBuildTarget::Tui);
+        build::selfdev_build_command_for_target(temp.path(), build::SelfDevBuildTarget::Backend);
     assert!(build.display.contains("-p jcode --bin jcode"));
 }

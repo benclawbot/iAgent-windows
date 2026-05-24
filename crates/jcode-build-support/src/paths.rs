@@ -113,7 +113,7 @@ pub fn selfdev_build_command_for_target(
         explicit => explicit,
     };
     let specs = match target {
-        SelfDevBuildTarget::Tui | SelfDevBuildTarget::Auto => vec![("jcode", "jcode")],
+        SelfDevBuildTarget::Backend | SelfDevBuildTarget::Auto => vec![("jcode", "jcode")],
     };
     let wrapper = repo_dir.join("scripts").join("dev_cargo.sh");
     if wrapper.is_file() {
@@ -161,7 +161,7 @@ fn display_build_command(program: &str, specs: &[(&str, &str)]) -> String {
 
 fn infer_selfdev_build_target(repo_dir: &Path) -> SelfDevBuildTarget {
     let _ = repo_dir;
-    SelfDevBuildTarget::Tui
+    SelfDevBuildTarget::Backend
 }
 
 fn shell_escape(value: &str) -> String {

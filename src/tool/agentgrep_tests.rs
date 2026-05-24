@@ -289,7 +289,7 @@ fn build_smart_args_uses_terms() {
         terms: Some(vec![
             "subject:auth_status".to_string(),
             "relation:rendered".to_string(),
-            "path:src/tui".to_string(),
+            "path:app/iagent-py".to_string(),
         ]),
         regex: None,
         path: Some("repo".to_string()),
@@ -308,7 +308,11 @@ fn build_smart_args_uses_terms() {
     let (args, query) = build_smart_args_and_query(&params, &ctx, None).unwrap();
     assert_eq!(
         args.terms,
-        vec!["subject:auth_status", "relation:rendered", "path:src/tui"]
+        vec![
+            "subject:auth_status",
+            "relation:rendered",
+            "path:app/iagent-py"
+        ]
     );
     assert_eq!(args.max_files, 3);
     assert_eq!(args.max_regions, 4);
@@ -319,7 +323,7 @@ fn build_smart_args_uses_terms() {
     assert_eq!(args.path.as_deref(), Some("/workspace/repo"));
     assert_eq!(query.subject, "auth_status");
     assert_eq!(query.relation.as_str(), "rendered");
-    assert_eq!(query.path_hint.as_deref(), Some("src/tui"));
+    assert_eq!(query.path_hint.as_deref(), Some("app/iagent-py"));
 }
 
 #[test]
@@ -328,7 +332,7 @@ fn build_smart_args_falls_back_to_query_terms() {
     let params = AgentGrepInput {
         mode: "smart".to_string(),
         query: Some(
-            "subject:auth_status relation:rendered path:src/tui support:current".to_string(),
+            "subject:auth_status relation:rendered path:app/iagent-py support:current".to_string(),
         ),
         file: None,
         terms: None,
@@ -352,7 +356,7 @@ fn build_smart_args_falls_back_to_query_terms() {
         vec![
             "subject:auth_status",
             "relation:rendered",
-            "path:src/tui",
+            "path:app/iagent-py",
             "support:current"
         ]
     );
@@ -592,9 +596,9 @@ query parameters:
   relation: rendered
 
 top results: 1 files, 1 regions
-best answer likely in src/tui/app.rs
+best answer likely in app/iagent-py/iagent/app.py
 
-1. src/tui/app.rs
+1. app/iagent-py/iagent/app.py
    role: ui
    structure:
      - function render_status_bar @ 9002-9017 (16 lines)
@@ -620,21 +624,20 @@ best answer likely in src/tui/app.rs
         &mut file_mtime_cache,
     );
 
-    assert!(focus.contains("src/tui/app.rs"));
+    assert!(focus.contains("app/iagent-py/iagent/app.py"));
     assert!(
         context
             .known_files
             .iter()
-            .any(|entry| entry.path == "src/tui/app.rs")
+            .any(|entry| entry.path == "app/iagent-py/iagent/app.py")
     );
-    assert!(
-        context
-            .known_symbols
-            .iter()
-            .any(|entry| { entry.path == "src/tui/app.rs" && entry.symbol == "render_status_bar" })
-    );
+    assert!(context.known_symbols.iter().any(|entry| {
+        entry.path == "app/iagent-py/iagent/app.py" && entry.symbol == "render_status_bar"
+    }));
     assert!(context.known_regions.iter().any(|entry| {
-        entry.path == "src/tui/app.rs" && entry.start_line == 9002 && entry.end_line == 9017
+        entry.path == "app/iagent-py/iagent/app.py"
+            && entry.start_line == 9002
+            && entry.end_line == 9017
     }));
 }
 

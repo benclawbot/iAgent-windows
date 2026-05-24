@@ -59,15 +59,12 @@ pub fn enter_selfdev_session(
         });
     }
 
-    let exe = SelfDevTool::launch_binary()?;
-    let launched = tui_launch::spawn_selfdev_in_new_terminal(&exe, &session_id, &repo_dir)?;
-
     Ok(SelfDevLaunchResult {
         session_id,
         repo_dir,
-        launched,
+        launched: false,
         test_mode: false,
-        exe: Some(exe),
+        exe: None,
         inherited_context,
     })
 }

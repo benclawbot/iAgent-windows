@@ -49,34 +49,7 @@ impl Agent {
         output_format: &str,
         revised_prompt: Option<&str>,
     ) -> Option<crate::side_panel::SidePanelSnapshot> {
-        #[cfg(not(feature = "terminal-ui"))]
-        {
-            let _ = (id, path, metadata_path, output_format, revised_prompt);
-            None
-        }
-
-        #[cfg(feature = "terminal-ui")]
-        match crate::tui::write_generated_image_side_panel_page(
-            &self.session.id,
-            id,
-            path,
-            metadata_path,
-            output_format,
-            revised_prompt,
-        ) {
-            Ok(snapshot) => {
-                crate::bus::Bus::global().publish(crate::bus::BusEvent::SidePanelUpdated(
-                    crate::bus::SidePanelUpdated {
-                        session_id: self.session.id.clone(),
-                        snapshot: snapshot.clone(),
-                    },
-                ));
-                Some(snapshot)
-            }
-            Err(err) => {
-                log_warn!("Failed to write generated image side panel page: {}", err);
-                None
-            }
-        }
+        let _ = (id, path, metadata_path, output_format, revised_prompt);
+        None
     }
 }

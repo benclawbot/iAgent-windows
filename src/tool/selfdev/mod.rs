@@ -5,7 +5,6 @@
 use crate::background::{self, TaskResult};
 use crate::build;
 use crate::bus::BackgroundTaskStatus;
-use crate::cli::tui_launch;
 use crate::protocol::{ServerEvent, TranscriptMode};
 use crate::server;
 use crate::session;
@@ -43,7 +42,7 @@ struct SelfDevInput {
     /// Why this build is needed; shown to other queued/blocked agents.
     #[serde(default)]
     reason: Option<String>,
-    /// Build target for selfdev build: auto, tui, desktop, or all.
+    /// Build target for selfdev build: auto or backend.
     #[serde(default)]
     target: Option<String>,
     /// Shell command for selfdev test/check action.
@@ -400,8 +399,8 @@ impl Tool for SelfDevTool {
                 "reason": { "type": "string" },
                 "target": {
                     "type": "string",
-                    "enum": ["auto", "tui", "desktop", "all"],
-                        "description": "Build target for action=build. auto and tui both build the jcode binary; the Rust desktop frontend has been retired."
+                    "enum": ["auto", "backend"],
+                        "description": "Build target for action=build. auto and backend both build the jcode binary; Rust desktop and TUI frontends have been retired."
                 },
                 "command": {
                     "type": "string",

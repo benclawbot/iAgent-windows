@@ -12,9 +12,8 @@ From a repo-wide search snapshot:
 2. `crates/jcode-storage/src/lib.rs`
 3. `src/process_title.rs`
 4. `src/setup_hints.rs`
-5. `src/cli/tui_launch.rs`
-6. `src/provider_catalog.rs`
-7. `src/provider/openrouter.rs`
+5. `src/provider_catalog.rs`
+6. `src/provider/openrouter.rs`
 
 ## Migration Phases
 
