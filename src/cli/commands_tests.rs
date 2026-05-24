@@ -123,6 +123,10 @@ fn test_parse_tailscale_dns_name_invalid_json() {
     assert!(parse_tailscale_dns_name(b"not-json").is_none());
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn configured_auth_test_targets_only_include_configured_supported_providers() {
     let status = AuthStatus {
