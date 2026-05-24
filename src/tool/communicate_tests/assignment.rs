@@ -111,6 +111,7 @@ async fn communicate_assign_task_can_spawn_fallback_agent() {
     server_task.abort();
 }
 
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[tokio::test]
 async fn communicate_assign_next_assigns_next_runnable_task() {
     let _env_lock = crate::storage::lock_test_env();
