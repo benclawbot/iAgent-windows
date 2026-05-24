@@ -28,7 +28,7 @@ pub fn home_dir() -> PathBuf {
 }
 
 /// Resolve XDG directories for Linux, fall back to macOS/Windows conventions.
-pub fn xdg_dir(_env_key: &str, fallback: &str) -> Option<PathBuf> {
+pub fn xdg_dir(_env_key: &str, _fallback: &str) -> Option<PathBuf> {
     #[cfg(target_os = "linux")]
     {
         std::env::var(_env_key)
@@ -39,9 +39,9 @@ pub fn xdg_dir(_env_key: &str, fallback: &str) -> Option<PathBuf> {
     #[cfg(not(target_os = "linux"))]
     {
         home_dir()
-            .join(fallback)
+            .join(_fallback)
             .exists()
-            .then(|| home_dir().join(fallback))
+            .then(|| home_dir().join(_fallback))
     }
 }
 

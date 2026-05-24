@@ -9,14 +9,12 @@ Priority should be user-facing strings and runtime paths first, then deeper crat
 From a repo-wide search snapshot:
 
 1. `Cargo.toml` (workspace and crate names)
-2. `crates/jcode-desktop/src/main.rs`
-3. `crates/jcode-desktop/src/session_launch.rs`
-4. `crates/jcode-storage/src/lib.rs`
-5. `src/process_title.rs`
-6. `src/setup_hints.rs`
-7. `src/cli/tui_launch.rs`
-8. `src/provider_catalog.rs`
-9. `src/provider/openrouter.rs`
+2. `crates/jcode-storage/src/lib.rs`
+3. `src/process_title.rs`
+4. `src/setup_hints.rs`
+5. `src/cli/tui_launch.rs`
+6. `src/provider_catalog.rs`
+7. `src/provider/openrouter.rs`
 
 ## Migration Phases
 

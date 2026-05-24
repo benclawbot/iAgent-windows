@@ -14,12 +14,6 @@ It's always available, has computer use and full agentic capabilities (with swar
 
 ---
 
-## Screenshots
-
-![iAgent Desktop](docs/assets/iagent-desktop-full.jpg)
-
----
-
 # Overview
 
 iAgent Windows is a local-first ambient AI runtime designed for persistent desktop workflows.
@@ -563,7 +557,6 @@ If issues persist:
 | `jcode-provider-openai` | OpenAI integration |
 | `jcode-provider-openrouter` | OpenRouter integration |
 | `jcode-provider-gemini` | Gemini integration |
-| `iagent-desktop` | Desktop integration |
 | `overlay-ui` | Overlay runtime |
 | `desktop-monitor` | Desktop monitoring |
 | `suggestion-engine` | Suggestion systems |

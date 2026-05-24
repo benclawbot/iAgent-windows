@@ -401,7 +401,7 @@ impl Tool for SelfDevTool {
                 "target": {
                     "type": "string",
                     "enum": ["auto", "tui", "desktop", "all"],
-                    "description": "Build target for action=build. auto chooses from changed paths; tui builds jcode; desktop builds iagent-desktop; all builds both."
+                        "description": "Build target for action=build. auto and tui both build the jcode binary; the Rust desktop frontend has been retired."
                 },
                 "command": {
                     "type": "string",

@@ -21,8 +21,6 @@ pub struct SelfDevBuildCommand {
 pub enum SelfDevBuildTarget {
     Auto,
     Tui,
-    Desktop,
-    All,
 }
 
 impl SelfDevBuildTarget {
@@ -30,10 +28,9 @@ impl SelfDevBuildTarget {
         match value.unwrap_or("auto").trim().to_ascii_lowercase().as_str() {
             "" | "auto" => Ok(Self::Auto),
             "tui" | "jcode" => Ok(Self::Tui),
-            "desktop" | "jcode-desktop" => Ok(Self::Desktop),
-            "all" | "both" => Ok(Self::All),
+            "all" | "both" => Ok(Self::Tui),
             other => anyhow::bail!(
-                "invalid selfdev build target `{}`; expected auto, tui, desktop, or all",
+                "invalid selfdev build target `{}`; expected auto or tui",
                 other
             ),
         }

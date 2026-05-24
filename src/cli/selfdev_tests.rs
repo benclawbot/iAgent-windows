@@ -300,9 +300,7 @@ fn test_selfdev_build_command_prefers_repo_wrapper_when_present() {
     assert_eq!(build.args.first().map(String::as_str), Some("-lc"));
     let command = build.args.get(1).expect("shell command");
     assert!(command.contains("dev_cargo.sh' build --profile selfdev -p jcode --bin jcode"));
-    assert!(!command.contains("jcode-desktop"));
     assert!(build.display.contains("-p jcode --bin jcode"));
-    assert!(!build.display.contains("jcode-desktop"));
 }
 
 #[test]
@@ -313,20 +311,6 @@ fn test_selfdev_build_command_falls_back_to_cargo_when_wrapper_missing() {
     assert_eq!(build.args.first().map(String::as_str), Some("-lc"));
     let command = build.args.get(1).expect("shell command");
     assert!(command.contains("cargo build --profile selfdev -p jcode --bin jcode"));
-    assert!(!command.contains("jcode-desktop"));
-}
-
-#[test]
-fn test_selfdev_build_command_can_target_all() {
-    let temp = tempfile::tempdir().expect("tempdir");
-    let build =
-        build::selfdev_build_command_for_target(temp.path(), build::SelfDevBuildTarget::All);
-    assert!(build.display.contains("-p jcode --bin jcode"));
-    assert!(
-        build
-            .display
-            .contains("-p jcode-desktop --bin iagent-desktop")
-    );
 }
 
 #[test]
@@ -335,18 +319,4 @@ fn test_selfdev_build_command_can_target_tui_only() {
     let build =
         build::selfdev_build_command_for_target(temp.path(), build::SelfDevBuildTarget::Tui);
     assert!(build.display.contains("-p jcode --bin jcode"));
-    assert!(!build.display.contains("jcode-desktop"));
-}
-
-#[test]
-fn test_selfdev_build_command_can_target_desktop_only() {
-    let temp = tempfile::tempdir().expect("tempdir");
-    let build =
-        build::selfdev_build_command_for_target(temp.path(), build::SelfDevBuildTarget::Desktop);
-    assert!(!build.display.contains("-p jcode --bin jcode"));
-    assert!(
-        build
-            .display
-            .contains("-p jcode-desktop --bin iagent-desktop")
-    );
 }

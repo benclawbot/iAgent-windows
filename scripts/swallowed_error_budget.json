@@ -1,9 +1,9 @@
 {
-  "total": 2309,
+  "total": 2224,
   "totals_by_pattern": {
-    "dot_ok": 767,
-    "let_underscore": 997,
-    "unwrap_or_default": 545
+    "dot_ok": 741,
+    "let_underscore": 976,
+    "unwrap_or_default": 507
   },
   "tracked_files": {
     "crates/desktop-monitor/src/lib.rs": {
@@ -50,66 +50,6 @@
       "dot_ok": 2,
       "let_underscore": 0,
       "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/build.rs": {
-      "dot_ok": 2,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-desktop/src/benchmarks.rs": {
-      "dot_ok": 0,
-      "let_underscore": 1,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/src/desktop_prefs.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/src/main.rs": {
-      "dot_ok": 17,
-      "let_underscore": 8,
-      "unwrap_or_default": 11
-    },
-    "crates/jcode-desktop/src/markdown.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 3
-    },
-    "crates/jcode-desktop/src/power_inhibit.rs": {
-      "dot_ok": 0,
-      "let_underscore": 2,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-desktop/src/render_helpers.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/src/session_data.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/src/session_launch.rs": {
-      "dot_ok": 4,
-      "let_underscore": 7,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-desktop/src/single_session.rs": {
-      "dot_ok": 0,
-      "let_underscore": 2,
-      "unwrap_or_default": 17
-    },
-    "crates/jcode-desktop/src/single_session_render.rs": {
-      "dot_ok": 1,
-      "let_underscore": 1,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/src/workspace.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
     },
     "crates/jcode-import-core/src/lib.rs": {
       "dot_ok": 9,
