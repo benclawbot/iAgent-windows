@@ -78,6 +78,10 @@ fn auth_status_check_fast_includes_bedrock_probe() {
     AuthStatus::invalidate_cache();
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn full_and_fast_auth_status_match_for_shared_probe_fields() {
     let _lock = crate::storage::lock_test_env();

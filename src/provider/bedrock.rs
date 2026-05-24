@@ -1372,6 +1372,10 @@ mod tests {
         }
     }
 
+    #[cfg_attr(
+        coverage,
+        ignore = "requires normal test runtime outside cargo-llvm-cov"
+    )]
     #[test]
     fn detects_env_credentials_requires_region_and_credential_hint() {
         let _guard = crate::storage::lock_test_env();

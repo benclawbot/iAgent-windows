@@ -231,6 +231,10 @@ async fn register_visible_spawned_member_marks_startup_as_running() {
         }));
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn prepare_visible_spawn_session_persists_startup_before_launch() {
     let _guard = crate::storage::lock_test_env();

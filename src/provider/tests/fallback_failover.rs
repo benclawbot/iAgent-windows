@@ -166,6 +166,7 @@ fn test_forced_provider_disables_cross_provider_fallback_sequence() {
     );
 }
 
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[test]
 fn test_set_model_rejects_cross_provider_without_creds() {
     let _guard = crate::storage::lock_test_env();

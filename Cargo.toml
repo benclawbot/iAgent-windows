@@ -192,6 +192,9 @@ aws-smithy-types = "1.4.7"
 aws-sdk-bedrock = "1.141.0"
 aws-sdk-sts = "1.103.0"
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
+
 [features]
 # Keep the heavyweight local ONNX/tokenizer embedding stack opt-in. It remains
 # available via `--features embeddings` or `JCODE_DEV_FEATURE_PROFILE=full`, but

@@ -688,6 +688,10 @@ mod tests {
         }
     }
 
+    #[cfg_attr(
+        coverage,
+        ignore = "requires normal test runtime outside cargo-llvm-cov"
+    )]
     #[tokio::test]
     async fn debug_tool_selfdev_reload_returns_promptly_for_direct_execution() {
         let _env_lock = lock_env();

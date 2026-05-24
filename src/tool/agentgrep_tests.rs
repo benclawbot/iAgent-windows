@@ -74,6 +74,10 @@ fn render_compacts_huge_grep_match_lines() {
     );
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn grep_max_regions_limits_rendered_match_excerpts() {
     let temp = tempfile::tempdir().expect("tempdir");
@@ -98,6 +102,10 @@ fn grep_max_regions_limits_rendered_match_excerpts() {
     );
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn grep_caps_non_code_file_match_excerpts_by_default() {
     let temp = tempfile::tempdir().expect("tempdir");
@@ -471,6 +479,10 @@ fn build_outline_args_accepts_file_field() {
     assert_eq!(args.path.as_deref(), Some("/workspace/repo"));
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[tokio::test]
 async fn execute_runs_linked_grep() {
     let temp = tempfile::tempdir().expect("tempdir");
@@ -495,6 +507,10 @@ async fn execute_runs_linked_grep() {
     assert!(output.output.contains("@ 1 pub fn auth_status() {}"));
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[tokio::test]
 async fn execute_runs_linked_grep_when_mode_is_omitted() {
     let temp = tempfile::tempdir().expect("tempdir");
@@ -512,6 +528,10 @@ async fn execute_runs_linked_grep_when_mode_is_omitted() {
     assert!(output.output.contains("app.rs"));
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[tokio::test]
 async fn execute_runs_linked_grep_when_path_points_to_file() {
     let temp = tempfile::tempdir().expect("tempdir");
