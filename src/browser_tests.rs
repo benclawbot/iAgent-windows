@@ -1,5 +1,20 @@
 use super::*;
 
+fn with_temp_jcode_home(test: impl FnOnce()) {
+    let _guard = crate::storage::lock_test_env();
+    let prev_home = std::env::var_os("JCODE_HOME");
+    let temp = tempfile::TempDir::new().expect("create temp dir");
+    crate::env::set_var("JCODE_HOME", temp.path());
+
+    test();
+
+    if let Some(prev_home) = prev_home {
+        crate::env::set_var("JCODE_HOME", prev_home);
+    } else {
+        crate::env::remove_var("JCODE_HOME");
+    }
+}
+
 #[test]
 fn test_is_browser_command() {
     assert!(is_browser_command("browser ping"));
@@ -19,28 +34,33 @@ fn test_is_browser_command() {
 
 #[test]
 fn test_rewrite_command_with_full_path() {
-    let cmd = "browser ping";
-    let result = rewrite_command_with_full_path(cmd);
-    // If binary exists, it rewrites; if not, returns unchanged
-    if browser_binary_path().exists() {
-        assert!(result.contains("ping"));
-        assert!(result.contains(".jcode/browser"));
-    } else {
-        assert_eq!(result, cmd);
-    }
+    with_temp_jcode_home(|| {
+        let cmd = "browser ping";
+        std::fs::create_dir_all(browser_dir()).expect("create browser dir");
+        std::fs::write(browser_binary_path(), "browser").expect("write browser binary");
+
+        let result = rewrite_command_with_full_path(cmd);
+
+        assert_eq!(
+            result,
+            format!("{} ping", browser_binary_path().to_string_lossy())
+        );
+    });
 }
 
 #[test]
 fn test_paths() {
-    let bdir = browser_dir();
-    assert!(bdir.to_string_lossy().contains(".jcode"));
-    assert!(bdir.to_string_lossy().ends_with("browser"));
+    with_temp_jcode_home(|| {
+        let bdir = browser_dir();
+        assert!(bdir.to_string_lossy().ends_with("browser"));
 
-    let bin = browser_binary_path();
-    assert!(bin.to_string_lossy().contains("browser"));
+        let bin = browser_binary_path();
+        assert!(bin.starts_with(&bdir));
 
-    let xpi = xpi_path();
-    assert!(xpi.to_string_lossy().ends_with(".xpi"));
+        let xpi = xpi_path();
+        assert!(xpi.starts_with(&bdir));
+        assert!(xpi.to_string_lossy().ends_with(".xpi"));
+    });
 }
 
 #[test]
