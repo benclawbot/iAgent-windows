@@ -219,6 +219,7 @@ async fn communicate_assign_next_assigns_next_runnable_task() {
     server_task.abort();
 }
 
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[tokio::test]
 async fn communicate_assign_next_can_prefer_fresh_spawn_server_side() {
     let _env_lock = crate::storage::lock_test_env();
