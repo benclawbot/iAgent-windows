@@ -19,6 +19,11 @@ It is designed for ambient help:
 - keep working while tasks execute
 - review output/status in the task inbox
 
+3. Proposal popup mode
+- AI-suggested `TYPE`, `CMD`, and `JCODE` actions appear as system-wide floating cards
+- choose Validate to execute through the existing safe action path
+- choose Refuse to dismiss without running the proposed action
+
 ## Relationship with `jcode`
 
 iAgent is the frontend orchestrator. `jcode` is the backend executor.
@@ -44,6 +49,8 @@ Primary modules:
 - `iagent/app.py`: bootstrap + service wiring + backend delegation
 - `iagent/companion_manager.py`: voice/state/action routing
 - `iagent/background_command_runner.py`: async command execution
+- `iagent/proposals.py`: proposal records for user-approved actions
+- `iagent/ui/proposal_popup.py`: topmost Validate/Refuse popup cards
 - `iagent/ui/task_inbox.py`: badge + inbox details
 - `iagent/response_actions.py`: action parser (`POINT`, `TYPE`, `CMD`, `JCODE`)
 - `iagent/config.py`: config schema/validation
@@ -52,8 +59,9 @@ Execution pipeline:
 1. Input capture (voice/hotkey or text)
 2. Context capture (screen + app state)
 3. Immediate concise response
-4. Optional delegated background execution through `jcode`
-5. Inbox/badge update on completion or failure
+4. Proposal popup for mutating actions (`TYPE`, `CMD`, `JCODE`)
+5. Optional delegated background execution through `jcode`
+6. Inbox/badge update on completion or failure
 
 ## Requirements
 
@@ -72,8 +80,8 @@ Recommended:
 ### 1) Clone with submodules
 
 ```bash
-git clone --recurse-submodules https://github.com/benclawbot/iagent.git
-cd iagent
+git clone https://github.com/benclawbot/iAgent-windows.git
+cd iAgent-windows
 ```
 
 Optional automated setup from repo root:
@@ -85,13 +93,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\setup-windows.ps1
 ### 2) Build backend once
 
 ```bash
-cargo build --release --manifest-path backend/jcode/Cargo.toml
+cargo build --release
 ```
 
 ### 3) Install Python deps
 
 ```bash
-cd iagent-py
+cd app/iagent-py
 uv sync
 ```
 
@@ -108,7 +116,7 @@ minimax_api_key = "your-key"
 Optional explicit backend path:
 
 ```toml
-jcode_path = "C:\\Users\\YourName\\iagent\\backend\\jcode\\target\\release\\jcode.exe"
+jcode_path = "C:\\Users\\YourName\\iAgent-windows\\target\\release\\iagent.exe"
 ```
 
 ### 5) Run
@@ -124,6 +132,7 @@ uv run iagent
 - multi-monitor screenshot capture
 - concise dock response output
 - async task inbox with unread badge and command output
+- system-wide proposal popups for AI-suggested mutating actions
 - guarded command execution (`rm` requires approval)
 - foreground typing disabled by default (`allow_foreground_typing=false`)
 - tray controls to start/stop backend ambient mode (`jcode ambient desktop --headless`)
@@ -132,10 +141,10 @@ uv run iagent
 
 - `[POINT:x,y:label]`: move companion cursor
 - `[POINT:none]`: suppress pointer move
-- `[TYPE:...]`: draft (or active typing when enabled)
+- `[TYPE:...]`: proposal to draft (or active typing when enabled)
 - `[ENTER]`: submit typed content
-- `[CMD:...]`: run background shell command
-- `[JCODE:...]`: run delegated backend goal
+- `[CMD:...]`: propose a background shell command
+- `[JCODE:...]`: propose a delegated backend goal
 
 ## Config reference
 

@@ -39,17 +39,17 @@ class _FakeLLM(QObject):
     delta = Signal(str)
     error = Signal(str)
 
-    def __init__(self) -> None:
+    def __init__(self, response: str = "here you go [POINT:none]") -> None:
         super().__init__()
         self.calls = 0
+        self.response = response
 
     async def send(self, messages, system: str, model: str):  # noqa: ANN001
         self.calls += 1
         assert isinstance(messages, list)
         assert isinstance(system, str)
         assert isinstance(model, str)
-        # Keep response action-free except [POINT:none] to avoid side effects.
-        return "here you go [POINT:none]"
+        return self.response
 
 
 class _FakeTTS(QObject):
@@ -128,3 +128,74 @@ def test_submit_text_prompt_bypasses_transcription() -> None:
     assert transcription.stop_calls == 0
     assert llm.calls == 1
     assert emitted and emitted[0]
+
+
+def test_submit_text_prompt_turns_command_action_into_proposal() -> None:
+    _app = QCoreApplication.instance() or QCoreApplication([])
+
+    manager = CompanionManager(
+        config=_make_config(),
+        mic=_FakeMic(),
+        hotkey=_FakeHotkey(),
+        transcription=_FakeTranscription(),
+        llm=_FakeLLM("I can run that. [CMD:python -m pytest -q]"),
+        tts=_FakeTTS(),
+        screen_capture_fn=_fake_capture,
+        panel_visibility_controller=_FakePanel(),
+    )
+
+    proposals: list[object] = []
+    queued_commands: list[str] = []
+    manager.proposal_requested.connect(proposals.append)
+    manager.background_command_requested.connect(queued_commands.append)
+
+    loop = asyncio.new_event_loop()
+    try:
+        asyncio.set_event_loop(loop)
+        manager.submit_text_prompt("run tests")
+        assert manager._current_task is not None
+        loop.run_until_complete(manager._current_task)
+    finally:
+        loop.close()
+        asyncio.set_event_loop(None)
+
+    assert queued_commands == []
+    assert len(proposals) == 1
+    assert proposals[0].kind == "command"
+    assert proposals[0].payload == "python -m pytest -q"
+
+
+def test_accepting_command_proposal_routes_to_existing_command_signal() -> None:
+    _app = QCoreApplication.instance() or QCoreApplication([])
+
+    manager = CompanionManager(
+        config=_make_config(),
+        mic=_FakeMic(),
+        hotkey=_FakeHotkey(),
+        transcription=_FakeTranscription(),
+        llm=_FakeLLM(),
+        tts=_FakeTTS(),
+        screen_capture_fn=_fake_capture,
+        panel_visibility_controller=_FakePanel(),
+    )
+
+    from iagent.proposals import ActionProposal
+
+    queued_commands: list[str] = []
+    decisions: list[tuple[str, bool]] = []
+    manager.background_command_requested.connect(queued_commands.append)
+    manager.proposal_decided.connect(
+        lambda proposal, accepted: decisions.append((proposal.kind, accepted))
+    )
+
+    proposal = ActionProposal(
+        proposal_id="command:test",
+        kind="command",
+        title="Run Command",
+        body="git status",
+        payload="git status",
+    )
+    manager.accept_proposal(proposal)
+
+    assert queued_commands == ["git status"]
+    assert decisions == [("command", True)]

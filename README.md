@@ -26,13 +26,15 @@ Unlike browser-only assistants or stateless chatbot wrappers, iAgent behaves lik
 - operating on files and projects
 - maintaining persistent sessions and memory
 - running background and ambient jobs
+- asking for explicit approval through floating proposal popups before mutating desktop actions
 - coordinating provider-backed reasoning
 - integrating directly into Windows UX
 
 The platform combines:
 
 - a modular Rust async runtime
-- desktop dock and overlay interfaces
+- Python desktop dock, task inbox, and system-wide proposal popups
+- backend overlay interfaces
 - provider abstraction layers
 - persistent memory and storage systems
 - execution planning pipelines
@@ -161,6 +163,7 @@ Integrated tooling includes:
 - integration layers
 - memory tooling
 - desktop automation
+- Validate/Refuse proposal popups for AI-suggested commands, typing, and delegated goals
 
 ---
 
@@ -256,6 +259,7 @@ flowchart TB
 
     subgraph Frontend["Desktop Dock Frontend"]
         DOCK[Dock / Tray UI]
+        PROPOSAL[Proposal Popups]
         OVERLAY[Overlay UI]
         INBOX[Task Inbox]
     end
@@ -286,6 +290,7 @@ flowchart TB
     USER --> VOICE
     HOTKEY --> SHORTCUT --> VBS --> PS
     PS --> DOCK
+    DOCK --> PROPOSAL
     DOCK --> SERVER
     SERVER --> AGENT
     AGENT --> MEMORY
