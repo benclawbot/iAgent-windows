@@ -1540,6 +1540,42 @@ pub(super) async fn handle_client(
                     break;
                 }
             }
+            Request::GetSettings { id } => {
+                let config = iagent_settings::IagentConfig::load()
+                    .unwrap_or_default();
+                let json = encode_event(&ServerEvent::SettingsResponse {
+                    id,
+                    provider: config.provider,
+                    model: config.model,
+                    api_key: if config.api_key.is_empty() { None } else { Some(config.api_key) },
+                    auto_start: config.auto_start,
+                    start_minimized: config.start_minimized,
+                    always_on_top: config.always_on_top,
+                });
+                let mut w = writer.lock().await;
+                if w.write_all(json.as_bytes()).await.is_err() {
+                    break;
+                }
+            }
+
+            Request::SaveSettings { id, settings } => {
+                let config = iagent_settings::IagentConfig {
+                    provider: settings.provider,
+                    model: settings.model,
+                    api_key: settings.api_key.unwrap_or_default(),
+                    api_base: None,
+                    auto_start: settings.auto_start,
+                    start_minimized: settings.start_minimized,
+                    always_on_top: settings.always_on_top,
+                };
+                let _ = config.save();
+                let json = encode_event(&ServerEvent::SettingsSaved { id });
+                let mut w = writer.lock().await;
+                if w.write_all(json.as_bytes()).await.is_err() {
+                    break;
+                }
+            }
+
 
             Request::Subscribe {
                 id,

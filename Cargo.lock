@@ -3033,6 +3033,7 @@ dependencies = [
  "glob",
  "global-hotkey",
  "hex",
+ "iagent-settings",
  "ignore",
  "image",
  "jcode-agent-runtime",
@@ -3115,6 +3116,16 @@ dependencies = [
  "uuid",
  "walkdir",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "iagent-settings"
+version = "0.1.0"
+dependencies = [
+ "dirs",
+ "serde",
+ "serde_json",
+ "toml 0.8.2",
 ]
 
 [[package]]

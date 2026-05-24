@@ -43,6 +43,8 @@ from iagent.state import VoiceState
 from iagent.ui.history_window import HistoryWindow
 from iagent.ui.task_inbox import TaskInboxController
 from iagent.ui.tray_icon import TrayIcon
+from iagent.settings_window import SettingsWindow
+from iagent.ipc_client import IagentClient
 
 APP_NAME = "iAgent"
 APP_AUTHOR = "iAgent"
@@ -86,6 +88,11 @@ def _project_root() -> Path:
 def _candidate_submodule_jcode_paths() -> list[Path]:
     backend_dir = _project_root() / "backend" / "jcode"
     return [
+        backend_dir / "target" / "release" / "iagent.exe",
+        backend_dir / "target" / "release" / "iagent",
+        backend_dir / "target" / "debug" / "iagent.exe",
+        backend_dir / "target" / "debug" / "iagent",
+        # Fallback: jcode as the binary name
         backend_dir / "target" / "release" / "jcode.exe",
         backend_dir / "target" / "release" / "jcode",
         backend_dir / "target" / "debug" / "jcode.exe",
@@ -461,7 +468,7 @@ def run() -> int:
                 "config.jcode_path, or backend/jcode/target"
             )
             return None
-        display = f"jcode run --json --quiet <goal: {goal_clean[:80]}>"
+        display = f"iagent run --json <goal: {goal_clean[:80]}>"
         try:
             task_id = command_runner.enqueue_exec(
                 [
