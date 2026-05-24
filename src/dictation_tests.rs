@@ -1,3 +1,5 @@
+#[cfg(target_os = "linux")]
+use super::focused_jcode_session;
 use super::{
     ClientCandidate, extract_session_short_name_from_window_title, last_focused_session,
     normalize_session_short_name, parse_ppid, read_resumed_session_id,

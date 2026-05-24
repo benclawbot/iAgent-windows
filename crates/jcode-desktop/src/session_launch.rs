@@ -4,14 +4,14 @@ use serde_json::Value;
 use serde_json::json;
 use std::io;
 #[cfg(unix)]
-use std::io::{BufRead, Write};
+use std::io::{BufRead, BufReader, Write};
 #[cfg(unix)]
 use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::mpsc::{self, Receiver, Sender};
 #[cfg(unix)]
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[cfg(unix)]
 const SERVER_START_TIMEOUT: Duration = Duration::from_secs(10);

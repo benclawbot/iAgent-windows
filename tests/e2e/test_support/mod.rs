@@ -17,6 +17,8 @@ pub(crate) use iagent::server;
 pub(crate) use iagent::session::{Session, StoredCompactionState};
 pub(crate) use iagent::tool::Registry;
 pub(crate) use std::ffi::OsString;
+#[cfg(unix)]
+use std::io::Read;
 pub(crate) use std::net::TcpListener as StdTcpListener;
 #[cfg(unix)]
 use std::os::fd::FromRawFd;
