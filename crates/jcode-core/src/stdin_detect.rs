@@ -23,7 +23,7 @@ pub fn is_waiting_for_stdin(pid: u32) -> StdinState {
 pub mod linux {
     use super::*;
 
-    pub fn check(_pid: u32) -> StdinState {
+    pub fn check(pid: u32) -> StdinState {
         check_inner(pid, false)
     }
 

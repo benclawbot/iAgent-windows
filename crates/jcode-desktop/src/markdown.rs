@@ -45,12 +45,6 @@ struct AssistantMarkdownTable {
     header_rows: usize,
 }
 
-impl Default for SingleSessionLineStyle {
-    fn default() -> Self {
-        Self::Assistant
-    }
-}
-
 impl AssistantMarkdownRenderer {
     pub(super) fn handle_event(&mut self, event: Event<'_>) {
         match event {

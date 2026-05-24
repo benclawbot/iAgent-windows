@@ -786,14 +786,13 @@ pub(crate) async fn spawn_server(
         let start = std::time::Instant::now();
         let timeout = std::time::Duration::from_secs(5);
         while start.elapsed() < timeout {
-            if crate::transport::is_socket_path(&server::socket_path()) {
-                if crate::transport::Stream::connect(server::socket_path())
+            if crate::transport::is_socket_path(&server::socket_path())
+                && crate::transport::Stream::connect(server::socket_path())
                     .await
                     .is_ok()
-                {
-                    startup_profile::mark("server_ready");
-                    return Ok(());
-                }
+            {
+                startup_profile::mark("server_ready");
+                return Ok(());
             }
 
             if let Some(status) = child.try_wait()? {

@@ -507,7 +507,7 @@ impl SafetySystem {
         let risk_level = log
             .risk_level
             .unwrap_or_else(|| self.classify_risk(&log.action_type));
-        let disposition = log.disposition.unwrap_or_else(|| match risk_level {
+        let disposition = log.disposition.unwrap_or(match risk_level {
             RiskLevel::ReadOnly => PolicyDisposition::AutoAllow,
             RiskLevel::EditLocal | RiskLevel::ExternalSend => PolicyDisposition::Confirm,
             RiskLevel::FinancialLegal => PolicyDisposition::Escalate,

@@ -202,8 +202,9 @@ impl ReadOnlyInlineWidget {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub(crate) enum SingleSessionLineStyle {
+    #[default]
     Assistant,
     AssistantHeading,
     AssistantQuote,
@@ -249,7 +250,7 @@ pub(crate) struct TaskTabRow {
     sort_key: String,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Default)]
 pub(crate) struct ModelPickerState {
     pub(crate) open: bool,
     pub(crate) loading: bool,
@@ -261,23 +262,6 @@ pub(crate) struct ModelPickerState {
     pub(crate) provider_name: Option<String>,
     pub(crate) choices: Vec<DesktopModelChoice>,
     pub(crate) error: Option<String>,
-}
-
-impl Default for ModelPickerState {
-    fn default() -> Self {
-        Self {
-            open: false,
-            loading: false,
-            preview: false,
-            filter: String::new(),
-            selected: 0,
-            column: 0,
-            current_model: None,
-            provider_name: None,
-            choices: Vec::new(),
-            error: None,
-        }
-    }
 }
 
 impl ModelPickerState {
@@ -805,8 +789,8 @@ impl SingleSessionApp {
             && !self.model_picker.open
             && !self.session_switcher.open
             && self.stdin_response.is_none()
-            && self.show_help == false
-            && self.show_session_info == false
+            && !self.show_help
+            && !self.show_session_info
             && self.session.is_some()
     }
 
@@ -2332,8 +2316,8 @@ impl SingleSessionApp {
         }
         let end_line = end.line.min(lines.len().saturating_sub(1));
         let mut segments = Vec::new();
-        for line_index in start.line..=end_line {
-            let line_len = lines[line_index].chars().count();
+        for (line_index, line) in lines.iter().enumerate().take(end_line + 1).skip(start.line) {
+            let line_len = line.chars().count();
             let prompt_columns = if line_index == 0 {
                 self.composer_prompt().chars().count()
             } else {
@@ -2427,8 +2411,8 @@ impl SingleSessionApp {
 
         let end_line = end.line.min(lines.len().saturating_sub(1));
         let mut segments = Vec::new();
-        for line_index in start.line..=end_line {
-            let line_len = lines[line_index].chars().count();
+        for (line_index, line) in lines.iter().enumerate().take(end_line + 1).skip(start.line) {
+            let line_len = line.chars().count();
             let start_column = if line_index == start.line {
                 start.column.min(line_len)
             } else {
@@ -2465,8 +2449,7 @@ impl SingleSessionApp {
         }
         let end_line = end.line.min(lines.len().saturating_sub(1));
         let mut selected = Vec::new();
-        for line_index in start.line..=end_line {
-            let line = &lines[line_index];
+        for (line_index, line) in lines.iter().enumerate().take(end_line + 1).skip(start.line) {
             let line_len = line.chars().count();
             let start_column = if line_index == start.line {
                 start.column.min(line_len)
@@ -3958,7 +3941,6 @@ fn tool_summary_name(content: &str) -> String {
         .next()
         .unwrap_or("tool")
         .trim_start_matches(['▾', '▸'])
-        .trim()
         .split_whitespace()
         .next()
         .filter(|name| !name.is_empty())

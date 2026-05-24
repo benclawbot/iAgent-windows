@@ -5,6 +5,8 @@ use crate::{id, session, telemetry};
 #[cfg(feature = "terminal-ui")]
 use crate::tui;
 #[cfg(feature = "terminal-ui")]
+use anyhow::Result;
+#[cfg(feature = "terminal-ui")]
 use std::io::{self, IsTerminal};
 
 #[cfg(feature = "terminal-ui")]

@@ -721,6 +721,7 @@ pub(crate) fn push_native_activity_spinner(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn push_spinner_segment(
     vertices: &mut Vec<Vertex>,
     center: [f32; 2],
@@ -2342,12 +2343,11 @@ fn single_session_style_attrs_for_text(
 }
 
 fn single_session_font_family_for_style(style: SingleSessionLineStyle) -> &'static str {
-    let family = if is_ai_response_font_style(style) {
+    (if is_ai_response_font_style(style) {
         SINGLE_SESSION_ASSISTANT_FONT_FAMILY
     } else {
         SINGLE_SESSION_FONT_FAMILY
-    };
-    family
+    }) as _
 }
 
 fn single_session_style_attrs_for_family(
@@ -2360,7 +2360,7 @@ fn single_session_style_attrs_for_family(
 }
 
 fn text_contains_symbol_glyphs(text: &str) -> bool {
-    text.chars().any(|ch| !ch.is_ascii())
+    !text.is_ascii()
 }
 
 fn is_ai_response_font_style(style: SingleSessionLineStyle) -> bool {
@@ -2614,6 +2614,7 @@ fn welcome_status_lane_visible(app: &SingleSessionApp) -> bool {
         && app.has_activity_indicator()
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn single_session_text_areas_for_state(
     buffers: &[Buffer],
     size: PhysicalSize<u32>,

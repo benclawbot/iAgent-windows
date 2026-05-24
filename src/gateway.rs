@@ -98,7 +98,7 @@ impl Default for GatewayState {
 
 impl GatewayState {
     fn get() -> &'static GatewayState {
-        GATEWAY_STATE.get_or_init(|| GatewayState::default())
+        GATEWAY_STATE.get_or_init(GatewayState::default)
     }
 
     /// Initialize gateway state with shared SafetySystem and Registry

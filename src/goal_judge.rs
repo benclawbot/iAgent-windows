@@ -53,20 +53,12 @@ impl RoutingDecision {
 /// GoalJudge configuration for routing decisions.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct GoalJudgeConfig {
     /// Enable goal-based tool routing (default: false).
     pub enabled: bool,
     /// Optional model override for goal routing decisions.
     pub model: Option<String>,
-}
-
-impl Default for GoalJudgeConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            model: None,
-        }
-    }
 }
 
 /// GoalJudge routes tool execution based on active goal context.

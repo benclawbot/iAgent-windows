@@ -254,17 +254,16 @@ async fn wait_for_dictation_exit(
                 let guard = child.lock().await;
                 guard.as_ref().and_then(|process| process.id())
             };
+            #[cfg(unix)]
             if let Some(pid) = pid {
-                #[cfg(unix)]
-                {
-                    let _ = crate::platform::signal_detached_process_group(pid, libc::SIGINT);
-                }
-                #[cfg(not(unix))]
-                {
-                    let mut guard = child.lock().await;
-                    if let Some(process) = guard.as_mut() {
-                        let _ = process.start_kill();
-                    }
+                let _ = crate::platform::signal_detached_process_group(pid, libc::SIGINT);
+            }
+
+            #[cfg(not(unix))]
+            if pid.is_some() {
+                let mut guard = child.lock().await;
+                if let Some(process) = guard.as_mut() {
+                    let _ = process.start_kill();
                 }
             }
 

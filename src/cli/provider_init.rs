@@ -17,7 +17,18 @@ use super::output;
 
 mod external_auth;
 pub(crate) use external_auth::maybe_run_external_auth_auto_import_flow;
-use external_auth::*;
+#[cfg(feature = "terminal-ui")]
+pub(crate) use external_auth::{
+    ExternalAuthReviewCandidate, format_external_auth_review_candidates_markdown,
+    run_external_auth_auto_import_candidates,
+};
+use external_auth::{
+    can_prompt_for_external_auth, external_auth_blocked_message, prompt_to_trust_external_auth,
+};
+#[cfg(any(feature = "terminal-ui", test))]
+pub(crate) use external_auth::{
+    parse_external_auth_review_selection, pending_external_auth_review_candidates,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
 pub enum ProviderChoice {

@@ -1,9 +1,10 @@
+#![allow(clippy::approx_constant, clippy::too_many_arguments)]
+
 use super::{Vertex, pixel_to_ndc, push_pixel_triangle};
 use winit::dpi::PhysicalSize;
 
 /// Handwritten welcome-hero paths and geometric helpers.
 /// Extracted from single_session_render.rs.
-
 pub(super) fn handwritten_welcome_paths_for_phrase(phrase: &str) -> Vec<Vec<[f32; 2]>> {
     match phrase.trim().to_ascii_lowercase().as_str() {
         "hi there" => handwritten_hi_there_paths(),

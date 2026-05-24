@@ -344,7 +344,7 @@ async fn run() -> Result<()> {
             None
         };
         let backend_wake = pending_backend_redraw_since
-            .and_then(|_| last_backend_redraw_request)
+            .and(last_backend_redraw_request)
             .map(|last| last + BACKEND_REDRAW_FRAME_INTERVAL);
         let wake = match (default_wake, backend_wake) {
             (Some(default_wake), Some(backend_wake)) => Some(default_wake.min(backend_wake)),
@@ -2515,10 +2515,7 @@ fn binary_modified_time(path: &Path) -> Option<std::time::SystemTime> {
         Ok(metadata) => metadata,
         Err(_) => return None,
     };
-    match metadata.modified() {
-        Ok(modified) => Some(modified),
-        Err(_) => None,
-    }
+    metadata.modified().ok()
 }
 
 fn resolve_invoked_binary(argv0: &OsString) -> Option<PathBuf> {
@@ -2533,6 +2530,7 @@ fn resolve_invoked_binary(argv0: &OsString) -> Option<PathBuf> {
         .find(|candidate| candidate.is_file())
 }
 
+#[allow(clippy::large_enum_variant)]
 enum DesktopApp {
     SingleSession(SingleSessionApp),
     Workspace(Workspace),
@@ -3036,6 +3034,7 @@ fn desktop_session_event_refreshes_session_card(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn log_desktop_session_event_batch_profile(
     raw_event_count: usize,
     raw_payload_bytes: usize,
@@ -4200,6 +4199,7 @@ fn log_desktop_slow_interaction(
     );
 }
 
+#[allow(clippy::too_many_arguments)]
 fn single_session_streaming_primitive_geometry_cache_key(
     app: &SingleSessionApp,
     size: PhysicalSize<u32>,

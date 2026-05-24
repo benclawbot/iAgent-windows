@@ -251,16 +251,16 @@ impl Agent {
     fn sync_allowed_tools_from_active_skill(&mut self) {
         if let Some(ref skill_name) = self.active_skill {
             let registry = self.current_skills_snapshot();
-            if let Some(skill) = registry.get(skill_name) {
-                if let Some(ref allowed) = skill.allowed_tools {
-                    let tools: HashSet<String> = allowed.iter().cloned().collect();
-                    self.allowed_tools = Some(tools);
-                    log_info!((
-                        "Skill '{}' activated - restricted to tools: {:?}",
-                        skill_name,
-                        self.allowed_tools
-                    ));
-                }
+            if let Some(skill) = registry.get(skill_name)
+                && let Some(ref allowed) = skill.allowed_tools
+            {
+                let tools: HashSet<String> = allowed.iter().cloned().collect();
+                self.allowed_tools = Some(tools);
+                log_info!((
+                    "Skill '{}' activated - restricted to tools: {:?}",
+                    skill_name,
+                    self.allowed_tools
+                ));
             }
         }
     }

@@ -445,10 +445,10 @@ pub fn find_files(
         }
 
         // Filter by name pattern
-        if let Some(pattern) = name_pattern {
-            if !entry.name.to_lowercase().contains(&pattern.to_lowercase()) {
-                continue;
-            }
+        if let Some(pattern) = name_pattern
+            && !entry.name.to_lowercase().contains(&pattern.to_lowercase())
+        {
+            continue;
         }
 
         // Filter by extension

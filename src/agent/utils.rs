@@ -52,7 +52,7 @@ impl Agent {
         #[cfg(not(feature = "terminal-ui"))]
         {
             let _ = (id, path, metadata_path, output_format, revised_prompt);
-            return None;
+            None
         }
 
         #[cfg(feature = "terminal-ui")]

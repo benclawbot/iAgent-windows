@@ -111,12 +111,10 @@ impl Sidecar {
     }
 
     fn detect_fallback_backend() -> (SidecarBackend, String) {
-        if let Ok(_) = std::env::var("MINIMAX_API_KEY") {
-            return (SidecarBackend::MiniMax, SIDECAR_MINIMAX_MODEL.to_string());
+        if std::env::var("MINIMAX_API_KEY").is_ok() {
+            (SidecarBackend::MiniMax, SIDECAR_MINIMAX_MODEL.to_string())
         } else if auth::codex::load_credentials().is_ok() {
             (SidecarBackend::OpenAI, SIDECAR_OPENAI_MODEL.to_string())
-        } else if auth::claude::load_credentials().is_ok() {
-            (SidecarBackend::Claude, SIDECAR_CLAUDE_MODEL.to_string())
         } else {
             (SidecarBackend::Claude, SIDECAR_CLAUDE_MODEL.to_string())
         }
