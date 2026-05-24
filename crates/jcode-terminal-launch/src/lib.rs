@@ -342,7 +342,7 @@ fn build_spawn_command(term: &str, command: &TerminalCommand, cwd: &Path) -> Opt
     Some(cmd)
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(unix)]
 fn command_parts(command: &TerminalCommand) -> Vec<String> {
     std::iter::once(command.program.to_string_lossy().into_owned())
         .chain(command.args.iter().cloned())
