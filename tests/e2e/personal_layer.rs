@@ -1,7 +1,8 @@
 use crate::test_support::setup_test_env;
 use iagent::personal_layer::{
-    ClipboardInput, JobInput, PersonalStore, ReminderInput, SnippetInput, WindowBounds,
-    plan_tile_two_windows,
+    ClearPersonalData, ClipboardInput, JobInput, PersonalSettings, PersonalSettingsInput,
+    PersonalStore, ReminderInput, RuntimeTickInput, SavedWindowLayoutInput, SnippetInput,
+    WindowBounds, WindowPlacement, plan_tile_two_windows,
 };
 use std::fs;
 
@@ -121,6 +122,169 @@ fn personal_store_covers_recovery_reminders_snippets_apps_jobs_and_layouts() {
     assert_eq!(tiled[0].bounds.width, 960);
     assert_eq!(tiled[1].label, "right");
     assert_eq!(tiled[1].bounds.x, 960);
+}
+
+#[test]
+fn personal_store_covers_full_product_runtime_controls() {
+    let _env = setup_test_env().expect("test env");
+    let store = PersonalStore::load().expect("load personal store");
+
+    let settings = store.settings().expect("default settings");
+    assert!(settings.clipboard_history_enabled);
+    assert!(settings.reminder_notifications_enabled);
+    assert!(settings.background_jobs_enabled);
+    assert!(settings.proactive_suggestions_enabled);
+    assert!(settings.snippet_expansion_enabled);
+
+    let updated = store
+        .update_settings(PersonalSettingsInput {
+            clipboard_history_enabled: Some(false),
+            max_clipboard_entries: Some(2),
+            ..Default::default()
+        })
+        .expect("update settings");
+    assert!(!updated.clipboard_history_enabled);
+    assert_eq!(updated.max_clipboard_entries, 2);
+
+    store
+        .update_settings(PersonalSettingsInput {
+            clipboard_history_enabled: Some(true),
+            ..Default::default()
+        })
+        .expect("reenable clipboard");
+
+    store
+        .create_snippet(SnippetInput {
+            trigger: "/sig".into(),
+            body: "Thomas".into(),
+            description: Some("email signature".into()),
+            app_scope: vec!["Mail".into()],
+        })
+        .expect("create snippet");
+    let expansion = store
+        .expand_typed_snippet("Thanks,\n/sig", Some("Mail"))
+        .expect("typed snippet")
+        .expect("expansion");
+    assert_eq!(expansion.output_text, "Thanks,\nThomas");
+    assert_eq!(
+        store
+            .expand_typed_snippet("Thanks,\n/sig", Some("Code"))
+            .expect("typed snippet wrong scope"),
+        None
+    );
+
+    let clipboard = store
+        .record_clipboard(ClipboardInput {
+            content: "first copied value".into(),
+            source_app: Some("Editor".into()),
+        })
+        .expect("record clipboard")
+        .expect("clipboard");
+    assert!(store.pin_clipboard(&clipboard.id, true).expect("pin"));
+    assert!(store.delete_clipboard(&clipboard.id).expect("delete"));
+    assert!(store.recent_clipboard(10).expect("clipboard").is_empty());
+
+    store
+        .create_reminder(ReminderInput {
+            title: "Bring this back".into(),
+            note: Some("contextual reminder".into()),
+            due_at: "2026-05-25T07:00:00Z".into(),
+            source_app: Some("Editor".into()),
+            source_title: Some("notes.md".into()),
+        })
+        .expect("create reminder");
+
+    let summary_folder = folder();
+    store
+        .create_job(JobInput {
+            kind: "folder_summary".into(),
+            description: "Summarize a folder".into(),
+            input_json: serde_json::json!({ "folder": summary_folder.path() }),
+        })
+        .expect("queue job");
+
+    let tick = store
+        .run_runtime_tick(RuntimeTickInput {
+            as_of: "2026-05-25T08:00:00Z".into(),
+            clipboard_content: Some("second copied value".into()),
+            active_app: Some("Editor".into()),
+            active_window_title: Some("notes.md".into()),
+            run_one_job: true,
+        })
+        .expect("runtime tick");
+    assert_eq!(tick.due_reminders.len(), 1);
+    assert!(tick.captured_clipboard.is_some());
+    assert_eq!(tick.completed_job.as_ref().unwrap().status, "succeeded");
+    assert!(
+        tick.suggestions
+            .iter()
+            .any(|suggestion| suggestion.kind == "remember_context")
+    );
+
+    let jobs = store.list_jobs().expect("jobs");
+    assert!(jobs[0].log_path.is_some());
+
+    let layout = store
+        .save_window_layout(SavedWindowLayoutInput {
+            name: "writing".into(),
+            placements: vec![
+                WindowPlacement {
+                    label: "notes".into(),
+                    bounds: WindowBounds {
+                        x: 0,
+                        y: 0,
+                        width: 960,
+                        height: 1080,
+                    },
+                },
+                WindowPlacement {
+                    label: "browser".into(),
+                    bounds: WindowBounds {
+                        x: 960,
+                        y: 0,
+                        width: 960,
+                        height: 1080,
+                    },
+                },
+            ],
+        })
+        .expect("save layout");
+    assert_eq!(layout.name, "writing");
+    assert_eq!(
+        store
+            .saved_window_layout_plan("writing")
+            .expect("layout plan")
+            .expect("layout")
+            .len(),
+        2
+    );
+
+    let cleared = store
+        .clear_personal_data(ClearPersonalData {
+            clipboard: true,
+            reminders: true,
+            snippets: true,
+            jobs: true,
+            app_windows: true,
+            layouts: true,
+        })
+        .expect("clear personal data");
+    assert!(cleared.clipboard > 0);
+    assert!(cleared.reminders > 0);
+    assert!(cleared.snippets > 0);
+    assert!(cleared.jobs > 0);
+    assert!(cleared.layouts > 0);
+
+    let reset_settings = store
+        .update_settings(
+            PersonalSettings {
+                clipboard_history_enabled: true,
+                ..PersonalSettings::default()
+            }
+            .into(),
+        )
+        .expect("reset settings");
+    assert!(reset_settings.clipboard_history_enabled);
 }
 
 fn folder() -> tempfile::TempDir {

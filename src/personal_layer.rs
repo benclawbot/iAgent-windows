@@ -18,6 +18,8 @@ pub struct PersonalStore {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PersonalState {
     #[serde(default)]
+    pub settings: PersonalSettings,
+    #[serde(default)]
     pub snippets: Vec<Snippet>,
     #[serde(default)]
     pub reminders: Vec<Reminder>,
@@ -27,6 +29,65 @@ pub struct PersonalState {
     pub app_windows: Vec<AppWindowRecord>,
     #[serde(default)]
     pub jobs: Vec<BackgroundJob>,
+    #[serde(default)]
+    pub layouts: Vec<SavedWindowLayout>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PersonalSettings {
+    #[serde(default = "default_true")]
+    pub clipboard_history_enabled: bool,
+    #[serde(default = "default_true")]
+    pub reminder_notifications_enabled: bool,
+    #[serde(default = "default_true")]
+    pub background_jobs_enabled: bool,
+    #[serde(default = "default_true")]
+    pub proactive_suggestions_enabled: bool,
+    #[serde(default = "default_true")]
+    pub snippet_expansion_enabled: bool,
+    #[serde(default = "default_max_clipboard_entries")]
+    pub max_clipboard_entries: usize,
+    #[serde(default = "default_retention_days")]
+    pub retention_days: u32,
+}
+
+impl Default for PersonalSettings {
+    fn default() -> Self {
+        Self {
+            clipboard_history_enabled: true,
+            reminder_notifications_enabled: true,
+            background_jobs_enabled: true,
+            proactive_suggestions_enabled: true,
+            snippet_expansion_enabled: true,
+            max_clipboard_entries: default_max_clipboard_entries(),
+            retention_days: default_retention_days(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct PersonalSettingsInput {
+    pub clipboard_history_enabled: Option<bool>,
+    pub reminder_notifications_enabled: Option<bool>,
+    pub background_jobs_enabled: Option<bool>,
+    pub proactive_suggestions_enabled: Option<bool>,
+    pub snippet_expansion_enabled: Option<bool>,
+    pub max_clipboard_entries: Option<usize>,
+    pub retention_days: Option<u32>,
+}
+
+impl From<PersonalSettings> for PersonalSettingsInput {
+    fn from(settings: PersonalSettings) -> Self {
+        Self {
+            clipboard_history_enabled: Some(settings.clipboard_history_enabled),
+            reminder_notifications_enabled: Some(settings.reminder_notifications_enabled),
+            background_jobs_enabled: Some(settings.background_jobs_enabled),
+            proactive_suggestions_enabled: Some(settings.proactive_suggestions_enabled),
+            snippet_expansion_enabled: Some(settings.snippet_expansion_enabled),
+            max_clipboard_entries: Some(settings.max_clipboard_entries),
+            retention_days: Some(settings.retention_days),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -91,6 +152,13 @@ pub struct ClipboardInput {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SnippetExpansion {
+    pub trigger: String,
+    pub replacement: String,
+    pub output_text: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AppWindowRecord {
     pub id: String,
     pub observed_at: DateTime<Utc>,
@@ -137,6 +205,65 @@ pub struct WindowPlacement {
     pub bounds: WindowBounds,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SavedWindowLayout {
+    pub id: String,
+    pub name: String,
+    pub placements: Vec<WindowPlacement>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SavedWindowLayoutInput {
+    pub name: String,
+    pub placements: Vec<WindowPlacement>,
+}
+
+#[derive(Debug, Clone)]
+pub struct RuntimeTickInput {
+    pub as_of: String,
+    pub clipboard_content: Option<String>,
+    pub active_app: Option<String>,
+    pub active_window_title: Option<String>,
+    pub run_one_job: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RuntimeTick {
+    pub due_reminders: Vec<Reminder>,
+    pub captured_clipboard: Option<ClipboardEntry>,
+    pub completed_job: Option<BackgroundJob>,
+    pub suggestions: Vec<ProactiveSuggestion>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ProactiveSuggestion {
+    pub kind: String,
+    pub title: String,
+    pub detail: Option<String>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ClearPersonalData {
+    pub clipboard: bool,
+    pub reminders: bool,
+    pub snippets: bool,
+    pub jobs: bool,
+    pub app_windows: bool,
+    pub layouts: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ClearPersonalDataResult {
+    pub clipboard: usize,
+    pub reminders: usize,
+    pub snippets: usize,
+    pub jobs: usize,
+    pub app_windows: usize,
+    pub layouts: usize,
+}
+
 impl PersonalStore {
     pub fn load() -> Result<Self> {
         let dir = crate::storage::jcode_dir()?.join("personal");
@@ -161,6 +288,41 @@ impl PersonalStore {
         }
         crate::storage::write_json(&self.path, state)
             .with_context(|| format!("write personal layer state at {}", self.path.display()))
+    }
+
+    pub fn settings(&self) -> Result<PersonalSettings> {
+        Ok(self.state()?.settings)
+    }
+
+    pub fn update_settings(&self, input: PersonalSettingsInput) -> Result<PersonalSettings> {
+        let mut state = self.state()?;
+        let settings = &mut state.settings;
+
+        if let Some(value) = input.clipboard_history_enabled {
+            settings.clipboard_history_enabled = value;
+        }
+        if let Some(value) = input.reminder_notifications_enabled {
+            settings.reminder_notifications_enabled = value;
+        }
+        if let Some(value) = input.background_jobs_enabled {
+            settings.background_jobs_enabled = value;
+        }
+        if let Some(value) = input.proactive_suggestions_enabled {
+            settings.proactive_suggestions_enabled = value;
+        }
+        if let Some(value) = input.snippet_expansion_enabled {
+            settings.snippet_expansion_enabled = value;
+        }
+        if let Some(value) = input.max_clipboard_entries {
+            settings.max_clipboard_entries = value.clamp(1, 250);
+        }
+        if let Some(value) = input.retention_days {
+            settings.retention_days = value.clamp(1, 3650);
+        }
+
+        let settings = settings.clone();
+        self.save_state(&state)?;
+        Ok(settings)
     }
 
     pub fn create_snippet(&self, input: SnippetInput) -> Result<Snippet> {
@@ -215,6 +377,44 @@ impl PersonalStore {
             .find(|snippet| snippet.enabled && snippet.trigger == trigger)
             .map(|snippet| snippet.body)
             .ok_or_else(|| anyhow!("snippet not found: {}", trigger))
+    }
+
+    pub fn expand_typed_snippet(
+        &self,
+        input_text: &str,
+        app_name: Option<&str>,
+    ) -> Result<Option<SnippetExpansion>> {
+        let state = self.state()?;
+        if !state.settings.snippet_expansion_enabled {
+            return Ok(None);
+        }
+
+        let app_name = app_name.unwrap_or_default().to_lowercase();
+        let mut snippets = state.snippets;
+        snippets.sort_by(|a, b| b.trigger.len().cmp(&a.trigger.len()));
+
+        for snippet in snippets {
+            if !snippet.enabled || !input_text.ends_with(&snippet.trigger) {
+                continue;
+            }
+            if !snippet.app_scope.is_empty()
+                && !snippet
+                    .app_scope
+                    .iter()
+                    .any(|scope| app_name.contains(&scope.to_lowercase()))
+            {
+                continue;
+            }
+
+            let prefix = &input_text[..input_text.len() - snippet.trigger.len()];
+            return Ok(Some(SnippetExpansion {
+                trigger: snippet.trigger,
+                replacement: snippet.body.clone(),
+                output_text: format!("{}{}", prefix, snippet.body),
+            }));
+        }
+
+        Ok(None)
     }
 
     pub fn delete_snippet(&self, id_or_trigger: &str) -> Result<bool> {
@@ -318,6 +518,9 @@ impl PersonalStore {
         }
         let hash = stable_hash(&input.content);
         let mut state = self.state()?;
+        if !state.settings.clipboard_history_enabled {
+            return Ok(None);
+        }
         if state.clipboard.iter().any(|entry| {
             entry.content_hash == hash && entry.content_text.as_deref() == Some(&input.content)
         }) {
@@ -335,7 +538,12 @@ impl PersonalStore {
             redacted,
         };
         state.clipboard.insert(0, entry.clone());
-        state.clipboard.truncate(MAX_CLIPBOARD_ENTRIES);
+        let max_entries = state
+            .settings
+            .max_clipboard_entries
+            .max(1)
+            .min(MAX_CLIPBOARD_ENTRIES.max(250));
+        state.clipboard.truncate(max_entries);
         self.save_state(&state)?;
         Ok(Some(entry))
     }
@@ -369,6 +577,32 @@ impl PersonalStore {
         state.clipboard.clear();
         self.save_state(&state)?;
         Ok(count)
+    }
+
+    pub fn pin_clipboard(&self, id: &str, pinned: bool) -> Result<bool> {
+        let mut state = self.state()?;
+        let mut found = false;
+        for entry in &mut state.clipboard {
+            if entry.id == id {
+                entry.pinned = pinned;
+                found = true;
+            }
+        }
+        if found {
+            self.save_state(&state)?;
+        }
+        Ok(found)
+    }
+
+    pub fn delete_clipboard(&self, id: &str) -> Result<bool> {
+        let mut state = self.state()?;
+        let before = state.clipboard.len();
+        state.clipboard.retain(|entry| entry.id != id);
+        let removed = state.clipboard.len() != before;
+        if removed {
+            self.save_state(&state)?;
+        }
+        Ok(removed)
     }
 
     pub fn record_app_window(
@@ -560,9 +794,184 @@ impl PersonalStore {
                 updated.output_json = Some(json!({ "error": err.to_string() }));
             }
         }
+        let log_path = self.write_job_log(updated)?;
+        updated.log_path = Some(log_path.to_string_lossy().to_string());
         let job = updated.clone();
         self.save_state(&state)?;
         Ok(Some(job))
+    }
+
+    fn write_job_log(&self, job: &BackgroundJob) -> Result<PathBuf> {
+        let log_dir = self
+            .path
+            .parent()
+            .unwrap_or_else(|| self.path.as_path())
+            .join("jobs");
+        fs::create_dir_all(&log_dir)?;
+        let log_path = log_dir.join(format!("{}.json", job.id));
+        crate::storage::write_json(&log_path, job)
+            .with_context(|| format!("write personal job log at {}", log_path.display()))?;
+        Ok(log_path)
+    }
+
+    pub fn run_runtime_tick(&self, input: RuntimeTickInput) -> Result<RuntimeTick> {
+        let settings = self.settings()?;
+        if let (Some(app), Some(title)) = (&input.active_app, &input.active_window_title) {
+            let _ = self.record_app_window(app, "", title);
+        }
+
+        let captured_clipboard = if settings.clipboard_history_enabled {
+            match &input.clipboard_content {
+                Some(content) => self.record_clipboard(ClipboardInput {
+                    content: content.clone(),
+                    source_app: input.active_app.clone(),
+                })?,
+                None => None,
+            }
+        } else {
+            None
+        };
+
+        let due_reminders = if settings.reminder_notifications_enabled {
+            self.list_due_reminders(&input.as_of)?
+        } else {
+            Vec::new()
+        };
+
+        let completed_job = if input.run_one_job && settings.background_jobs_enabled {
+            self.run_next_job()?
+        } else {
+            None
+        };
+
+        let suggestions = if settings.proactive_suggestions_enabled {
+            self.proactive_suggestions(&due_reminders, captured_clipboard.as_ref(), &input)
+        } else {
+            Vec::new()
+        };
+
+        Ok(RuntimeTick {
+            due_reminders,
+            captured_clipboard,
+            completed_job,
+            suggestions,
+        })
+    }
+
+    fn proactive_suggestions(
+        &self,
+        due_reminders: &[Reminder],
+        clipboard: Option<&ClipboardEntry>,
+        input: &RuntimeTickInput,
+    ) -> Vec<ProactiveSuggestion> {
+        let mut suggestions = Vec::new();
+        if input.active_app.is_some() && input.active_window_title.is_some() {
+            suggestions.push(ProactiveSuggestion {
+                kind: "remember_context".to_string(),
+                title: "Offer to remember this context".to_string(),
+                detail: input.active_window_title.clone(),
+            });
+        }
+        if clipboard
+            .and_then(|entry| entry.content_text.as_deref())
+            .is_some_and(|text| text.len() > 80)
+        {
+            suggestions.push(ProactiveSuggestion {
+                kind: "make_snippet".to_string(),
+                title: "Offer to save copied text as a snippet".to_string(),
+                detail: None,
+            });
+        }
+        for reminder in due_reminders.iter().take(3) {
+            suggestions.push(ProactiveSuggestion {
+                kind: "show_reminder".to_string(),
+                title: reminder.title.clone(),
+                detail: reminder.source_title.clone(),
+            });
+        }
+        suggestions
+    }
+
+    pub fn save_window_layout(&self, input: SavedWindowLayoutInput) -> Result<SavedWindowLayout> {
+        if input.name.trim().is_empty() {
+            return Err(anyhow!("layout name is required"));
+        }
+        if input.placements.is_empty() {
+            return Err(anyhow!("layout placements are required"));
+        }
+
+        let mut state = self.state()?;
+        let now = Utc::now();
+        if let Some(existing) = state
+            .layouts
+            .iter_mut()
+            .find(|layout| layout.name == input.name)
+        {
+            existing.placements = input.placements;
+            existing.updated_at = now;
+            let layout = existing.clone();
+            self.save_state(&state)?;
+            return Ok(layout);
+        }
+
+        let layout = SavedWindowLayout {
+            id: Uuid::new_v4().to_string(),
+            name: input.name,
+            placements: input.placements,
+            created_at: now,
+            updated_at: now,
+        };
+        state.layouts.push(layout.clone());
+        self.save_state(&state)?;
+        Ok(layout)
+    }
+
+    pub fn list_window_layouts(&self) -> Result<Vec<SavedWindowLayout>> {
+        let mut layouts = self.state()?.layouts;
+        layouts.sort_by(|a, b| a.name.cmp(&b.name));
+        Ok(layouts)
+    }
+
+    pub fn saved_window_layout_plan(&self, name: &str) -> Result<Option<Vec<WindowPlacement>>> {
+        Ok(self
+            .state()?
+            .layouts
+            .into_iter()
+            .find(|layout| layout.name == name || layout.id == name)
+            .map(|layout| layout.placements))
+    }
+
+    pub fn clear_personal_data(&self, clear: ClearPersonalData) -> Result<ClearPersonalDataResult> {
+        let mut state = self.state()?;
+        let mut result = ClearPersonalDataResult::default();
+
+        if clear.clipboard {
+            result.clipboard = state.clipboard.len();
+            state.clipboard.clear();
+        }
+        if clear.reminders {
+            result.reminders = state.reminders.len();
+            state.reminders.clear();
+        }
+        if clear.snippets {
+            result.snippets = state.snippets.len();
+            state.snippets.clear();
+        }
+        if clear.jobs {
+            result.jobs = state.jobs.len();
+            state.jobs.clear();
+        }
+        if clear.app_windows {
+            result.app_windows = state.app_windows.len();
+            state.app_windows.clear();
+        }
+        if clear.layouts {
+            result.layouts = state.layouts.len();
+            state.layouts.clear();
+        }
+
+        self.save_state(&state)?;
+        Ok(result)
     }
 }
 
@@ -937,6 +1346,18 @@ fn parse_rfc3339_utc(value: &str) -> Result<DateTime<Utc>> {
     Ok(DateTime::parse_from_rfc3339(value)
         .with_context(|| format!("parse RFC3339 timestamp {}", value))?
         .with_timezone(&Utc))
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_max_clipboard_entries() -> usize {
+    MAX_CLIPBOARD_ENTRIES
+}
+
+fn default_retention_days() -> u32 {
+    30
 }
 
 fn validate_trigger(trigger: &str) -> Result<()> {

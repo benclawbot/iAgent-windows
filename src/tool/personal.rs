@@ -1,6 +1,7 @@
 use super::{Tool, ToolContext, ToolOutput};
 use crate::personal_layer::{
-    ClipboardInput, JobInput, PersonalStore, ReminderInput, SnippetInput, WindowBounds,
+    ClearPersonalData, ClipboardInput, JobInput, PersonalSettingsInput, PersonalStore,
+    ReminderInput, RuntimeTickInput, SavedWindowLayoutInput, SnippetInput, WindowBounds,
     WindowPlacement, plan_snap_window, plan_tile_two_windows, snap_active_window,
 };
 use anyhow::{Result, anyhow};
@@ -67,6 +68,42 @@ struct PersonalInput {
     direction: Option<String>,
     #[serde(default)]
     monitor: Option<WindowBounds>,
+    #[serde(default)]
+    placements: Vec<WindowPlacement>,
+    #[serde(default)]
+    clipboard_history_enabled: Option<bool>,
+    #[serde(default)]
+    reminder_notifications_enabled: Option<bool>,
+    #[serde(default)]
+    background_jobs_enabled: Option<bool>,
+    #[serde(default)]
+    proactive_suggestions_enabled: Option<bool>,
+    #[serde(default)]
+    snippet_expansion_enabled: Option<bool>,
+    #[serde(default)]
+    max_clipboard_entries: Option<usize>,
+    #[serde(default)]
+    retention_days: Option<u32>,
+    #[serde(default)]
+    pinned: Option<bool>,
+    #[serde(default)]
+    run_one_job: Option<bool>,
+    #[serde(default)]
+    active_app: Option<String>,
+    #[serde(default)]
+    active_window_title: Option<String>,
+    #[serde(default)]
+    clear_clipboard: bool,
+    #[serde(default)]
+    clear_reminders: bool,
+    #[serde(default)]
+    clear_snippets: bool,
+    #[serde(default)]
+    clear_jobs: bool,
+    #[serde(default)]
+    clear_app_windows: bool,
+    #[serde(default)]
+    clear_layouts: bool,
 }
 
 #[async_trait]
@@ -88,12 +125,16 @@ impl Tool for PersonalTool {
                 "action": {
                     "type": "string",
                     "enum": [
+                        "get_settings", "update_settings", "runtime_tick", "clear_personal_data",
                         "create_snippet", "list_snippets", "expand_snippet", "delete_snippet",
+                        "expand_typed_snippet",
                         "create_reminder", "list_reminders", "due_reminders", "complete_reminder", "snooze_reminder",
                         "record_clipboard", "capture_clipboard", "clipboard_recent", "clipboard_clear",
+                        "clipboard_pin", "clipboard_delete",
                         "record_app_window", "capture_active_window", "list_recent_apps", "resolve_app", "switch_to_app",
                         "create_job", "list_jobs", "cancel_job", "retry_job", "run_job", "run_next_job",
-                        "snap_window_plan", "tile_windows_plan", "snap_active_window", "tile_windows"
+                        "snap_window_plan", "tile_windows_plan", "save_window_layout", "list_window_layouts", "window_layout_plan",
+                        "snap_active_window", "tile_windows"
                     ]
                 },
                 "id": {"type": "string"},
@@ -118,6 +159,24 @@ impl Tool for PersonalTool {
                 "right_query": {"type": "string"},
                 "kind": {"type": "string"},
                 "input_json": {"type": "object", "additionalProperties": true},
+                "placements": {"type": "array", "items": {"type": "object"}},
+                "clipboard_history_enabled": {"type": "boolean"},
+                "reminder_notifications_enabled": {"type": "boolean"},
+                "background_jobs_enabled": {"type": "boolean"},
+                "proactive_suggestions_enabled": {"type": "boolean"},
+                "snippet_expansion_enabled": {"type": "boolean"},
+                "max_clipboard_entries": {"type": "integer"},
+                "retention_days": {"type": "integer"},
+                "pinned": {"type": "boolean"},
+                "run_one_job": {"type": "boolean"},
+                "active_app": {"type": "string"},
+                "active_window_title": {"type": "string"},
+                "clear_clipboard": {"type": "boolean"},
+                "clear_reminders": {"type": "boolean"},
+                "clear_snippets": {"type": "boolean"},
+                "clear_jobs": {"type": "boolean"},
+                "clear_app_windows": {"type": "boolean"},
+                "clear_layouts": {"type": "boolean"},
                 "direction": {"type": "string", "enum": ["left", "right", "top", "bottom", "center", "maximize", "full"]},
                 "monitor": {
                     "type": "object",
@@ -138,6 +197,70 @@ impl Tool for PersonalTool {
         let store = PersonalStore::load()?;
 
         match input.action.as_str() {
+            "get_settings" => Ok(ToolOutput::new(serde_json::to_string_pretty(
+                &store.settings()?,
+            )?)),
+            "update_settings" => {
+                let settings = store.update_settings(PersonalSettingsInput {
+                    clipboard_history_enabled: input.clipboard_history_enabled,
+                    reminder_notifications_enabled: input.reminder_notifications_enabled,
+                    background_jobs_enabled: input.background_jobs_enabled,
+                    proactive_suggestions_enabled: input.proactive_suggestions_enabled,
+                    snippet_expansion_enabled: input.snippet_expansion_enabled,
+                    max_clipboard_entries: input.max_clipboard_entries,
+                    retention_days: input.retention_days,
+                })?;
+                Ok(ToolOutput::new(format!(
+                    "Personal settings updated: clipboard_history={} reminders={} jobs={} proactive={} snippets={} max_clipboard_entries={} retention_days={}",
+                    settings.clipboard_history_enabled,
+                    settings.reminder_notifications_enabled,
+                    settings.background_jobs_enabled,
+                    settings.proactive_suggestions_enabled,
+                    settings.snippet_expansion_enabled,
+                    settings.max_clipboard_entries,
+                    settings.retention_days
+                )))
+            }
+            "runtime_tick" => {
+                let tick = store.run_runtime_tick(RuntimeTickInput {
+                    as_of: input
+                        .as_of
+                        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339()),
+                    clipboard_content: input.content,
+                    active_app: input.active_app.or(input.source_app),
+                    active_window_title: input.active_window_title.or(input.source_title),
+                    run_one_job: input.run_one_job.unwrap_or(true),
+                })?;
+                Ok(ToolOutput::new(format!(
+                    "Runtime tick: {} due reminder(s), clipboard_captured={}, job_completed={}, {} suggestion(s)",
+                    tick.due_reminders.len(),
+                    tick.captured_clipboard.is_some(),
+                    tick.completed_job
+                        .as_ref()
+                        .map(|job| job.status.as_str())
+                        .unwrap_or("none"),
+                    tick.suggestions.len()
+                )))
+            }
+            "clear_personal_data" => {
+                let cleared = store.clear_personal_data(ClearPersonalData {
+                    clipboard: input.clear_clipboard,
+                    reminders: input.clear_reminders,
+                    snippets: input.clear_snippets,
+                    jobs: input.clear_jobs,
+                    app_windows: input.clear_app_windows,
+                    layouts: input.clear_layouts,
+                })?;
+                Ok(ToolOutput::new(format!(
+                    "Cleared personal data: clipboard={} reminders={} snippets={} jobs={} app_windows={} layouts={}",
+                    cleared.clipboard,
+                    cleared.reminders,
+                    cleared.snippets,
+                    cleared.jobs,
+                    cleared.app_windows,
+                    cleared.layouts
+                )))
+            }
             "create_snippet" => {
                 let snippet = store.create_snippet(SnippetInput {
                     trigger: required(input.trigger, "trigger")?,
@@ -165,6 +288,15 @@ impl Tool for PersonalTool {
             "expand_snippet" => {
                 let trigger = required(input.trigger, "trigger")?;
                 Ok(ToolOutput::new(store.expand_snippet(&trigger)?))
+            }
+            "expand_typed_snippet" => {
+                let text = required(input.content, "content")?;
+                Ok(ToolOutput::new(
+                    store
+                        .expand_typed_snippet(&text, input.source_app.as_deref())?
+                        .map(|expansion| expansion.output_text)
+                        .unwrap_or(text),
+                ))
             }
             "delete_snippet" => {
                 let id = input
@@ -296,6 +428,23 @@ impl Tool for PersonalTool {
                     "Cleared {} clipboard entries.",
                     count
                 )))
+            }
+            "clipboard_pin" => {
+                let id = required(input.id, "id")?;
+                let pinned = input.pinned.unwrap_or(true);
+                Ok(ToolOutput::new(if store.pin_clipboard(&id, pinned)? {
+                    format!("Clipboard entry updated: {} pinned={}", id, pinned)
+                } else {
+                    format!("Clipboard entry not found: {}", id)
+                }))
+            }
+            "clipboard_delete" => {
+                let id = required(input.id, "id")?;
+                Ok(ToolOutput::new(if store.delete_clipboard(&id)? {
+                    format!("Deleted clipboard entry: {}", id)
+                } else {
+                    format!("Clipboard entry not found: {}", id)
+                }))
             }
             "record_app_window" => {
                 let record = store.record_app_window(
@@ -435,6 +584,44 @@ impl Tool for PersonalTool {
                     .ok_or_else(|| anyhow!("monitor bounds required"))?;
                 let placements = plan_tile_two_windows(monitor)?;
                 Ok(ToolOutput::new(format_placements(&placements)))
+            }
+            "save_window_layout" => {
+                let layout = store.save_window_layout(SavedWindowLayoutInput {
+                    name: required(input.title.or(input.description), "title")?,
+                    placements: input.placements,
+                })?;
+                Ok(ToolOutput::new(format!(
+                    "Saved window layout: {} [id: {}]",
+                    layout.name, layout.id
+                )))
+            }
+            "list_window_layouts" => {
+                let layouts = store.list_window_layouts()?;
+                Ok(ToolOutput::new(if layouts.is_empty() {
+                    "No saved window layouts.".to_string()
+                } else {
+                    layouts
+                        .into_iter()
+                        .map(|layout| {
+                            format!(
+                                "- {} ({} placement(s)) [id: {}]",
+                                layout.name,
+                                layout.placements.len(),
+                                layout.id
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                }))
+            }
+            "window_layout_plan" => {
+                let name = required(input.title.or(input.id), "title")?;
+                Ok(ToolOutput::new(
+                    store
+                        .saved_window_layout_plan(&name)?
+                        .map(|placements| format_placements(&placements))
+                        .unwrap_or_else(|| format!("Window layout not found: {}", name)),
+                ))
             }
             "snap_active_window" => {
                 let direction = required(input.direction, "direction")?;
