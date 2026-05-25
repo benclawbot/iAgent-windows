@@ -198,6 +198,34 @@ async fn personal_tool_schema_exposes_sensitive_context_firewall_actions() {
     assert_eq!(def.input_schema["properties"]["reason"]["type"], "string");
 }
 
+#[tokio::test]
+async fn registry_exposes_recipe_catalog_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "recipe")
+        .expect("recipe tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("recipe action enum");
+    for action in ["list", "search", "get", "plan"] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "recipe tool should expose {action}"
+        );
+    }
+    assert_eq!(def.input_schema["properties"]["query"]["type"], "string");
+    assert_eq!(
+        def.input_schema["properties"]["recipe_id"]["type"],
+        "string"
+    );
+    assert_eq!(def.input_schema["properties"]["inputs"]["type"], "array");
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");

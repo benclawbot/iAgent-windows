@@ -11,6 +11,7 @@ mod binary_integration;
 mod burst_spawn;
 mod personal_layer;
 mod provider_behavior;
+mod recipe_catalog;
 mod safety;
 mod session_flow;
 mod smoke;

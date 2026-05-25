@@ -213,6 +213,7 @@ Integrated tooling includes:
 - `computer` actions for screenshots, active-window context, app listing/opening, clicks, typing, hotkeys, waits, and scrolling
 - `personal` actions for snippets, reminders, clipboard recovery, app/window recall, jobs, layouts, and project workspaces
 - `personal` Sensitive Context Firewall actions for privacy status, redaction preview, capture pause/resume, and recent-context deletion
+- `recipe` catalog and command palette actions for searchable, hotkey-ready workflows with typed inputs, approval policies, required tools, and non-executing dispatch plans
 - `flight_recorder` action timeline for user-readable run evidence, approval state, screenshots, undo metadata, and follow-up queues
 - `communicate` / swarm delegation tools for assignment-style multi-agent work
 - dictation and voice-adjacent runtime support used by the desktop companion
@@ -662,22 +663,19 @@ This repository is structured more like an operating layer for AI workflows than
 
 This roadmap lists final product deliveries that are not yet fully integrated. When one is delivered, remove it from this section and document it above as current behavior.
 
-1. Recipe Catalog and Command Palette
-   - Searchable, hotkey-ready recipes for common workflows such as folder summaries, Office document generation, web form filling, meeting prep, project resume, and weekly reports, with typed inputs and approval policies.
-
-2. Meeting and Voice Memory Mode
+1. Meeting and Voice Memory Mode
    - Start/stop meeting capture, local transcript storage, speaker/time segmentation where available, decision and action-item extraction, source-linked notes, and conversion into reminders, jobs, or delegated tasks.
 
-3. Connector Packs With Permission Scopes
+2. Connector Packs With Permission Scopes
    - Scoped Outlook/Gmail/Calendar, Slack/Teams, GitHub/Linear/Jira, Notion/Obsidian, and file-share connectors with explicit read/write permissions and run evidence for every write.
 
-4. Proactive Briefings and Next-Best Actions
+3. Proactive Briefings and Next-Best Actions
    - Morning briefings, end-of-task recaps, meeting prep cards, project-resume suggestions, and low-noise contextual recommendations with "never suggest this again" feedback.
 
-5. Windows App Intent Manifests
+4. Windows App Intent Manifests
    - `iagent.intent.json` support so local apps and scripts can declare safe structured actions, parameters, examples, approval levels, and rollback hints for import into tools and recipes.
 
-6. Remote Dispatch and Watch Mode
+5. Remote Dispatch and Watch Mode
    - Authenticated local/remote task dispatch, mobile-friendly status, scheduled jobs, approval-needed notifications, completion evidence, and failure packets.
 
 ---

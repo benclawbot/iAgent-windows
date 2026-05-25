@@ -29,6 +29,7 @@ mod open;
 mod patch;
 mod personal;
 mod read;
+mod recipe;
 pub mod selfdev;
 mod session_search;
 mod side_panel;
@@ -215,6 +216,7 @@ impl Registry {
             );
             Self::insert_tool_timed(&mut m, &mut timings, "goal", goal::GoalTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "gmail", gmail::GmailTool::new);
+            Self::insert_tool_timed(&mut m, &mut timings, "recipe", recipe::RecipeTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "word", word::WordTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "schedule", ambient::ScheduleTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "selfdev", selfdev::SelfDevTool::new);
