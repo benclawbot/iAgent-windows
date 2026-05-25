@@ -142,6 +142,24 @@ Agents can:
 
 ---
 
+## Safety, Approval, and Audit Trail
+
+iAgent's default product loop is:
+
+`watch context -> suggest action -> user approves -> execute safely -> remember pattern`
+
+That loop is backed by runtime safety systems rather than prompt-only promises:
+
+- risk classification for proposed actions
+- queued permission requests for actions that mutate the desktop, shell, files, or external systems
+- Validate/Refuse proposal popups in the Python dock for commands, typing, and delegated goals
+- action history, audit entries, transcripts, summaries, and "never again" rules
+- Action Flight Recorder read model and `flight_recorder` tool for inspecting actions, approvals, audit entries, evidence, undo tokens, screenshots, risk/disposition totals, and pending follow-ups
+- filters for recorder entries by action text, risk level, disposition, result limit, and optional structured context payloads
+- explicit separation between observation actions and mutating actions such as click, type, hotkey, scroll, app launch, and delegated communication
+
+---
+
 ## Persistent Memory
 
 Dedicated memory and storage layers enable:
@@ -186,13 +204,17 @@ Run `iagent personal-daemon --headless` to keep the personal layer active in the
 
 Integrated tooling includes:
 
-- filesystem access
-- shell execution
-- web context tooling
-- planning systems
-- integration layers
-- memory tooling
-- desktop automation
+- filesystem read/write/edit/search tools with protected-path handling
+- shell and task execution with approval-aware routing
+- browser automation through Firefox bridge routing plus Chrome/Edge CDP backends
+- form-fill workflows over extracted web form fields
+- Office workflows through OfficeCLI-backed Word, Excel, and PowerPoint builders
+- `computer` actions for screenshots, active-window context, app listing/opening, clicks, typing, hotkeys, waits, and scrolling
+- `personal` actions for snippets, reminders, clipboard recovery, app/window recall, jobs, layouts, and project workspaces
+- `flight_recorder` action timeline for user-readable run evidence, approval state, screenshots, undo metadata, and follow-up queues
+- `communicate` / swarm delegation tools for assignment-style multi-agent work
+- dictation and voice-adjacent runtime support used by the desktop companion
+- planning, compaction, memory, MCP registration, self-development, and ambient tool registration layers
 - Validate/Refuse proposal popups for AI-suggested commands, typing, and delegated goals
 
 ---
@@ -200,6 +222,17 @@ Integrated tooling includes:
 ## Desktop Integrations
 
 iAgent connects directly to the Windows desktop and key productivity applications through three integration layers.
+
+### Desktop Dock, Companion, and Proposal UX
+
+The tracked Python desktop runtime under `app/iagent-py` provides the Windows-facing user experience:
+
+- tray and dock launcher via `app/launch-iagent.ps1`
+- compact companion responses and context capture
+- task inbox with running, completed, and feedback-aware task records
+- system-wide proposal popups for mutating action tags such as command execution, typing, and delegated backend goals
+- Office-goal queuing that routes "make a document/spreadsheet/deck" requests through deterministic builders before opening the result
+- settings UI for provider/runtime configuration and personal desktop controls
 
 ### Windows Desktop Automation
 
@@ -571,6 +604,12 @@ If issues persist:
 - `src/provider/*` → provider routing
 - `src/auth/*` → auth and token handling
 - `src/ambient/*` → background workflows
+- `src/safety.rs` → permission queue, audit trail, action history, transcripts, and never-again rules
+- `src/personal_layer.rs` and `src/personal_daemon.rs` → snippets, reminders, clipboard recovery, window recall, jobs, layouts, and project workspaces
+- `src/dictation.rs` → desktop dictation support
+- `src/tool/communicate*` → delegated/swarm communication tooling
+- `app/iagent-py/*` → Python dock, task inbox, proposal popups, companion manager, settings UI, and Office goal queue
+- `scripts/office/*` → deterministic Office document builders mirrored into the installed runtime
 
 ---
 
@@ -578,15 +617,25 @@ If issues persist:
 
 | Crate | Purpose |
 |---|---|
+| `app-integrations` | Browser, form-fill, OfficeCLI, and Office workflow integrations |
+| `desktop-monitor` | Active desktop context, window state, and safe file operations |
+| `iagent-settings` | Shared desktop/runtime settings |
 | `jcode-agent-runtime` | Runtime orchestration |
+| `jcode-ambient-types` | Ambient workflow data contracts |
+| `jcode-auth-types` | Authentication data contracts |
+| `jcode-compaction-core` | Conversation/context compaction support |
 | `jcode-memory-types` | Memory structures |
-| `jcode-storage` | Persistence layer |
 | `jcode-plan` | Planning engine |
+| `jcode-protocol` | Runtime protocol and transport types |
+| `jcode-provider-core` | Provider abstraction layer |
 | `jcode-provider-openai` | OpenAI integration |
 | `jcode-provider-openrouter` | OpenRouter integration |
 | `jcode-provider-gemini` | Gemini integration |
+| `jcode-session-types` | Session state contracts |
+| `jcode-storage` | Persistence layer |
+| `jcode-tool-core` | Shared tool traits and execution contracts |
+| `jcode-tool-types` | Shared tool input/output types |
 | `overlay-ui` | Overlay runtime |
-| `desktop-monitor` | Desktop monitoring |
 | `suggestion-engine` | Suggestion systems |
 
 ---
@@ -604,6 +653,33 @@ The architecture is moving toward:
 - autonomous workflow coordination
 
 This repository is structured more like an operating layer for AI workflows than a traditional chatbot frontend.
+
+---
+
+# Product Roadmap
+
+This roadmap lists final product deliveries that are not yet fully integrated. When one is delivered, remove it from this section and document it above as current behavior.
+
+1. Sensitive Context Firewall
+   - Visible privacy controls for capture pause/resume, forget-last-window, redaction preview, app/site/title exclusions, secret detection, retention meters, and per-feature storage controls.
+
+2. Recipe Catalog and Command Palette
+   - Searchable, hotkey-ready recipes for common workflows such as folder summaries, Office document generation, web form filling, meeting prep, project resume, and weekly reports, with typed inputs and approval policies.
+
+3. Meeting and Voice Memory Mode
+   - Start/stop meeting capture, local transcript storage, speaker/time segmentation where available, decision and action-item extraction, source-linked notes, and conversion into reminders, jobs, or delegated tasks.
+
+4. Connector Packs With Permission Scopes
+   - Scoped Outlook/Gmail/Calendar, Slack/Teams, GitHub/Linear/Jira, Notion/Obsidian, and file-share connectors with explicit read/write permissions and run evidence for every write.
+
+5. Proactive Briefings and Next-Best Actions
+   - Morning briefings, end-of-task recaps, meeting prep cards, project-resume suggestions, and low-noise contextual recommendations with "never suggest this again" feedback.
+
+6. Windows App Intent Manifests
+   - `iagent.intent.json` support so local apps and scripts can declare safe structured actions, parameters, examples, approval levels, and rollback hints for import into tools and recipes.
+
+7. Remote Dispatch and Watch Mode
+   - Authenticated local/remote task dispatch, mobile-friendly status, scheduled jobs, approval-needed notifications, completion evidence, and failure packets.
 
 ---
 

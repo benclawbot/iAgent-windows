@@ -132,6 +132,39 @@ async fn first_party_tool_definitions_include_optional_intent_explicitly() {
     }
 }
 
+#[tokio::test]
+async fn registry_exposes_action_flight_recorder_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "flight_recorder")
+        .expect("flight_recorder tool should be registered");
+
+    assert_eq!(def.input_schema["required"][0], "action");
+    assert!(
+        def.input_schema["properties"]["action"]["enum"]
+            .as_array()
+            .expect("flight_recorder action enum")
+            .iter()
+            .any(|value| value == "view")
+    );
+    assert_eq!(
+        def.input_schema["properties"]["action_query"]["type"],
+        "string"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["risk_level"]["type"],
+        "string"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["include_context"]["type"],
+        "boolean"
+    );
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");

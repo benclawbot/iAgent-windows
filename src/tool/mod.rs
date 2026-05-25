@@ -14,6 +14,7 @@ mod conversation_search;
 mod debug_socket;
 mod edit;
 mod file_ops;
+mod flight_recorder;
 mod glob;
 mod gmail;
 mod goal;
@@ -154,6 +155,12 @@ impl Registry {
             );
             Self::insert_tool_timed(&mut m, &mut timings, "glob", glob::GlobTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "file", file_ops::FileOpsTool::new);
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "flight_recorder",
+                flight_recorder::FlightRecorderTool::new,
+            );
             Self::insert_tool_timed(&mut m, &mut timings, "grep", grep::GrepTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "ls", ls::LsTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "bash", bash::BashTool::new);

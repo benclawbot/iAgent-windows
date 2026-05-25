@@ -144,3 +144,96 @@ fn test_safety_summary_generation() {
     assert!(summary.contains("Merged 2 duplicate memories"));
     assert!(summary.contains("Pruned 1 stale memory"));
 }
+
+/// Test safety system: action flight recorder read model
+#[test]
+fn test_action_flight_recorder_filters_actions_and_preserves_evidence() {
+    use iagent::safety::{
+        ActionLog, ActionTier, FlightRecorderQuery, PolicyDisposition, RiskLevel, SafetySystem,
+    };
+    use serde_json::json;
+
+    let safety = SafetySystem::new();
+
+    safety.log_action(ActionLog {
+        action_type: "write".to_string(),
+        description: "Edited README roadmap".to_string(),
+        tier: ActionTier::RequiresPermission,
+        risk_level: Some(RiskLevel::EditLocal),
+        disposition: Some(PolicyDisposition::Confirm),
+        undo_token: Some("undo-readme-001".to_string()),
+        screenshot_before: Some("before.png".to_string()),
+        screenshot_after: Some("after.png".to_string()),
+        screenshot_diff: Some("diff.png".to_string()),
+        details: Some(json!({
+            "file": "README.md",
+            "success": true
+        })),
+        timestamp: chrono::Utc::now(),
+    });
+
+    let view = safety.flight_recorder(FlightRecorderQuery {
+        action_query: Some("roadmap".to_string()),
+        risk_level: Some(RiskLevel::EditLocal),
+        limit: Some(10),
+        include_context: true,
+        ..Default::default()
+    });
+
+    assert_eq!(view.entries.len(), 1);
+    let entry = &view.entries[0];
+    assert_eq!(entry.kind, "action");
+    assert_eq!(entry.action_type, "write");
+    assert_eq!(entry.summary, "Edited README roadmap");
+    assert_eq!(entry.risk_level, Some(RiskLevel::EditLocal));
+    assert_eq!(entry.disposition, Some(PolicyDisposition::Confirm));
+    assert_eq!(entry.undo_token.as_deref(), Some("undo-readme-001"));
+    assert_eq!(entry.screenshot_before.as_deref(), Some("before.png"));
+    assert_eq!(entry.screenshot_after.as_deref(), Some("after.png"));
+    assert_eq!(entry.screenshot_diff.as_deref(), Some("diff.png"));
+    assert!(entry.context.is_some());
+    assert!(!entry.needs_follow_up);
+    assert_eq!(view.totals.total_entries, 1);
+    assert_eq!(view.totals.undo_available, 1);
+    assert_eq!(view.totals.screenshots_captured, 1);
+}
+
+/// Test safety system: pending approvals are first-class flight recorder entries
+#[test]
+fn test_action_flight_recorder_includes_pending_permission_followups() {
+    use iagent::safety::{FlightRecorderQuery, PermissionRequest, SafetySystem, Urgency};
+
+    let safety = SafetySystem::new();
+    let request_id = format!("flight_perm_{}", chrono::Utc::now().timestamp_nanos_opt().unwrap());
+
+    let _ = safety.request_permission(PermissionRequest {
+        id: request_id.clone(),
+        action: "communicate".to_string(),
+        description: "Send the follow-up summary".to_string(),
+        rationale: "User asked the agent to close the loop".to_string(),
+        urgency: Urgency::High,
+        wait: false,
+        created_at: chrono::Utc::now(),
+        context: None,
+    });
+
+    let view = safety.flight_recorder(FlightRecorderQuery {
+        action_query: Some("follow-up".to_string()),
+        include_context: false,
+        ..Default::default()
+    });
+
+    let entry = view
+        .entries
+        .iter()
+        .find(|entry| entry.id == request_id)
+        .expect("pending permission should appear in the flight recorder");
+
+    assert_eq!(entry.kind, "pending_permission");
+    assert_eq!(entry.action_type, "communicate");
+    assert_eq!(entry.summary, "Send the follow-up summary");
+    assert!(entry.needs_follow_up);
+    assert_eq!(view.totals.pending_permissions, 1);
+
+    let _ = safety.record_decision(&request_id, false, "test", Some("cleanup".to_string()));
+}
