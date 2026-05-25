@@ -22,6 +22,7 @@ mod gmail;
 mod goal;
 mod grep;
 mod invalid;
+mod intent;
 mod ls;
 mod lsp;
 pub mod mcp;
@@ -201,6 +202,7 @@ impl Registry {
                 codesearch::CodeSearchTool::new,
             );
             Self::insert_tool_timed(&mut m, &mut timings, "invalid", invalid::InvalidTool::new);
+            Self::insert_tool_timed(&mut m, &mut timings, "intent", intent::IntentTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "lsp", lsp::LspTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "meeting", meeting::MeetingTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "todo", todo::TodoTool::new);

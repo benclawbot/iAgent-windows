@@ -45,6 +45,7 @@ pub mod goal;
 pub mod goal_judge;
 pub mod id;
 pub mod import;
+pub mod intent_manifest;
 pub mod login_qr;
 pub mod mcp;
 pub mod meeting_memory;

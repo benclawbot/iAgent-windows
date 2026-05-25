@@ -10,6 +10,7 @@ mod ambient;
 mod binary_integration;
 mod burst_spawn;
 mod connector_packs;
+mod intent_manifests;
 mod meeting_memory;
 mod personal_layer;
 mod proactive_briefings;

@@ -338,6 +338,34 @@ async fn registry_exposes_proactive_briefing_tool() {
     assert_eq!(def.input_schema["properties"]["signals"]["type"], "array");
 }
 
+#[tokio::test]
+async fn registry_exposes_intent_manifest_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "intent")
+        .expect("intent tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("intent action enum");
+    for action in ["discover", "import", "list", "get", "plan"] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "intent tool should expose {action}"
+        );
+    }
+    assert_eq!(def.input_schema["properties"]["path"]["type"], "string");
+    assert_eq!(def.input_schema["properties"]["app_id"]["type"], "string");
+    assert_eq!(
+        def.input_schema["properties"]["parameters"]["type"],
+        "object"
+    );
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");
