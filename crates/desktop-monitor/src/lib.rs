@@ -633,15 +633,15 @@ mod platform {
         impl Drop for FocusHookGuard {
             fn drop(&mut self) {
                 unsafe {
-                    if let Some(hook) = self.foreground_hook.take() {
-                        if !hook.is_invalid() {
-                            let _ = UnhookWinEvent(hook);
-                        }
+                    if let Some(hook) = self.foreground_hook.take()
+                        && !hook.is_invalid()
+                    {
+                        let _ = UnhookWinEvent(hook);
                     }
-                    if let Some(hook) = self.object_focus_hook.take() {
-                        if !hook.is_invalid() {
-                            let _ = UnhookWinEvent(hook);
-                        }
+                    if let Some(hook) = self.object_focus_hook.take()
+                        && !hook.is_invalid()
+                    {
+                        let _ = UnhookWinEvent(hook);
                     }
                 }
             }

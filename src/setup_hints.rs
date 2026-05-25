@@ -12,8 +12,6 @@ use crate::storage;
 use anyhow::Context;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-#[cfg(any(windows, target_os = "macos"))]
-use std::io::Write;
 use std::io::{self, IsTerminal};
 use std::path::PathBuf;
 
@@ -492,7 +490,7 @@ pub fn maybe_show_setup_hints() -> Option<StartupHints> {
 
     #[cfg(windows)]
     {
-        return maybe_show_windows_setup_hints(&mut state, startup_hints);
+        maybe_show_windows_setup_hints(&mut state, startup_hints)
     }
 
     #[cfg(not(any(windows, target_os = "macos")))]

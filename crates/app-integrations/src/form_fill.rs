@@ -314,18 +314,18 @@ fn score_candidate(field: &FormField, candidate: &PageFieldDescriptor) -> Option
         reasons.push("selector_exact".to_string());
     }
 
-    if let (Some(request_id), Some(candidate_id)) = (&field.id, &candidate.id) {
-        if normalize_text(request_id) == normalize_text(candidate_id) {
-            score += 0.95;
-            reasons.push("id_exact".to_string());
-        }
+    if let (Some(request_id), Some(candidate_id)) = (&field.id, &candidate.id)
+        && normalize_text(request_id) == normalize_text(candidate_id)
+    {
+        score += 0.95;
+        reasons.push("id_exact".to_string());
     }
 
-    if let (Some(request_name), Some(candidate_name)) = (&field.name, &candidate.name) {
-        if normalize_text(request_name) == normalize_text(candidate_name) {
-            score += 0.9;
-            reasons.push("name_exact".to_string());
-        }
+    if let (Some(request_name), Some(candidate_name)) = (&field.name, &candidate.name)
+        && normalize_text(request_name) == normalize_text(candidate_name)
+    {
+        score += 0.9;
+        reasons.push("name_exact".to_string());
     }
 
     if let (Some(request_label), Some(candidate_label)) = (&field.label, &candidate.label) {
@@ -586,19 +586,17 @@ async fn extract_page_fields(browser: &CdpBrowser) -> Result<Vec<PageFieldDescri
 fn find_field_selector(interactables: &[CdpInteractable], field: &FormField) -> String {
     // Try exact name/id match first
     for i in interactables {
-        if let Some(ref name) = field.name {
-            if i.selector.contains(&format!("[name=\"{}\"]", name))
-                || i.selector.contains(&format!("name=\"{}\"", name))
-            {
-                return i.selector.clone();
-            }
+        if let Some(ref name) = field.name
+            && (i.selector.contains(&format!("[name=\"{}\"]", name))
+                || i.selector.contains(&format!("name=\"{}\"", name)))
+        {
+            return i.selector.clone();
         }
-        if let Some(ref id) = field.id {
-            if i.selector.contains(&format!("#{}", id))
-                || i.selector.contains(&format!("[id=\"{}\"]", id))
-            {
-                return i.selector.clone();
-            }
+        if let Some(ref id) = field.id
+            && (i.selector.contains(&format!("#{}", id))
+                || i.selector.contains(&format!("[id=\"{}\"]", id)))
+        {
+            return i.selector.clone();
         }
     }
 

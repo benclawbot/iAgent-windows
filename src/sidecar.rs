@@ -111,12 +111,10 @@ impl Sidecar {
     }
 
     fn detect_fallback_backend() -> (SidecarBackend, String) {
-        if let Ok(_) = std::env::var("MINIMAX_API_KEY") {
-            return (SidecarBackend::MiniMax, SIDECAR_MINIMAX_MODEL.to_string());
+        if std::env::var("MINIMAX_API_KEY").is_ok() {
+            (SidecarBackend::MiniMax, SIDECAR_MINIMAX_MODEL.to_string())
         } else if auth::codex::load_credentials().is_ok() {
             (SidecarBackend::OpenAI, SIDECAR_OPENAI_MODEL.to_string())
-        } else if auth::claude::load_credentials().is_ok() {
-            (SidecarBackend::Claude, SIDECAR_CLAUDE_MODEL.to_string())
         } else {
             (SidecarBackend::Claude, SIDECAR_CLAUDE_MODEL.to_string())
         }
@@ -151,7 +149,11 @@ impl Sidecar {
         let api_key = std::env::var("MINIMAX_API_KEY")
             .context("MINIMAX_API_KEY not set for MiniMax sidecar")?;
 
-        let url = format!("{}/{}", MINIMAX_API_BASE.trim_end_matches('/'), MINIMAX_RESPONSES_PATH);
+        let url = format!(
+            "{}/{}",
+            MINIMAX_API_BASE.trim_end_matches('/'),
+            MINIMAX_RESPONSES_PATH
+        );
 
         #[derive(serde::Serialize)]
         struct Request<'a> {
@@ -174,8 +176,14 @@ impl Sidecar {
             model: &self.model,
             input: RequestInput {
                 messages: vec![
-                    Message { role: "system", content: system },
-                    Message { role: "user", content: user_message },
+                    Message {
+                        role: "system",
+                        content: system,
+                    },
+                    Message {
+                        role: "user",
+                        content: user_message,
+                    },
                 ],
             },
         };
@@ -201,9 +209,15 @@ impl Sidecar {
             output: serde_json::Value,
         }
 
-        let resp: MiniMaxResponse = response.json().await.context("Failed to parse MiniMax response")?;
+        let resp: MiniMaxResponse = response
+            .json()
+            .await
+            .context("Failed to parse MiniMax response")?;
 
-        let text = resp.output.get("text").and_then(|v| v.as_str())
+        let text = resp
+            .output
+            .get("text")
+            .and_then(|v| v.as_str())
             .context("No text in MiniMax response output")?
             .to_string();
 

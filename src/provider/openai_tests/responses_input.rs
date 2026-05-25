@@ -10,7 +10,6 @@ fn assistant_tool_use(id: &str, name: &str, input: serde_json::Value) -> ChatMes
         tool_duration_ms: None,
     }
 }
-
 fn user_text(text: &str) -> ChatMessage {
     ChatMessage {
         role: Role::User,
@@ -101,7 +100,6 @@ fn test_build_responses_input_injects_missing_tool_output() {
         vec![expected_missing]
     );
 }
-
 #[test]
 fn test_build_responses_input_preserves_tool_output() {
     let messages = vec![
@@ -378,18 +376,5 @@ fn test_build_response_request_respects_configured_cache_retention() {
     assert_eq!(
         request["prompt_cache_retention"],
         serde_json::json!("in_memory")
-    );
-}
-
-#[test]
-#[cfg(feature = "terminal-ui")]
-fn test_openai_cache_ttl_is_model_aware() {
-    assert_eq!(
-        crate::tui::cache_ttl_for_provider_model("openai", Some("gpt-5.5")),
-        Some(24 * 60 * 60)
-    );
-    assert_eq!(
-        crate::tui::cache_ttl_for_provider_model("openai", Some("gpt-4o")),
-        Some(300)
     );
 }

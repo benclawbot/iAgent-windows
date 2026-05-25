@@ -32,6 +32,7 @@ from iagent.knowledge_base import load_kb_from_disk, match_app, select_content
 from iagent.mic_capture import MicCapture
 from iagent.point_mapper import map_point_to_screen
 from iagent.prompts import build_system_prompt
+from iagent.proposals import ActionProposal, proposals_from_actions
 from iagent.response_actions import parse_response_actions
 from iagent.screen_capture import ScreenshotImage
 from iagent.state import VoiceState
@@ -71,6 +72,8 @@ class CompanionManager(QObject):
     response_delta = Signal(str)
     response_complete = Signal(str)
     success_turn_completed = Signal()
+    proposal_requested = Signal(object)
+    proposal_decided = Signal(object, bool)
     background_command_requested = Signal(str)
     jcode_goal_requested = Signal(str)
     typing_action_blocked = Signal(str, bool)
@@ -146,6 +149,26 @@ class CompanionManager(QObject):
     def set_model(self, model_id: str) -> None:
         """Update the model used for LLM requests."""
         self._current_model = model_id
+
+    def accept_proposal(self, proposal: ActionProposal) -> None:
+        """Execute a user-validated proposal through existing action paths."""
+        if proposal.kind == "command":
+            self.background_command_requested.emit(proposal.payload)
+        elif proposal.kind == "jcode":
+            self.jcode_goal_requested.emit(proposal.payload)
+        elif proposal.kind == "type":
+            if self._allow_foreground_typing:
+                asyncio.ensure_future(
+                    self._type_into_active_app(proposal.payload, proposal.press_enter)
+                )
+            else:
+                self.typing_action_blocked.emit(proposal.payload, proposal.press_enter)
+        self.proposal_decided.emit(proposal, True)
+
+    def reject_proposal(self, proposal: ActionProposal) -> None:
+        """Record a user refusal without executing the proposal."""
+        logger.info("proposal refused: %s %s", proposal.kind, proposal.proposal_id)
+        self.proposal_decided.emit(proposal, False)
 
     def submit_text_prompt(self, text: str) -> None:
         """Submit a typed prompt without using microphone capture."""
@@ -450,9 +473,7 @@ class CompanionManager(QObject):
                     if action_notes:
                         visible_text = "I handled your request and " + ", ".join(action_notes) + "."
                     else:
-                        visible_text = (
-                            "I could not produce a visible reply for that request. Please try again."
-                        )
+                        visible_text = "I could not produce a visible reply. Please try again."
 
                 self._history.append(text, visible_text)
                 self.response_complete.emit(visible_text)
@@ -467,29 +488,13 @@ class CompanionManager(QObject):
                             coords[0], coords[1], actions.point_tag.label,
                         )
 
-                if actions.type_text:
-                    if self._allow_foreground_typing:
-                        await self._type_into_active_app(actions.type_text, actions.press_enter)
-                        logger.info(
-                            "TYPE executed: len=%d enter=%s",
-                            len(actions.type_text),
-                            actions.press_enter,
-                        )
-                    else:
-                        self.typing_action_blocked.emit(actions.type_text, actions.press_enter)
-                        logger.info(
-                            "TYPE blocked (allow_foreground_typing=false): len=%d enter=%s",
-                            len(actions.type_text),
-                            actions.press_enter,
-                        )
-
-                if actions.cli_command:
-                    self.background_command_requested.emit(actions.cli_command)
-                    logger.info("CMD queued: %s", actions.cli_command)
-
-                if actions.jcode_goal:
-                    self.jcode_goal_requested.emit(actions.jcode_goal)
-                    logger.info("JCODE goal queued: %s", actions.jcode_goal[:160])
+                for proposal in proposals_from_actions(actions):
+                    self.proposal_requested.emit(proposal)
+                    logger.info(
+                        "proposal requested: %s %s",
+                        proposal.kind,
+                        proposal.proposal_id,
+                    )
 
                 if self._state == VoiceState.RESPONDING:
                     self._set_state(VoiceState.IDLE)

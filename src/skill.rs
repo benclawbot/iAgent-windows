@@ -470,7 +470,8 @@ impl Skill {
     /// Run a script from the skill's scripts directory.
     /// Returns the script content and working directory for execution.
     pub fn run_script(&self, script_name: &str) -> Result<(String, Option<String>)> {
-        let scripts_dir = self.scripts_dir()
+        let scripts_dir = self
+            .scripts_dir()
             .ok_or_else(|| anyhow::anyhow!("No scripts directory for skill '{}'", self.name))?;
         let script_path = scripts_dir.join(script_name);
 

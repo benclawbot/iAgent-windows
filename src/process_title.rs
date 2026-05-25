@@ -1,4 +1,4 @@
-use crate::cli::args::{AmbientCommand, Args, Command};
+use crate::cli::args::{Args, Command};
 
 const LINUX_PROCESS_TITLE_LIMIT: usize = 15;
 const KILLALL_PROCESS_NAME: &str = "jcode";
@@ -132,13 +132,8 @@ pub(crate) fn initial_title(args: &Args) -> String {
         Some(Command::Provider(_)) => "jcode provider".to_string(),
         Some(Command::Memory(_)) => "jcode memory".to_string(),
         Some(Command::Session(_)) => "jcode session".to_string(),
-        Some(Command::Ambient(subcommand)) => match subcommand {
-            AmbientCommand::RunVisible => "jcode ambient visible".to_string(),
-            _ => "jcode ambient".to_string(),
-        },
+        Some(Command::Ambient(_)) => "jcode ambient".to_string(),
         Some(Command::Pair { .. }) => "jcode pair".to_string(),
-        Some(Command::Permissions) => "jcode permissions".to_string(),
-        Some(Command::Transcript { .. }) => "jcode transcript".to_string(),
         Some(Command::Dictate { .. }) => "jcode dictate".to_string(),
         Some(Command::SetupHotkey {
             listen_macos_hotkey,
@@ -150,7 +145,6 @@ pub(crate) fn initial_title(args: &Args) -> String {
             }
         }
         Some(Command::Browser { .. }) => "jcode browser".to_string(),
-        Some(Command::Replay { .. }) => "jcode replay".to_string(),
         Some(Command::Model(_)) => "jcode model".to_string(),
         Some(Command::AuthTest { .. }) => "jcode auth-test".to_string(),
         Some(Command::Restart { .. }) => "jcode restart".to_string(),

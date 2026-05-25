@@ -265,7 +265,8 @@ impl BedrockProvider {
             if catalog.region.as_deref() != configured_region.as_deref() {
                 log_info!((
                     "Ignoring Bedrock model cache for region {:?}; configured region is {:?}",
-                    catalog.region, configured_region
+                    catalog.region,
+                    configured_region
                 ));
                 return;
             }
@@ -1371,6 +1372,10 @@ mod tests {
         }
     }
 
+    #[cfg_attr(
+        coverage,
+        ignore = "requires normal test runtime outside cargo-llvm-cov"
+    )]
     #[test]
     fn detects_env_credentials_requires_region_and_credential_hint() {
         let _guard = crate::storage::lock_test_env();

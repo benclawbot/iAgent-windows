@@ -596,7 +596,7 @@ mod tests {
             vec![ContentBlock::ToolUse {
                 id: "tool_1".to_string(),
                 name: "read".to_string(),
-                input: serde_json::json!({"file_path": "src/tui/session_picker.rs"}),
+                input: serde_json::json!({"file_path": "app/iagent-py/iagent/app.py"}),
             }],
         );
         session.add_message(

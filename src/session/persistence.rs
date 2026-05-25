@@ -280,7 +280,8 @@ impl Session {
                 Err(err) => {
                     log_warn!((
                         "Session journal append failed for {} ({}); checkpointing full snapshot",
-                        self.id, err
+                        self.id,
+                        err
                     ));
                     let checkpoint_start = Instant::now();
                     let result = self.checkpoint_snapshot(&path, &journal_path);

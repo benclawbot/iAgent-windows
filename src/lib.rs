@@ -1,4 +1,6 @@
 #![allow(
+    dead_code,
+    non_camel_case_types,
     unknown_lints,
     clippy::collapsible_match,
     clippy::manual_checked_ops,
@@ -63,7 +65,6 @@ pub mod protocol;
 pub mod provider;
 pub mod provider_catalog;
 pub mod registry;
-pub mod replay;
 pub mod restart_snapshot;
 pub mod runtime_memory_log;
 pub mod safety;
@@ -86,13 +87,9 @@ pub mod think_filter;
 pub mod todo;
 pub mod tool;
 pub mod transport;
-#[cfg(feature = "terminal-ui")]
-pub mod tui;
 pub mod update;
 pub mod usage;
 pub mod util;
-#[cfg(feature = "terminal-ui")]
-pub mod video_export;
 
 use anyhow::Result;
 use std::sync::Mutex;

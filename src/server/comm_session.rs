@@ -92,25 +92,8 @@ fn spawn_visible_session_window(
     selfdev_requested: bool,
     provider_key: Option<&str>,
 ) -> anyhow::Result<bool> {
-    let exe = crate::build::client_update_candidate(selfdev_requested)
-        .map(|(path, _label)| path)
-        .or_else(|| std::env::current_exe().ok())
-        .unwrap_or_else(|| PathBuf::from("jcode"));
-    if selfdev_requested {
-        crate::cli::tui_launch::spawn_selfdev_in_new_terminal_with_provider(
-            &exe,
-            session_id,
-            cwd,
-            provider_key,
-        )
-    } else {
-        crate::cli::tui_launch::spawn_resume_in_new_terminal_with_provider(
-            &exe,
-            session_id,
-            cwd,
-            provider_key,
-        )
-    }
+    let _ = (session_id, cwd, selfdev_requested, provider_key);
+    Ok(false)
 }
 
 fn provider_key_for_spawn_model(
@@ -144,15 +127,7 @@ fn provider_key_for_spawn_model(
 }
 
 fn persist_headed_startup_message(session_id: &str, message: &str) {
-    #[cfg(not(feature = "terminal-ui"))]
     let _ = (session_id, message);
-
-    #[cfg(feature = "terminal-ui")]
-    crate::tui::App::save_startup_submission_for_session(
-        session_id,
-        message.to_string(),
-        Vec::new(),
-    );
 }
 
 fn clear_headed_startup_message(session_id: &str) {

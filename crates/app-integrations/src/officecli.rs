@@ -20,7 +20,7 @@ use std::io::Write as IoWrite;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 
 /// OfficeCLI executable name.
@@ -244,12 +244,7 @@ pub fn set(path: &str, doc_path: &str, props: &[(&str, &str)]) -> Result<String>
 }
 
 /// Add an element to a document.
-pub fn add(
-    path: &str,
-    parent: &str,
-    element_type: &str,
-    props: &[(&str, &str)],
-) -> Result<String> {
+pub fn add(path: &str, parent: &str, element_type: &str, props: &[(&str, &str)]) -> Result<String> {
     let mut args: Vec<String> = vec![
         "add".into(),
         path.into(),
@@ -477,12 +472,7 @@ pub fn xlsx_set_formula(path: &str, cell: &str, formula: &str) -> Result<String>
 }
 
 /// Read a cell range from Excel.
-pub fn xlsx_get_range(
-    path: &str,
-    sheet: &str,
-    range: &str,
-    json: bool,
-) -> Result<String> {
+pub fn xlsx_get_range(path: &str, sheet: &str, range: &str, json: bool) -> Result<String> {
     get(path, &format!("/{}/{}", sheet, range), None, json)
 }
 
@@ -514,22 +504,13 @@ pub fn pptx_add_textbox(
 }
 
 /// Set a shape property in PowerPoint.
-pub fn pptx_set_shape(
-    path: &str,
-    shape_path: &str,
-    props: &[(&str, &str)],
-) -> Result<String> {
+pub fn pptx_set_shape(path: &str, shape_path: &str, props: &[(&str, &str)]) -> Result<String> {
     set(path, shape_path, props)
 }
 
 /// Get all shapes on a slide.
 pub fn pptx_get_shapes(path: &str, slide_index: u32, json: bool) -> Result<String> {
-    get(
-        path,
-        &format!("/slide[{}]", slide_index),
-        Some(1),
-        json,
-    )
+    get(path, &format!("/slide[{}]", slide_index), Some(1), json)
 }
 
 #[cfg(test)]

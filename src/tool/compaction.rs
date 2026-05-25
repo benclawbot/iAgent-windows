@@ -12,8 +12,8 @@ use crate::compaction::CompactionManager;
 use crate::tool::{Tool, ToolContext, ToolOutput};
 use anyhow::Result;
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde::Deserialize;
+use serde_json::{Value, json};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -125,7 +125,9 @@ impl CompactionTool {
         let stats = manager.stats_with(&[]);
 
         if stats.is_compacting {
-            return Ok(ToolOutput::new("Compaction already in progress".to_string()));
+            return Ok(ToolOutput::new(
+                "Compaction already in progress".to_string(),
+            ));
         }
 
         if stats.active_messages < 5 {

@@ -854,18 +854,18 @@ mod tests {
                 PlanItem {
                     assigned_to: Some("agent-a".to_string()),
                     subsystem: Some("ui".to_string()),
-                    file_scope: vec!["src/tui.rs".to_string()],
+                    file_scope: vec!["app/iagent-py/iagent/app.py".to_string()],
                     ..item("dep", "completed", &[])
                 },
                 PlanItem {
                     assigned_to: Some("agent-b".to_string()),
                     subsystem: Some("ui".to_string()),
-                    file_scope: vec!["src/tui.rs".to_string()],
+                    file_scope: vec!["app/iagent-py/iagent/app.py".to_string()],
                     ..item("sibling", "queued", &[])
                 },
                 PlanItem {
                     subsystem: Some("ui".to_string()),
-                    file_scope: vec!["src/tui.rs".to_string()],
+                    file_scope: vec!["app/iagent-py/iagent/app.py".to_string()],
                     ..item("target", "queued", &["dep"])
                 },
             ],

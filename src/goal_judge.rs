@@ -19,14 +19,9 @@ pub enum RoutingDecision {
     /// Tool execution should proceed normally.
     Proceed,
     /// Redirect to an alternative tool/workflow with a reason.
-    Redirect {
-        alternative: String,
-        reason: String,
-    },
+    Redirect { alternative: String, reason: String },
     /// Block the tool execution with a reason.
-    Block {
-        reason: String,
-    },
+    Block { reason: String },
 }
 
 impl RoutingDecision {
@@ -46,7 +41,10 @@ impl RoutingDecision {
     /// Returns (alternative, reason) if redirect.
     pub fn redirect_info(&self) -> Option<(&str, &str)> {
         match self {
-            RoutingDecision::Redirect { alternative, reason } => Some((alternative, reason)),
+            RoutingDecision::Redirect {
+                alternative,
+                reason,
+            } => Some((alternative, reason)),
             _ => None,
         }
     }
@@ -55,20 +53,12 @@ impl RoutingDecision {
 /// GoalJudge configuration for routing decisions.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct GoalJudgeConfig {
     /// Enable goal-based tool routing (default: false).
     pub enabled: bool,
     /// Optional model override for goal routing decisions.
     pub model: Option<String>,
-}
-
-impl Default for GoalJudgeConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            model: None,
-        }
-    }
 }
 
 /// GoalJudge routes tool execution based on active goal context.
@@ -112,8 +102,7 @@ impl GoalJudge {
 
         // Build the routing prompt
         let input_preview = if input.is_object() {
-            serde_json::to_string(input)
-                .unwrap_or_else(|_| "<invalid JSON>".to_string())
+            serde_json::to_string(input).unwrap_or_else(|_| "<invalid JSON>".to_string())
         } else {
             format!("{}", input)
         };
@@ -155,24 +144,31 @@ Only output the JSON, no additional text."#,
         let parsed: serde_json::Value = serde_json::from_str(response)
             .unwrap_or_else(|_| serde_json::json!({"decision": "proceed"}));
 
-        let decision = parsed.get("decision")
+        let decision = parsed
+            .get("decision")
             .and_then(|v| v.as_str())
             .unwrap_or("proceed");
 
         match decision {
             "redirect" => {
-                let alternative = parsed.get("alternative")
+                let alternative = parsed
+                    .get("alternative")
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown")
                     .to_string();
-                let reason = parsed.get("reason")
+                let reason = parsed
+                    .get("reason")
                     .and_then(|v| v.as_str())
                     .unwrap_or("redirected by goal judge")
                     .to_string();
-                Ok(RoutingDecision::Redirect { alternative, reason })
+                Ok(RoutingDecision::Redirect {
+                    alternative,
+                    reason,
+                })
             }
             "block" => {
-                let reason = parsed.get("reason")
+                let reason = parsed
+                    .get("reason")
                     .and_then(|v| v.as_str())
                     .unwrap_or("blocked by goal judge")
                     .to_string();

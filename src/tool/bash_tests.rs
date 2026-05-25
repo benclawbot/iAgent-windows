@@ -177,6 +177,10 @@ async fn test_command_timeout_with_stdin_channel() {
     );
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[tokio::test]
 async fn test_reload_persistable_bash_continues_in_background() {
     let tool = BashTool::new();

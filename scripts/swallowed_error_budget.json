@@ -1,9 +1,9 @@
 {
-  "total": 2309,
+  "total": 1667,
   "totals_by_pattern": {
-    "dot_ok": 767,
-    "let_underscore": 997,
-    "unwrap_or_default": 545
+    "dot_ok": 551,
+    "let_underscore": 802,
+    "unwrap_or_default": 314
   },
   "tracked_files": {
     "crates/desktop-monitor/src/lib.rs": {
@@ -50,66 +50,6 @@
       "dot_ok": 2,
       "let_underscore": 0,
       "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/build.rs": {
-      "dot_ok": 2,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-desktop/src/benchmarks.rs": {
-      "dot_ok": 0,
-      "let_underscore": 1,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/src/desktop_prefs.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/src/main.rs": {
-      "dot_ok": 17,
-      "let_underscore": 8,
-      "unwrap_or_default": 11
-    },
-    "crates/jcode-desktop/src/markdown.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 3
-    },
-    "crates/jcode-desktop/src/power_inhibit.rs": {
-      "dot_ok": 0,
-      "let_underscore": 2,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-desktop/src/render_helpers.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/src/session_data.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/src/session_launch.rs": {
-      "dot_ok": 4,
-      "let_underscore": 7,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-desktop/src/single_session.rs": {
-      "dot_ok": 0,
-      "let_underscore": 2,
-      "unwrap_or_default": 17
-    },
-    "crates/jcode-desktop/src/single_session_render.rs": {
-      "dot_ok": 1,
-      "let_underscore": 1,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-desktop/src/workspace.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
     },
     "crates/jcode-import-core/src/lib.rs": {
       "dot_ok": 9,
@@ -210,86 +150,6 @@
       "dot_ok": 2,
       "let_underscore": 0,
       "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-core/src/keybind.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-markdown/src/lib.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
-    },
-    "crates/jcode-tui-markdown/src/markdown_context.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-markdown/src/markdown_render_full.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-markdown/src/markdown_render_lazy.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-mermaid/src/lib.rs": {
-      "dot_ok": 1,
-      "let_underscore": 5,
-      "unwrap_or_default": 2
-    },
-    "crates/jcode-tui-mermaid/src/mermaid_active.rs": {
-      "dot_ok": 3,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-tui-mermaid/src/mermaid_cache_render.rs": {
-      "dot_ok": 7,
-      "let_underscore": 2,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-tui-mermaid/src/mermaid_content.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-mermaid/src/mermaid_debug.rs": {
-      "dot_ok": 1,
-      "let_underscore": 2,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-mermaid/src/mermaid_runtime.rs": {
-      "dot_ok": 9,
-      "let_underscore": 2,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-mermaid/src/mermaid_svg.rs": {
-      "dot_ok": 19,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-mermaid/src/mermaid_viewport.rs": {
-      "dot_ok": 2,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "crates/jcode-tui-mermaid/src/mermaid_widget.rs": {
-      "dot_ok": 2,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-render/src/layout.rs": {
-      "dot_ok": 4,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "crates/jcode-tui-workspace/src/workspace_map.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
     },
     "crates/jcode-update-core/src/lib.rs": {
       "dot_ok": 3,
@@ -456,11 +316,6 @@
       "let_underscore": 12,
       "unwrap_or_default": 6
     },
-    "src/bin/tui_bench.rs": {
-      "dot_ok": 0,
-      "let_underscore": 4,
-      "unwrap_or_default": 4
-    },
     "src/browser.rs": {
       "dot_ok": 4,
       "let_underscore": 4,
@@ -539,11 +394,6 @@
     "src/cli/terminal.rs": {
       "dot_ok": 0,
       "let_underscore": 7,
-      "unwrap_or_default": 0
-    },
-    "src/cli/tui_launch.rs": {
-      "dot_ok": 1,
-      "let_underscore": 5,
       "unwrap_or_default": 0
     },
     "src/compaction.rs": {
@@ -840,11 +690,6 @@
       "dot_ok": 3,
       "let_underscore": 0,
       "unwrap_or_default": 0
-    },
-    "src/replay.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
     },
     "src/restart_snapshot.rs": {
       "dot_ok": 1,
@@ -1306,366 +1151,6 @@
       "let_underscore": 1,
       "unwrap_or_default": 0
     },
-    "src/tui/app.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
-    },
-    "src/tui/app/auth.rs": {
-      "dot_ok": 4,
-      "let_underscore": 2,
-      "unwrap_or_default": 10
-    },
-    "src/tui/app/auth_account_commands.rs": {
-      "dot_ok": 0,
-      "let_underscore": 3,
-      "unwrap_or_default": 3
-    },
-    "src/tui/app/auth_account_picker.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 9
-    },
-    "src/tui/app/auth_account_picker_saved_accounts.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 4
-    },
-    "src/tui/app/catchup.rs": {
-      "dot_ok": 0,
-      "let_underscore": 1,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/commands.rs": {
-      "dot_ok": 4,
-      "let_underscore": 10,
-      "unwrap_or_default": 13
-    },
-    "src/tui/app/commands_improve.rs": {
-      "dot_ok": 0,
-      "let_underscore": 2,
-      "unwrap_or_default": 8
-    },
-    "src/tui/app/commands_overnight.rs": {
-      "dot_ok": 5,
-      "let_underscore": 2,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/commands_review.rs": {
-      "dot_ok": 5,
-      "let_underscore": 6,
-      "unwrap_or_default": 6
-    },
-    "src/tui/app/conversation_state.rs": {
-      "dot_ok": 0,
-      "let_underscore": 4,
-      "unwrap_or_default": 1
-    },
-    "src/tui/app/copy_selection.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
-    },
-    "src/tui/app/debug.rs": {
-      "dot_ok": 0,
-      "let_underscore": 2,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/debug_bench.rs": {
-      "dot_ok": 2,
-      "let_underscore": 1,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/debug_cmds.rs": {
-      "dot_ok": 2,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/debug_profile.rs": {
-      "dot_ok": 2,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/debug_script.rs": {
-      "dot_ok": 1,
-      "let_underscore": 4,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/dictation.rs": {
-      "dot_ok": 0,
-      "let_underscore": 5,
-      "unwrap_or_default": 1
-    },
-    "src/tui/app/handterm_native_scroll.rs": {
-      "dot_ok": 1,
-      "let_underscore": 4,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/helpers.rs": {
-      "dot_ok": 12,
-      "let_underscore": 2,
-      "unwrap_or_default": 4
-    },
-    "src/tui/app/inline_interactive.rs": {
-      "dot_ok": 2,
-      "let_underscore": 4,
-      "unwrap_or_default": 4
-    },
-    "src/tui/app/inline_interactive/helpers.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "src/tui/app/inline_interactive/preview.rs": {
-      "dot_ok": 0,
-      "let_underscore": 1,
-      "unwrap_or_default": 1
-    },
-    "src/tui/app/input.rs": {
-      "dot_ok": 4,
-      "let_underscore": 2,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/local.rs": {
-      "dot_ok": 0,
-      "let_underscore": 5,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/model_context.rs": {
-      "dot_ok": 1,
-      "let_underscore": 4,
-      "unwrap_or_default": 2
-    },
-    "src/tui/app/remote.rs": {
-      "dot_ok": 0,
-      "let_underscore": 12,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/remote/input_dispatch.rs": {
-      "dot_ok": 0,
-      "let_underscore": 1,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/remote/key_handling.rs": {
-      "dot_ok": 0,
-      "let_underscore": 17,
-      "unwrap_or_default": 8
-    },
-    "src/tui/app/remote/reconnect.rs": {
-      "dot_ok": 4,
-      "let_underscore": 5,
-      "unwrap_or_default": 3
-    },
-    "src/tui/app/remote/server_events.rs": {
-      "dot_ok": 4,
-      "let_underscore": 1,
-      "unwrap_or_default": 3
-    },
-    "src/tui/app/remote/session_persistence.rs": {
-      "dot_ok": 0,
-      "let_underscore": 3,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/runtime_memory.rs": {
-      "dot_ok": 0,
-      "let_underscore": 1,
-      "unwrap_or_default": 0
-    },
-    "src/tui/app/split_view.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "src/tui/app/state_ui.rs": {
-      "dot_ok": 2,
-      "let_underscore": 9,
-      "unwrap_or_default": 11
-    },
-    "src/tui/app/state_ui_input_helpers.rs": {
-      "dot_ok": 3,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
-    },
-    "src/tui/app/state_ui_messages.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "src/tui/app/todos_view.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 4
-    },
-    "src/tui/app/tui_lifecycle.rs": {
-      "dot_ok": 9,
-      "let_underscore": 1,
-      "unwrap_or_default": 1
-    },
-    "src/tui/app/tui_lifecycle_runtime.rs": {
-      "dot_ok": 5,
-      "let_underscore": 7,
-      "unwrap_or_default": 4
-    },
-    "src/tui/app/tui_state.rs": {
-      "dot_ok": 5,
-      "let_underscore": 0,
-      "unwrap_or_default": 3
-    },
-    "src/tui/app/turn.rs": {
-      "dot_ok": 0,
-      "let_underscore": 11,
-      "unwrap_or_default": 2
-    },
-    "src/tui/app/turn_memory.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
-    },
-    "src/tui/info_widget.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "src/tui/info_widget_swarm_background.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "src/tui/login_picker.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
-    },
-    "src/tui/memory_profile.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "src/tui/mod.rs": {
-      "dot_ok": 1,
-      "let_underscore": 1,
-      "unwrap_or_default": 0
-    },
-    "src/tui/permissions.rs": {
-      "dot_ok": 0,
-      "let_underscore": 4,
-      "unwrap_or_default": 1
-    },
-    "src/tui/remote_diff.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 3
-    },
-    "src/tui/screenshot.rs": {
-      "dot_ok": 0,
-      "let_underscore": 4,
-      "unwrap_or_default": 0
-    },
-    "src/tui/session_picker.rs": {
-      "dot_ok": 0,
-      "let_underscore": 2,
-      "unwrap_or_default": 3
-    },
-    "src/tui/session_picker/filter.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 4
-    },
-    "src/tui/session_picker/loading.rs": {
-      "dot_ok": 27,
-      "let_underscore": 1,
-      "unwrap_or_default": 21
-    },
-    "src/tui/test_harness.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
-    },
-    "src/tui/ui.rs": {
-      "dot_ok": 3,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "src/tui/ui/url.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "src/tui/ui_changelog.rs": {
-      "dot_ok": 3,
-      "let_underscore": 2,
-      "unwrap_or_default": 1
-    },
-    "src/tui/ui_diagram_pane.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "src/tui/ui_file_diff.rs": {
-      "dot_ok": 2,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "src/tui/ui_frame_metrics.rs": {
-      "dot_ok": 3,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "src/tui/ui_header.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
-    },
-    "src/tui/ui_inline_interactive.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "src/tui/ui_input.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
-    },
-    "src/tui/ui_messages.rs": {
-      "dot_ok": 3,
-      "let_underscore": 0,
-      "unwrap_or_default": 1
-    },
-    "src/tui/ui_pinned.rs": {
-      "dot_ok": 1,
-      "let_underscore": 1,
-      "unwrap_or_default": 0
-    },
-    "src/tui/ui_status.rs": {
-      "dot_ok": 2,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "src/tui/ui_tools.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 12
-    },
-    "src/tui/ui_tools/batch.rs": {
-      "dot_ok": 1,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "src/tui/usage_overlay.rs": {
-      "dot_ok": 0,
-      "let_underscore": 0,
-      "unwrap_or_default": 2
-    },
-    "src/tui/visual_debug.rs": {
-      "dot_ok": 3,
-      "let_underscore": 0,
-      "unwrap_or_default": 0
-    },
-    "src/tui/workspace_client.rs": {
-      "dot_ok": 0,
-      "let_underscore": 5,
-      "unwrap_or_default": 1
-    },
     "src/update.rs": {
       "dot_ok": 0,
       "let_underscore": 7,
@@ -1705,11 +1190,6 @@
       "dot_ok": 1,
       "let_underscore": 0,
       "unwrap_or_default": 0
-    },
-    "src/video_export.rs": {
-      "dot_ok": 4,
-      "let_underscore": 2,
-      "unwrap_or_default": 1
     }
   },
   "version": 1

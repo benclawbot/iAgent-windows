@@ -192,6 +192,10 @@ fn openai_compatible_models_endpoint_allows_models_array_with_name_ids() {
     assert_eq!(parsed[0].context_length, Some(8192));
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn named_openai_compatible_provider_sets_catalog_cache_namespace() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -215,6 +219,10 @@ fn named_openai_compatible_provider_sets_catalog_cache_namespace() {
     );
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn named_openai_compatible_provider_exposes_static_models_as_routes() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -342,6 +350,10 @@ fn openai_compatible_profiles_with_unverified_live_catalogs_have_static_fallback
     }
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn comtegra_profile_uses_endpoint_default_max_tokens() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -357,6 +369,10 @@ fn comtegra_profile_uses_endpoint_default_max_tokens() {
     );
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn max_tokens_env_overrides_profile_default() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -368,6 +384,10 @@ fn max_tokens_env_overrides_profile_default() {
     );
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn test_configured_api_base_accepts_https() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -384,6 +404,10 @@ fn test_configured_api_base_accepts_https() {
     }
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn test_configured_api_base_rejects_insecure_http_remote() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -397,6 +421,10 @@ fn test_configured_api_base_rejects_insecure_http_remote() {
     }
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn autodetects_single_saved_openai_compatible_profile() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -422,6 +450,10 @@ fn autodetects_single_saved_openai_compatible_profile() {
     assert!(OpenRouterProvider::has_credentials());
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn autodetects_single_saved_local_openai_compatible_profile() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -452,6 +484,10 @@ fn autodetects_single_saved_local_openai_compatible_profile() {
     assert!(OpenRouterProvider::has_credentials());
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn does_not_guess_when_multiple_saved_openai_compatible_profiles_exist() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -486,6 +522,10 @@ fn does_not_guess_when_multiple_saved_openai_compatible_profiles_exist() {
     assert!(!OpenRouterProvider::has_credentials());
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn autodetected_profile_seeds_default_model_and_cache_namespace() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -757,6 +797,10 @@ fn direct_deepseek_chat_request_sends_reasoning_effort() {
     );
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn openai_compatible_model_catalog_refresh_calls_models_endpoint_and_updates_display() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -826,6 +870,10 @@ fn openai_compatible_model_catalog_refresh_calls_models_endpoint_and_updates_dis
     );
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn built_in_openai_compatible_static_models_drop_out_after_live_catalog() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -911,6 +959,10 @@ fn cerebras_chat_unavailable_catalog_models_are_rejected_on_explicit_switch() {
         .expect("chat-supported Cerebras model should remain selectable");
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn direct_deepseek_profile_uses_static_1m_context_when_catalog_is_absent() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -926,6 +978,10 @@ fn direct_deepseek_profile_uses_static_1m_context_when_catalog_is_absent() {
     assert_eq!(provider.context_window(), 1_000_000);
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn named_openai_compatible_model_context_window_overrides_default() {
     let _lock = ENV_LOCK.lock().unwrap();
@@ -949,6 +1005,10 @@ fn named_openai_compatible_model_context_window_overrides_default() {
     assert_eq!(provider.context_window(), 512_000);
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn named_openai_compatible_loads_api_key_from_env_file() {
     let _lock = ENV_LOCK.lock().unwrap();

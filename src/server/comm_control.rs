@@ -695,7 +695,11 @@ pub(super) async fn handle_comm_assign_role(
 
             log_info!((
                 "[CommAssignRole] req={} target={} role={} swarm={} current_coord={:?}",
-                req_session_id, target_session, role, sid, current_coordinator
+                req_session_id,
+                target_session,
+                role,
+                sid,
+                current_coordinator
             ));
 
             if current_coordinator.as_deref() == Some(req_session_id.as_str()) {

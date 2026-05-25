@@ -6,6 +6,7 @@ use crate::tool::Registry;
 use anyhow::{Context, Result};
 use chrono::{Duration as ChronoDuration, Utc};
 use serde_json::{Value, json};
+#[cfg(unix)]
 use std::ffi::CString;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -218,10 +219,7 @@ fn spawn_supervisor(
     } else {
         std::thread::spawn(move || match tokio::runtime::Runtime::new() {
             Ok(runtime) => runtime.block_on(fut),
-            Err(err) => log_error!((
-                "Failed to start overnight supervisor runtime: {}",
-                err
-            )),
+            Err(err) => log_error!(("Failed to start overnight supervisor runtime: {}", err)),
         });
     }
 }

@@ -8,8 +8,8 @@
 //! - Agent socket: Inter-agent communication (AI-to-AI)
 
 pub mod types;
-use serde::{Deserialize, Serialize};
 use crate::types::IagentConfig;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
 mod notifications;
@@ -569,7 +569,6 @@ pub enum Request {
         target_session: String,
         role: String,
     },
-
 
     /// Get current iAgent settings (provider, model, etc.)
     #[serde(rename = "get_settings")]
@@ -1352,7 +1351,6 @@ pub enum ServerEvent {
     /// Response to SaveSettings request
     #[serde(rename = "settings_saved")]
     SettingsSaved { id: u64 },
-
 }
 
 /// Summary of a tool call for the comm_summary response

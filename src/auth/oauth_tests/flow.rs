@@ -634,6 +634,10 @@ async fn claude_exchange_rejects_state_mismatch() -> Result<()> {
     Ok(())
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn openai_docs_reference_current_callback_uri() -> Result<()> {
     let repo_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));

@@ -1,14 +1,10 @@
 #![cfg_attr(test, allow(clippy::await_holding_lock))]
+use crate::{browser, gateway, memory, session, storage};
 use anyhow::Result;
 use serde::Serialize;
 use std::collections::BTreeSet;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::net::ToSocketAddrs;
-use crate::{browser, gateway, memory, session, storage};
-#[cfg(feature = "terminal-ui")]
-use crate::tui;
-#[cfg(feature = "terminal-ui")]
-use super::terminal::{cleanup_tui_runtime, init_tui_runtime};
 mod provider_setup;
 mod report_info;
 mod restart;
@@ -31,12 +27,10 @@ pub enum AmbientSubcommand {
     Trigger,
     Stop,
     Desktop { headless: bool },
-    RunVisible,
 }
 
 pub async fn run_ambient_command(cmd: AmbientSubcommand) -> Result<()> {
     match cmd {
-        AmbientSubcommand::RunVisible => run_ambient_visible().await,
         AmbientSubcommand::Desktop { headless } => crate::desktop_ambient::run(headless).await,
         AmbientSubcommand::Status => {
             super::debug::run_debug_command("ambient:status", "", None, None, false).await
@@ -53,45 +47,15 @@ pub async fn run_ambient_command(cmd: AmbientSubcommand) -> Result<()> {
     }
 }
 
-pub async fn run_transcript_command(
-    text: Option<String>,
-    mode: crate::protocol::TranscriptMode,
-    session: Option<String>,
-) -> Result<()> {
-    let text = if let Some(text) = text {
-        text
-    } else {
-        let mut stdin = String::new();
-        std::io::stdin().read_to_string(&mut stdin)?;
-        let trimmed = stdin.trim_end_matches(['\r', '\n']);
-        if trimmed.is_empty() {
-            anyhow::bail!("Provide transcript text as an argument or pipe it via stdin")
-        }
-        trimmed.to_string()
-    };
-
-    let mut client = crate::server::Client::connect_debug().await?;
-    let request_id = client.send_transcript(&text, mode, session).await?;
-
-    loop {
-        match client.read_event().await? {
-            crate::protocol::ServerEvent::Ack { id } if id == request_id => {}
-            crate::protocol::ServerEvent::Done { id } if id == request_id => return Ok(()),
-            crate::protocol::ServerEvent::Error { id, message, .. } if id == request_id => {
-                anyhow::bail!(message)
-            }
-            _ => {}
-        }
-    }
-}
-
 pub async fn run_dictate_command(type_output: bool) -> Result<()> {
     let run = crate::dictation::run_configured().await?;
 
     if type_output {
         crate::dictation::type_text(&run.text)
     } else {
-        run_transcript_command(Some(run.text), run.mode, None).await
+        anyhow::bail!(
+            "dictation-to-TUI has been retired; rerun with --type or use the Python frontend"
+        )
     }
 }
 
@@ -122,8 +86,6 @@ pub fn run_session_rename_command(
     }
 
     session.save()?;
-    #[cfg(feature = "terminal-ui")]
-    crate::tui::session_picker::invalidate_session_list_cache();
 
     let output = SessionRenameOutput {
         session_id: session.id.clone(),
@@ -147,57 +109,6 @@ pub fn run_session_rename_command(
     }
 
     Ok(())
-}
-
-#[cfg(feature = "terminal-ui")]
-async fn run_ambient_visible() -> Result<()> {
-    use crate::ambient::VisibleCycleContext;
-
-    let context = VisibleCycleContext::load().map_err(|e| {
-        anyhow::anyhow!(
-            "Failed to load visible cycle context: {}\nIs the ambient runner running?",
-            e
-        )
-    })?;
-
-    let (provider, registry) = super::provider_init::init_provider_and_registry(
-        &super::provider_init::ProviderChoice::Auto,
-        None,
-    )
-    .await?;
-
-    registry.register_ambient_tools().await;
-
-    let safety = std::sync::Arc::new(crate::safety::SafetySystem::new());
-    crate::tool::ambient::init_safety_system(safety);
-
-    let (terminal, tui_runtime) = init_tui_runtime()?;
-
-    let mut app = tui::App::new(provider, registry);
-    app.set_ambient_mode(context.system_prompt, context.initial_message);
-
-    let _ = crossterm::execute!(
-        std::io::stdout(),
-        crossterm::terminal::SetTitle("🤖 jcode ambient cycle")
-    );
-
-    let result = app.run(terminal).await;
-
-    cleanup_tui_runtime(&tui_runtime, true);
-
-    if let Some(cycle_result) = crate::tool::ambient::take_cycle_result() {
-        let result_path = VisibleCycleContext::result_path()?;
-        crate::storage::write_json(&result_path, &cycle_result)?;
-        eprintln!("Ambient cycle result saved.");
-    }
-
-    result?;
-    Ok(())
-}
-
-#[cfg(not(feature = "terminal-ui"))]
-async fn run_ambient_visible() -> Result<()> {
-    anyhow::bail!("visible ambient cycles require a build compiled with terminal-ui")
 }
 
 pub enum MemorySubcommand {

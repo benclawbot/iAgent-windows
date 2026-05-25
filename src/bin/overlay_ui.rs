@@ -9,4 +9,3 @@ async fn main() -> anyhow::Result<()> {
     };
     run_overlay_daemon(config).await
 }
-

@@ -14,12 +14,6 @@ It's always available, has computer use and full agentic capabilities (with swar
 
 ---
 
-## Screenshots
-
-![iAgent Desktop](docs/assets/iagent-desktop-full.jpg)
-
----
-
 # Overview
 
 iAgent Windows is a local-first ambient AI runtime designed for persistent desktop workflows.
@@ -32,13 +26,15 @@ Unlike browser-only assistants or stateless chatbot wrappers, iAgent behaves lik
 - operating on files and projects
 - maintaining persistent sessions and memory
 - running background and ambient jobs
+- asking for explicit approval through floating proposal popups before mutating desktop actions
 - coordinating provider-backed reasoning
 - integrating directly into Windows UX
 
 The platform combines:
 
 - a modular Rust async runtime
-- desktop dock and overlay interfaces
+- Python desktop dock, task inbox, and system-wide proposal popups
+- backend overlay interfaces
 - provider abstraction layers
 - persistent memory and storage systems
 - execution planning pipelines
@@ -69,6 +65,8 @@ iAgent requires at least one LLM provider API key:
 | OpenAI | `OPENAI_API_KEY` | https://platform.openai.com |
 | OpenRouter | `OPENROUTER_API_KEY` | https://openrouter.ai |
 | Gemini | `GEMINI_API_KEY` | https://aistudio.google.com |
+
+OpenAI OAuth uses `http://localhost:1455/auth/callback` as the default local callback URI.
 
 For GitHub operations (optional): Generate a PAT at https://github.com/settings/tokens
 
@@ -167,6 +165,7 @@ Integrated tooling includes:
 - integration layers
 - memory tooling
 - desktop automation
+- Validate/Refuse proposal popups for AI-suggested commands, typing, and delegated goals
 
 ---
 
@@ -262,6 +261,7 @@ flowchart TB
 
     subgraph Frontend["Desktop Dock Frontend"]
         DOCK[Dock / Tray UI]
+        PROPOSAL[Proposal Popups]
         OVERLAY[Overlay UI]
         INBOX[Task Inbox]
     end
@@ -292,6 +292,7 @@ flowchart TB
     USER --> VOICE
     HOTKEY --> SHORTCUT --> VBS --> PS
     PS --> DOCK
+    DOCK --> PROPOSAL
     DOCK --> SERVER
     SERVER --> AGENT
     AGENT --> MEMORY
@@ -563,7 +564,6 @@ If issues persist:
 | `jcode-provider-openai` | OpenAI integration |
 | `jcode-provider-openrouter` | OpenRouter integration |
 | `jcode-provider-gemini` | Gemini integration |
-| `iagent-desktop` | Desktop integration |
 | `overlay-ui` | Overlay runtime |
 | `desktop-monitor` | Desktop monitoring |
 | `suggestion-engine` | Suggestion systems |

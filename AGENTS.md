@@ -29,8 +29,8 @@
 
 ## Cleanup Direction
 
-- Remove or feature-gate the TUI after CI confirms the headless backend build
-  boundary.
+- Keep the retired Rust TUI out of the active build surface; the Python app is
+  the user-facing frontend.
 - Remove unused providers and tools only after the iAgent provider/tool matrix
   is decided.
 - Prefer adding narrow API boundaries over more global `pub mod` exposure.

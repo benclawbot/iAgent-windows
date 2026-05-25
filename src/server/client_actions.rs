@@ -126,7 +126,8 @@ async fn run_scheduled_task_in_live_session_if_idle(
         {
             log_error!((
                 "Failed to run scheduled task immediately for live session {}: {}",
-                session_id, err
+                session_id,
+                err
             ));
         }
     });
@@ -614,8 +615,6 @@ pub(super) async fn handle_rename_session(
         }
     };
 
-    #[cfg(feature = "terminal-ui")]
-    crate::tui::session_picker::invalidate_session_list_cache();
     let event = ServerEvent::SessionRenamed {
         session_id: renamed_session_id.clone(),
         title: normalized_title,

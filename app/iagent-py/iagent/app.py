@@ -41,10 +41,9 @@ from iagent.mic_capture import MicCapture
 from iagent.screen_capture import capture_all
 from iagent.state import VoiceState
 from iagent.ui.history_window import HistoryWindow
+from iagent.ui.proposal_popup import ProposalPopupController
 from iagent.ui.task_inbox import TaskInboxController
 from iagent.ui.tray_icon import TrayIcon
-from iagent.settings_window import SettingsWindow
-from iagent.ipc_client import IagentClient
 
 APP_NAME = "iAgent"
 APP_AUTHOR = "iAgent"
@@ -201,6 +200,7 @@ def run() -> int:
 
     command_runner = BackgroundCommandRunner(default_cwd=Path.home())
     task_inbox = TaskInboxController()
+    proposal_popups = ProposalPopupController()
     execution_memory = ExecutionMemory(result.config_path.parent / "execution_memory.json")
     tray_icon.show_prompt_dock_requested.connect(task_inbox.show_prompt_dock)
     ambient_process: subprocess.Popen | None = None
@@ -263,7 +263,8 @@ def run() -> int:
             "($_.Name -eq 'node.exe' -and $_.CommandLine -like '*wrangler dev*' "
             "-and $_.CommandLine -like \"*$workerDir*\") "
             "-or "
-            "($_.Name -eq 'uv.exe' -and $_.CommandLine -match 'run\\s+python(\\.exe)?\\s+-m\\s+iagent') "
+            "($_.Name -eq 'uv.exe' "
+            "-and $_.CommandLine -match 'run\\s+python(\\.exe)?\\s+-m\\s+iagent') "
             "-or "
             "(($_.Name -eq 'python.exe' -or $_.Name -eq 'pythonw.exe') "
             "-and ($_.CommandLine -match 'uv(\\.exe)?\\s+run\\s+python(\\.exe)?\\s+-m\\s+iagent' "
@@ -383,7 +384,16 @@ def run() -> int:
         goal_l = goal_clean.lower()
         explicit_open = any(
             token in goal_l
-            for token in ("open when done", "open it", "open the", "open in word", "open in excel", "open in powerpoint", "and open", "then open")
+            for token in (
+                "open when done",
+                "open it",
+                "open the",
+                "open in word",
+                "open in excel",
+                "open in powerpoint",
+                "and open",
+                "then open",
+            )
         )
         explicit_no_open = any(
             token in goal_l
@@ -673,6 +683,18 @@ def run() -> int:
                     f"Draft: {text[:120]}"
                     + (" [ENTER]" if press_enter else "")
                 ),
+            )
+        )
+        manager.proposal_requested.connect(proposal_popups.show_proposal)
+        manager.proposal_requested.connect(
+            lambda proposal: tray_icon.notify("iAgent Proposal", proposal.title)
+        )
+        proposal_popups.proposal_accepted.connect(manager.accept_proposal)
+        proposal_popups.proposal_rejected.connect(manager.reject_proposal)
+        manager.proposal_decided.connect(
+            lambda proposal, accepted: tray_icon.notify(
+                "iAgent Proposal",
+                f"{'Validated' if accepted else 'Refused'}: {proposal.title}",
             )
         )
         manager.success_turn_completed.connect(

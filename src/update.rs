@@ -699,7 +699,13 @@ fn build_from_source() -> Result<PathBuf> {
         let clone_url = format!("https://github.com/{}.git", GITHUB_REPO);
         let output = std::process::Command::new("git")
             .args([
-                "clone", "--depth", "1", "--branch", "main", &clone_url, "iAgent-windows",
+                "clone",
+                "--depth",
+                "1",
+                "--branch",
+                "main",
+                &clone_url,
+                "iAgent-windows",
             ])
             .current_dir(&build_dir)
             .output()

@@ -107,12 +107,15 @@ pub fn publish_reload_socket_ready() {
     } else if state.phase != ReloadPhase::Starting {
         log_warn!((
             "Server reached socket-ready publish point, but reload marker phase was {:?} (pid={}, current_pid={})",
-            state.phase, state.pid, current_pid
+            state.phase,
+            state.pid,
+            current_pid
         ));
     } else if state.pid != current_pid {
         log_warn!((
             "Server reached socket-ready publish point, but reload marker pid {} did not match current pid {}; clearing stale marker",
-            state.pid, current_pid
+            state.pid,
+            current_pid
         ));
         clear_reload_marker();
     }
@@ -525,7 +528,10 @@ pub fn send_reload_signal(
 pub fn acknowledge_reload_signal(signal: &ReloadSignal) {
     log_info!((
         "acknowledge_reload_signal: request={} hash={} triggering_session={:?} prefer_selfdev_binary={}",
-        signal.request_id, signal.hash, signal.triggering_session, signal.prefer_selfdev_binary
+        signal.request_id,
+        signal.hash,
+        signal.triggering_session,
+        signal.prefer_selfdev_binary
     ));
     let (tx, _) = reload_ack();
     let _ = tx.send(Some(ReloadAck {

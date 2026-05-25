@@ -558,7 +558,8 @@ pub(super) async fn queue_soft_interrupt_for_session(
         .unwrap_or_else(|err| {
             log_warn!((
                 "Failed to persist deferred soft interrupt for session {}: {}",
-                session_id, err
+                session_id,
+                err
             ));
             false
         })

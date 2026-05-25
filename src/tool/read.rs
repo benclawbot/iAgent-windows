@@ -2,8 +2,6 @@
 
 use super::{Tool, ToolContext, ToolOutput};
 use crate::bus::{Bus, BusEvent, FileOp, FileTouch};
-#[cfg(feature = "terminal-ui")]
-use crate::tui::image::{ImageDisplayParams, ImageProtocol, display_image};
 use anyhow::Result;
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -362,22 +360,7 @@ fn handle_image_file(path: &Path, file_path: &str) -> Result<ToolOutput> {
         format!("{:.1} MB", file_size as f64 / 1024.0 / 1024.0)
     };
 
-    let mut terminal_displayed = false;
-    #[cfg(feature = "terminal-ui")]
-    let protocol = ImageProtocol::detect();
-    #[cfg(feature = "terminal-ui")]
-    if protocol.is_supported() {
-        let params = ImageDisplayParams::from_terminal();
-        match display_image(path, &params) {
-            Ok(true) => {
-                terminal_displayed = true;
-            }
-            Ok(false) => {}
-            Err(e) => {
-                log_info!(("Warning: Failed to display image: {}", e));
-            }
-        }
-    }
+    let terminal_displayed = false;
 
     let ext = path
         .extension()

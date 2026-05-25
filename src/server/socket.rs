@@ -225,10 +225,7 @@ pub async fn spawn_server_notify(cmd: &mut std::process::Command) -> Result<std:
             wait_for_server_ready(&socket_path(), Duration::from_secs(5)).await?;
         }
         Ok(Err(e)) => {
-            log_info!((
-                "Ready pipe read error: {}; falling back to poll",
-                e
-            ));
+            log_info!(("Ready pipe read error: {}; falling back to poll", e));
             wait_for_server_ready(&socket_path(), Duration::from_secs(5)).await?;
         }
         Err(_) => {

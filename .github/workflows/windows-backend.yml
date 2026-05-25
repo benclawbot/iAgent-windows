@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 90
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -44,7 +44,7 @@ jobs:
     timeout-minutes: 90
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -68,7 +68,7 @@ jobs:
     timeout-minutes: 90
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -92,7 +92,7 @@ jobs:
     timeout-minutes: 120
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -112,7 +112,7 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -140,7 +140,7 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -160,7 +160,7 @@ jobs:
     timeout-minutes: 300
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -174,10 +174,10 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Generate coverage report
-        run: cargo llvm-cov report --lcov --output-path lcov.info || true
+        run: cargo llvm-cov --workspace --lcov --output-path lcov.info
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6.0.1
         with:
           files: lcov.info
           fail_ci_if_error: true

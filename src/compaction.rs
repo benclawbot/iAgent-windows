@@ -20,10 +20,6 @@ use crate::provider::openai_request::{
     openai_encrypted_content_fallback_summary, openai_encrypted_content_is_sendable,
 };
 use anyhow::Result;
-use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
-use std::time::Instant;
-use tokio::task::JoinHandle;
 pub use jcode_compaction_core::{
     CHARS_PER_TOKEN, COMPACTION_THRESHOLD, CRITICAL_THRESHOLD, CompactionAction, CompactionEvent,
     CompactionStats, DEFAULT_TOKEN_BUDGET, EMBED_MAX_CHARS_PER_MSG, EMBEDDING_HISTORY_WINDOW,
@@ -34,6 +30,10 @@ pub use jcode_compaction_core::{
     estimate_compaction_tokens, mean_embedding, message_char_count, safe_compaction_cutoff,
     semantic_cache_key, semantic_goal_text, semantic_message_text, summary_payload_char_count,
 };
+use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
+use std::time::Instant;
+use tokio::task::JoinHandle;
 /// Result from background compaction task
 struct CompactionResult {
     summary_text: String,

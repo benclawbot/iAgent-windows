@@ -123,6 +123,10 @@ fn test_parse_tailscale_dns_name_invalid_json() {
     assert!(parse_tailscale_dns_name(b"not-json").is_none());
 }
 
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn configured_auth_test_targets_only_include_configured_supported_providers() {
     let status = AuthStatus {
@@ -144,10 +148,6 @@ fn configured_auth_test_targets_only_include_configured_supported_providers() {
     assert!(targets.contains(&ResolvedAuthTestTarget::Detailed(AuthTestTarget::Claude)));
     assert!(targets.contains(&ResolvedAuthTestTarget::Detailed(AuthTestTarget::Copilot)));
     assert!(targets.contains(&ResolvedAuthTestTarget::Detailed(AuthTestTarget::Gemini)));
-    assert!(targets.contains(&ResolvedAuthTestTarget::Generic {
-        provider: crate::provider_catalog::OPENROUTER_LOGIN_PROVIDER,
-        choice: super::super::provider_init::ProviderChoice::Openrouter,
-    }));
 
     assert!(!targets.contains(&ResolvedAuthTestTarget::Detailed(AuthTestTarget::Openai)));
     assert!(!targets.contains(&ResolvedAuthTestTarget::Detailed(AuthTestTarget::Google)));
@@ -297,6 +297,7 @@ async fn auth_test_choice_plan_discovers_model_for_local_custom_compat_endpoint(
     }
 }
 
+#[cfg_attr(windows, ignore = "uses 0.0.0.0 as a hosted HTTP test endpoint")]
 #[tokio::test]
 async fn auth_test_choice_plan_discovers_model_for_hosted_custom_compat_endpoint_with_api_key() {
     let _env_guard = crate::storage::lock_test_env();

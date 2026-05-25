@@ -239,10 +239,7 @@ pub(super) fn persist_swarm_state(
     };
 
     if let Err(err) = storage::write_json_fast(&state_path(swarm_id), &state) {
-        log_warn!((
-            "Failed to persist swarm state {}: {}",
-            swarm_id, err
-        ));
+        log_warn!(("Failed to persist swarm state {}: {}", swarm_id, err));
     }
 }
 

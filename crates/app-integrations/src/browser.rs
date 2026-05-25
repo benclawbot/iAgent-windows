@@ -357,7 +357,7 @@ impl CdpBrowser {
 
         timeout(
             self.action_timeout,
-            socket.send(Message::Text(request.to_string().into())),
+            socket.send(Message::Text(request.to_string())),
         )
         .await
         .map_err(|_| Self::normalize_error(format!("Timeout sending CDP request {method}")))?

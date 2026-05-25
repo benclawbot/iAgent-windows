@@ -251,6 +251,7 @@ fn test_direct_chutes_ignores_legacy_openrouter_catalog_cache() {
     });
 }
 
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[test]
 fn test_auth_changed_preserves_existing_direct_profile_session() {
     with_clean_provider_test_env(|| {
@@ -313,6 +314,7 @@ fn test_auth_changed_preserves_existing_direct_profile_session() {
     });
 }
 
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[test]
 fn test_auth_changed_replaces_template_direct_profile_for_new_logins() {
     with_clean_provider_test_env(|| {

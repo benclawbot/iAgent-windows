@@ -186,7 +186,8 @@ async fn handle_lightweight_control_request(
             if let Err(error) = write_direct_event(&writer_clone, &event).await {
                 log_warn!((
                     "lightweight control writer failed while sending {:?}: {}",
-                    event, error
+                    event,
+                    error
                 ));
                 break;
             }
@@ -809,10 +810,7 @@ pub(super) async fn handle_client(
         let n = match reader.read_line(&mut line).await {
             Ok(n) => n,
             Err(error) => {
-                log_error!((
-                    "Client read error before initialization: {}",
-                    error
-                ));
+                log_error!(("Client read error before initialization: {}", error));
                 return Ok(());
             }
         };
@@ -1006,7 +1004,9 @@ pub(super) async fn handle_client(
             if let Err(error) = w.write_all(json.as_bytes()).await {
                 log_warn!((
                     "event_forwarder write failed for connection {} while sending {:?}: {}",
-                    client_connection_id_for_events, event, error
+                    client_connection_id_for_events,
+                    event,
+                    error
                 ));
                 break;
             }
@@ -1435,7 +1435,9 @@ pub(super) async fn handle_client(
                     Ok(removed) => {
                         log_info!((
                             "Rewound session {} to message {} (removed {})",
-                            client_session_id, message_index, removed
+                            client_session_id,
+                            message_index,
+                            removed
                         ));
                         if handle_get_history(
                             id,
@@ -1486,7 +1488,8 @@ pub(super) async fn handle_client(
                     Ok(restored) => {
                         log_info!((
                             "Undid rewind for session {} (restored {})",
-                            client_session_id, restored
+                            client_session_id,
+                            restored
                         ));
                         if handle_get_history(
                             id,
@@ -1541,13 +1544,16 @@ pub(super) async fn handle_client(
                 }
             }
             Request::GetSettings { id } => {
-                let config = iagent_settings::IagentConfig::load()
-                    .unwrap_or_default();
+                let config = iagent_settings::IagentConfig::load().unwrap_or_default();
                 let json = encode_event(&ServerEvent::SettingsResponse {
                     id,
                     provider: config.provider,
                     model: config.model,
-                    api_key: if config.api_key.is_empty() { None } else { Some(config.api_key) },
+                    api_key: if config.api_key.is_empty() {
+                        None
+                    } else {
+                        Some(config.api_key)
+                    },
                     auto_start: config.auto_start,
                     start_minimized: config.start_minimized,
                     always_on_top: config.always_on_top,
@@ -1575,7 +1581,6 @@ pub(super) async fn handle_client(
                     break;
                 }
             }
-
 
             Request::Subscribe {
                 id,
@@ -1665,7 +1670,9 @@ pub(super) async fn handle_client(
                         } else {
                             log_warn!((
                                 "Target-aware subscribe failed to bind {} from temporary {}; closing temporary client connection {}",
-                                target_session_id, pre_resume_session_id, client_connection_id
+                                target_session_id,
+                                pre_resume_session_id,
+                                client_connection_id
                             ));
                             break;
                         }
@@ -2750,21 +2757,16 @@ async fn start_processing_message(
                 } else {
                     "unknown panic".to_string()
                 };
-                log_error!((
-                    "Processing task PANICKED for message id={}: {}",
-                    id, msg
-                ));
+                log_error!(("Processing task PANICKED for message id={}: {}", id, msg));
                 Err(anyhow::anyhow!("Processing task panicked: {}", msg))
             }
         };
         match &result {
-            Ok(()) => log_info!((
-                "Processing task completed OK for message id={}",
-                id
-            )),
+            Ok(()) => log_info!(("Processing task completed OK for message id={}", id)),
             Err(error) => log_warn!((
                 "Processing task completed with error for message id={}: {}",
-                id, error
+                id,
+                error
             )),
         }
         let completion_report = if result.is_ok() {
@@ -2851,7 +2853,8 @@ fn clear_soft_interrupts(
     if let Err(err) = crate::soft_interrupt_store::clear(session_id) {
         log_warn!((
             "Failed to clear persisted soft interrupts for {}: {}",
-            session_id, err
+            session_id,
+            err
         ));
     }
     let _ = client_event_tx.send(ServerEvent::Ack { id });

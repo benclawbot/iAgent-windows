@@ -20,20 +20,16 @@ pub struct SelfDevBuildCommand {
 #[serde(rename_all = "snake_case")]
 pub enum SelfDevBuildTarget {
     Auto,
-    Tui,
-    Desktop,
-    All,
+    Backend,
 }
 
 impl SelfDevBuildTarget {
     pub fn parse(value: Option<&str>) -> Result<Self> {
         match value.unwrap_or("auto").trim().to_ascii_lowercase().as_str() {
             "" | "auto" => Ok(Self::Auto),
-            "tui" | "jcode" => Ok(Self::Tui),
-            "desktop" | "jcode-desktop" => Ok(Self::Desktop),
-            "all" | "both" => Ok(Self::All),
+            "backend" | "jcode" | "all" | "both" => Ok(Self::Backend),
             other => anyhow::bail!(
-                "invalid selfdev build target `{}`; expected auto, tui, desktop, or all",
+                "invalid selfdev build target `{}`; expected auto or backend",
                 other
             ),
         }

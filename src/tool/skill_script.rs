@@ -4,11 +4,11 @@
 //! by reading the script from the skill's scripts/ directory and executing it.
 
 use super::{Tool, ToolContext, ToolOutput};
-use crate::skill::{SkillRegistry};
+use crate::skill::SkillRegistry;
 use anyhow::Result;
 use async_trait::async_trait;
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
