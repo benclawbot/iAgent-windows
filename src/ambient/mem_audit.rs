@@ -84,7 +84,7 @@ impl MemoryAuditor {
         // Option 1: User provided IDs of memories used in reasoning
         if let Some(ids) = referenced_ids {
             for id in ids {
-                if let Some(mem) = graph.memories.get(id) {
+                if graph.memories.contains_key(id) {
                     let attr = self.attribute_memory(&graph, id, conclusion, 0);
                     if attr.attribution_score > 0.5 || attr.is_stale || attr.has_contradictions {
                         suspicious.push(attr);
@@ -105,7 +105,11 @@ impl MemoryAuditor {
         }
 
         // Sort by attribution score
-        suspicious.sort_by(|a, b| b.attribution_score.partial_cmp(&a.attribution_score).unwrap());
+        suspicious.sort_by(|a, b| {
+            b.attribution_score
+                .partial_cmp(&a.attribution_score)
+                .unwrap()
+        });
 
         // Build causal chains for top suspicious memories
         let top_suspicious: Vec<_> = suspicious.iter().take(5).cloned().collect();
@@ -172,16 +176,26 @@ impl MemoryAuditor {
             root_memories.push(attr);
         }
 
-        root_memories.sort_by(|a, b| b.attribution_score.partial_cmp(&a.attribution_score).unwrap());
+        root_memories.sort_by(|a, b| {
+            b.attribution_score
+                .partial_cmp(&a.attribution_score)
+                .unwrap()
+        });
 
         let warnings: Vec<String> = root_memories
             .iter()
             .filter(|m| m.is_stale || m.has_contradictions)
             .map(|m| {
                 if m.has_contradictions {
-                    format!("Memory '{}' has contradicting edges — may be the poison source", m.memory_id)
+                    format!(
+                        "Memory '{}' has contradicting edges — may be the poison source",
+                        m.memory_id
+                    )
                 } else {
-                    format!("Memory '{}' is stale — may have contributed to the error", m.memory_id)
+                    format!(
+                        "Memory '{}' is stale — may have contributed to the error",
+                        m.memory_id
+                    )
                 }
             })
             .collect();
@@ -189,7 +203,11 @@ impl MemoryAuditor {
         let avg_conf = if root_memories.is_empty() {
             0.0
         } else {
-            root_memories.iter().map(|m| m.attribution_score).sum::<f32>() / root_memories.len() as f32
+            root_memories
+                .iter()
+                .map(|m| m.attribution_score)
+                .sum::<f32>()
+                / root_memories.len() as f32
         };
 
         let chain = CausalChain {
@@ -208,7 +226,9 @@ impl MemoryAuditor {
             chains: vec![chain],
             suspicious_memories: suspicious,
             overall_health,
-            recommendation: "ERROR TRACED: Mark these memories as unreliable and create Correction entries.".to_string(),
+            recommendation:
+                "ERROR TRACED: Mark these memories as unreliable and create Correction entries."
+                    .to_string(),
         }
     }
 
@@ -259,21 +279,30 @@ impl MemoryAuditor {
         let has_contradictions = graph
             .edges
             .get(memory_id)
-            .map(|e| e.iter().any(|edge| matches!(edge.kind, EdgeKind::Contradicts)))
+            .map(|e| {
+                e.iter()
+                    .any(|edge| matches!(edge.kind, EdgeKind::Contradicts))
+            })
             .unwrap_or(false);
 
         let is_stale = mem
             .map(|m| (Utc::now() - m.updated_at).num_days() > 14)
             .unwrap_or(false);
 
-        let attribution_score = if depth == 0 { 1.0 } else { 0.7_f32.powf(depth as f32) };
+        let attribution_score = if depth == 0 {
+            1.0
+        } else {
+            0.7_f32.powf(depth as f32)
+        };
 
         AttributedMemory {
             memory_id: memory_id.to_string(),
             content: mem.map(|m| m.content.clone()).unwrap_or_default(),
             attribution_score,
             propagation_depth: depth,
-            is_fact: mem.map(|m| matches!(m.category, crate::memory_types::MemoryCategory::Fact)).unwrap_or(false),
+            is_fact: mem
+                .map(|m| matches!(m.category, crate::memory_types::MemoryCategory::Fact))
+                .unwrap_or(false),
             is_stale,
             has_contradictions,
         }
@@ -287,23 +316,27 @@ impl MemoryAuditor {
         depth: usize,
     ) -> AttributedMemory {
         let mem = graph.memories.get(memory_id);
-        let lower_conclusion = conclusion.to_lowercase();
 
         // Direct text match score
-        let content_match = mem.map(|m| {
-            let lower_content = m.content.to_lowercase();
-            let keyword_hits = self
-                .extract_keywords(conclusion)
-                .iter()
-                .filter(|kw| lower_content.contains(&kw.as_str()))
-                .count();
-            keyword_hits as f32 / self.extract_keywords(conclusion).len().max(1) as f32
-        }).unwrap_or(0.0);
+        let content_match = mem
+            .map(|m| {
+                let lower_content = m.content.to_lowercase();
+                let keyword_hits = self
+                    .extract_keywords(conclusion)
+                    .iter()
+                    .filter(|kw| lower_content.contains(&kw.as_str()))
+                    .count();
+                keyword_hits as f32 / self.extract_keywords(conclusion).len().max(1) as f32
+            })
+            .unwrap_or(0.0);
 
         let has_contradictions = graph
             .edges
             .get(memory_id)
-            .map(|e| e.iter().any(|edge| matches!(edge.kind, EdgeKind::Contradicts)))
+            .map(|e| {
+                e.iter()
+                    .any(|edge| matches!(edge.kind, EdgeKind::Contradicts))
+            })
             .unwrap_or(false);
 
         let is_stale = mem
@@ -326,7 +359,9 @@ impl MemoryAuditor {
             content: mem.map(|m| m.content.clone()).unwrap_or_default(),
             attribution_score,
             propagation_depth: depth,
-            is_fact: mem.map(|m| matches!(m.category, crate::memory_types::MemoryCategory::Fact)).unwrap_or(false),
+            is_fact: mem
+                .map(|m| matches!(m.category, crate::memory_types::MemoryCategory::Fact))
+                .unwrap_or(false),
             is_stale,
             has_contradictions,
         }
@@ -384,7 +419,10 @@ impl MemoryAuditor {
                 continue;
             }
             let lower_content = mem.content.to_lowercase();
-            let hits = keywords.iter().filter(|kw| lower_content.contains(&kw.as_str())).count();
+            let hits = keywords
+                .iter()
+                .filter(|kw| lower_content.contains(&kw.as_str()))
+                .count();
             if hits > 0 {
                 scores.push((id.clone(), hits as f32));
             }
@@ -396,12 +434,14 @@ impl MemoryAuditor {
 
     fn extract_keywords(&self, text: &str) -> Vec<String> {
         let stop_words: HashSet<&str> = [
-            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
-            "of", "with", "by", "from", "as", "is", "was", "are", "were", "been",
-            "be", "have", "has", "had", "do", "does", "did", "will", "would",
-            "should", "could", "may", "might", "can", "this", "that", "these",
-            "those", "i", "you", "he", "she", "it", "we", "they", "what", "which",
-        ].iter().copied().collect();
+            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with",
+            "by", "from", "as", "is", "was", "are", "were", "been", "be", "have", "has", "had",
+            "do", "does", "did", "will", "would", "should", "could", "may", "might", "can", "this",
+            "that", "these", "those", "i", "you", "he", "she", "it", "we", "they", "what", "which",
+        ]
+        .iter()
+        .copied()
+        .collect();
 
         text.split_whitespace()
             .map(|w| w.trim().to_lowercase())

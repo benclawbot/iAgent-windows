@@ -6,7 +6,7 @@
 // Ensures the agent's memory statements are consistent with user facts and
 // that the agent can verify its own reasoning.
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

@@ -343,6 +343,7 @@ impl ToolBus {
 
         let entries: Vec<serde_json::Value> = results
             .into_iter()
+            .take(limit)
             .map(|m| {
                 serde_json::json!({
                     "id": m.id,

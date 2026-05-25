@@ -8,7 +8,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-
 use crate::memory::MemoryManager;
 
 /// The user's communication style preference.
@@ -16,9 +15,9 @@ use crate::memory::MemoryManager;
 pub enum CommunicationStyle {
     Concise,        // Short, to-the-point responses
     Detailed,       // Thorough explanations with context
-    Technical,     // Uses jargon, assumes domain knowledge
-    Conversational,// Casual, friendly tone
-    Formal,        // Professional, structured
+    Technical,      // Uses jargon, assumes domain knowledge
+    Conversational, // Casual, friendly tone
+    Formal,         // Professional, structured
 }
 
 impl Default for CommunicationStyle {
@@ -92,9 +91,9 @@ impl Default for Expertise {
 /// A specific preference inferred from behavior.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InferredPreference {
-    pub key: String,           // e.g., "reply_length", "tone"
-    pub value: String,         // e.g., "concise", "friendly"
-    pub confidence: f32,      // 0.0-1.0
+    pub key: String,     // e.g., "reply_length", "tone"
+    pub value: String,   // e.g., "concise", "friendly"
+    pub confidence: f32, // 0.0-1.0
     pub source_memory_id: Option<String>,
     pub updated_at: DateTime<Utc>,
 }
@@ -228,10 +227,24 @@ impl UserIdentity {
             }
             if lower.contains("deep work:") || lower.contains("focus day:") {
                 // Parse day preferences
-                for (day_idx, day_name) in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-                    .iter().enumerate() {
+                for (day_idx, day_name) in [
+                    "monday",
+                    "tuesday",
+                    "wednesday",
+                    "thursday",
+                    "friday",
+                    "saturday",
+                    "sunday",
+                ]
+                .iter()
+                .enumerate()
+                {
                     if lower.contains(day_name) {
-                        if !self.working_pattern.deep_work_days.contains(&(day_idx as u32)) {
+                        if !self
+                            .working_pattern
+                            .deep_work_days
+                            .contains(&(day_idx as u32))
+                        {
                             self.working_pattern.deep_work_days.push(day_idx as u32);
                         }
                     }
@@ -246,7 +259,10 @@ impl UserIdentity {
         let re = regex::Regex::new(r"(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?").ok()?;
         for cap in re.captures_iter(text) {
             let hour: u32 = cap.get(1).and_then(|m| m.as_str().parse().ok())?;
-            let minute: u32 = cap.get(2).and_then(|m| m.as_str().parse().ok()).unwrap_or(0);
+            let _minute: u32 = cap
+                .get(2)
+                .and_then(|m| m.as_str().parse().ok())
+                .unwrap_or(0);
             let ampm = cap.get(3).map(|m| m.as_str());
 
             let hour = if let Some(ampm) = ampm {
@@ -271,8 +287,10 @@ impl UserIdentity {
             let lower = mem.content.to_lowercase();
 
             for tag in &mem.tags {
-                let tag_lower = tag.to_lowercase();
-                if lower.contains("expert in") || lower.contains("精通") || lower.contains("specialist") {
+                if lower.contains("expert in")
+                    || lower.contains("精通")
+                    || lower.contains("specialist")
+                {
                     if let Some(existing) = self.expertise.iter_mut().find(|e| e.topic == *tag) {
                         existing.level = Expertise::Expert;
                     } else {
@@ -308,7 +326,12 @@ impl UserIdentity {
 
             for (key, value, indicator) in &key_values {
                 if lower.contains(indicator) {
-                    new_prefs.push(InferredPreference::new(key, value, mem.effective_confidence(), Some(mem.id.clone())));
+                    new_prefs.push(InferredPreference::new(
+                        key,
+                        value,
+                        mem.effective_confidence(),
+                        Some(mem.id.clone()),
+                    ));
                 }
             }
         }
@@ -395,14 +418,19 @@ pub fn build_identity_section(identity: &UserIdentity) -> String {
     ));
 
     // Working hours
-    if let (Some(start), Some(end)) = (identity.working_pattern.typical_start_hour, identity.working_pattern.typical_end_hour) {
+    if let (Some(start), Some(end)) = (
+        identity.working_pattern.typical_start_hour,
+        identity.working_pattern.typical_end_hour,
+    ) {
         lines.push(format!("- Typical work hours: {}:00 - {}:00", start, end));
     }
 
     // Deep work days
     if !identity.working_pattern.deep_work_days.is_empty() {
         let day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-        let days: Vec<&str> = identity.working_pattern.deep_work_days
+        let days: Vec<&str> = identity
+            .working_pattern
+            .deep_work_days
             .iter()
             .filter_map(|d| day_names.get(*d as usize).copied())
             .collect();
@@ -410,7 +438,9 @@ pub fn build_identity_section(identity: &UserIdentity) -> String {
     }
 
     // Active projects
-    let active: Vec<&str> = identity.active_projects.iter()
+    let active: Vec<&str> = identity
+        .active_projects
+        .iter()
         .filter(|p| p.is_active)
         .map(|p| p.name.as_str())
         .collect();
@@ -421,13 +451,19 @@ pub fn build_identity_section(identity: &UserIdentity) -> String {
     // Key preferences
     for pref in &identity.preferences {
         if pref.confidence > 0.5 {
-            lines.push(format!("- Preference ({}% confident): {} = {}",
-                (pref.confidence * 100.0) as u32, pref.key, pref.value));
+            lines.push(format!(
+                "- Preference ({}% confident): {} = {}",
+                (pref.confidence * 100.0) as u32,
+                pref.key,
+                pref.value
+            ));
         }
     }
 
     // Expertise
-    let experts: Vec<&str> = identity.expertise.iter()
+    let experts: Vec<&str> = identity
+        .expertise
+        .iter()
         .filter(|e| e.level == Expertise::Expert)
         .map(|e| e.topic.as_str())
         .collect();
