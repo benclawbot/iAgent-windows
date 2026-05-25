@@ -32,6 +32,20 @@ fn personal_store_covers_recovery_reminders_snippets_apps_jobs_and_layouts() {
         .expect("create reminder");
     assert_eq!(reminder.status, "pending");
     assert_eq!(store.list_pending_reminders().expect("pending").len(), 1);
+    store
+        .create_reminder(ReminderInput {
+            title: "Already due".into(),
+            note: None,
+            due_at: "2026-05-25T07:00:00Z".into(),
+            source_app: Some("Editor".into()),
+            source_title: Some("notes.md".into()),
+        })
+        .expect("create due reminder");
+    let due = store
+        .list_due_reminders("2026-05-25T08:00:00Z")
+        .expect("due reminders");
+    assert_eq!(due.len(), 1);
+    assert_eq!(due[0].title, "Already due");
 
     store
         .record_clipboard(ClipboardInput {

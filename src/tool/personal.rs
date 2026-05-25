@@ -38,6 +38,8 @@ struct PersonalInput {
     #[serde(default)]
     snooze_until: Option<String>,
     #[serde(default)]
+    as_of: Option<String>,
+    #[serde(default)]
     source_app: Option<String>,
     #[serde(default)]
     source_title: Option<String>,
@@ -87,7 +89,7 @@ impl Tool for PersonalTool {
                     "type": "string",
                     "enum": [
                         "create_snippet", "list_snippets", "expand_snippet", "delete_snippet",
-                        "create_reminder", "list_reminders", "complete_reminder", "snooze_reminder",
+                        "create_reminder", "list_reminders", "due_reminders", "complete_reminder", "snooze_reminder",
                         "record_clipboard", "capture_clipboard", "clipboard_recent", "clipboard_clear",
                         "record_app_window", "list_recent_apps", "resolve_app", "switch_to_app",
                         "create_job", "list_jobs", "cancel_job", "retry_job", "run_job", "run_next_job",
@@ -103,6 +105,7 @@ impl Tool for PersonalTool {
                 "note": {"type": "string"},
                 "due_at": {"type": "string", "description": "RFC3339 due time."},
                 "snooze_until": {"type": "string", "description": "RFC3339 snooze time."},
+                "as_of": {"type": "string", "description": "RFC3339 time for due reminder checks."},
                 "source_app": {"type": "string"},
                 "source_title": {"type": "string"},
                 "content": {"type": "string"},
@@ -198,6 +201,32 @@ impl Tool for PersonalTool {
                             format!(
                                 "- {} at {} [id: {}]",
                                 reminder.title, reminder.due_at, reminder.id
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                }))
+            }
+            "due_reminders" => {
+                let as_of = input
+                    .as_of
+                    .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+                let reminders = store.list_due_reminders(&as_of)?;
+                Ok(ToolOutput::new(if reminders.is_empty() {
+                    "No due reminders.".to_string()
+                } else {
+                    reminders
+                        .into_iter()
+                        .map(|reminder| {
+                            let context = match (&reminder.source_app, &reminder.source_title) {
+                                (Some(app), Some(title)) => format!(" [{} - {}]", app, title),
+                                (Some(app), None) => format!(" [{}]", app),
+                                (None, Some(title)) => format!(" [{}]", title),
+                                (None, None) => String::new(),
+                            };
+                            format!(
+                                "- {} at {}{} [id: {}]",
+                                reminder.title, reminder.due_at, context, reminder.id
                             )
                         })
                         .collect::<Vec<_>>()

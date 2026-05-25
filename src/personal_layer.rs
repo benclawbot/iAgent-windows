@@ -265,6 +265,21 @@ impl PersonalStore {
         Ok(reminders)
     }
 
+    pub fn list_due_reminders(&self, as_of: &str) -> Result<Vec<Reminder>> {
+        let as_of = parse_rfc3339_utc(as_of)?;
+        let mut reminders: Vec<_> = self
+            .state()?
+            .reminders
+            .into_iter()
+            .filter(|reminder| {
+                reminder.status == "pending"
+                    && reminder.snoozed_until.unwrap_or(reminder.due_at) <= as_of
+            })
+            .collect();
+        reminders.sort_by(|a, b| a.due_at.cmp(&b.due_at));
+        Ok(reminders)
+    }
+
     pub fn complete_reminder(&self, id: &str) -> Result<bool> {
         self.update_reminder_status(id, "completed", Some(Utc::now()), None)
     }
