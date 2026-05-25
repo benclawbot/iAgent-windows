@@ -161,6 +161,7 @@ iAgent includes a local-first personal desktop layer for user-approved recall an
 - explicit personal memory through the existing `memory` tool
 - smart snippets such as `/sig` for reusable text expansions
 - typed snippet expansion support for text that ends with a saved trigger, with optional app scoping
+- a Windows global snippet hook in the personal daemon so saved triggers can expand directly in other apps
 - contextual reminders tied to the current app/window title, including due/overdue reminder checks
 - an always-on personal daemon contract for clipboard capture, app/window snapshots, due reminders, one queued background job, and proactive suggestion events
 - a `personal-daemon` CLI that can run once, print status, or stay resident as a headless login daemon
@@ -172,13 +173,12 @@ iAgent includes a local-first personal desktop layer for user-approved recall an
 - computer-use action planning with observe/act/verify steps, retry-ready verification, permission tiers, and prompt-injection risk flags
 - window layout plans, saved named layouts, project workspaces, Windows active-window snapping, and two-window tiling by app/window description
 - privacy/settings controls for clipboard history, reminder notifications, background jobs, proactive suggestions, snippet expansion, timeline capture modes, retention, app exclusions, and personal-data clearing
+- a Settings > Personal panel for daemon status, one-tick runs, daemon start, and opening the local personal-data folder
 - UI-ready control-panel summaries for snippets, reminders, clipboard, jobs, privacy, layouts, timeline, and project workspaces
 
 The `personal` tool stores this helper data under the local iAgent/JCode home directory and keeps it separate from durable long-term memory unless the user explicitly asks to remember something.
 
-The Windows installer creates a hidden `iagent-personal-daemon` Startup shortcut by default. Use `-SkipPersonalDaemonSetup` to opt out, or run `iagent personal-daemon --status` to inspect the local daemon state.
-
-Run `iagent personal-daemon --headless` to keep the personal layer active in the background, `iagent personal-daemon --once --headless` for a single watcher tick, and `iagent personal-daemon --status` to inspect counts for reminders, jobs, clipboard, timeline, layouts, and project workspaces. The Windows installer creates a hidden Startup shortcut for this daemon unless `-SkipPersonalDaemonSetup` is supplied.
+Run `iagent personal-daemon --headless` to keep the personal layer active in the background, `iagent personal-daemon --once --headless` for a single watcher tick, and `iagent personal-daemon --status` to inspect counts for reminders, jobs, clipboard, timeline, layouts, and project workspaces. The Windows installer creates a hidden `iagent-personal-daemon` Startup shortcut for this daemon unless `-SkipPersonalDaemonSetup` is supplied.
 
 ---
 

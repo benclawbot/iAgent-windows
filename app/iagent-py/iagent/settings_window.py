@@ -3,6 +3,9 @@ Settings window for the iAgent dock.
 Allows user to select provider, model, and enter API key.
 """
 import os
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
@@ -75,7 +78,7 @@ class SettingsWindow(QDialog):
                         prefix = key + " = "
                         if line.startswith(prefix):
                             val = line[len(prefix):].strip().strip('"').strip("'")
-                            if key == "api_key":
+                            if key in ("provider", "model", "api_key"):
                                 defaults[key] = val
                             else:
                                 defaults[key] = val.lower() in ("true", "1", "yes")
@@ -125,6 +128,36 @@ class SettingsWindow(QDialog):
 
         tabs.addTab(gt, "General")
 
+        # Personal tab
+        personal_tab = QWidget()
+        personal_layout = QGridLayout(personal_tab)
+        personal_layout.setColumnStretch(0, 1)
+
+        self.personal_status_label = QLabel("Not checked")
+        self.personal_status_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        self.personal_status_label.setWordWrap(True)
+        personal_layout.addWidget(self.personal_status_label, 0, 0, 1, 4)
+
+        refresh_personal_btn = QPushButton("Refresh")
+        refresh_personal_btn.clicked.connect(self._refresh_personal_status)
+        personal_layout.addWidget(refresh_personal_btn, 1, 0)
+
+        tick_personal_btn = QPushButton("Run One Tick")
+        tick_personal_btn.clicked.connect(self._run_personal_tick)
+        personal_layout.addWidget(tick_personal_btn, 1, 1)
+
+        start_personal_btn = QPushButton("Start Daemon")
+        start_personal_btn.clicked.connect(self._start_personal_daemon)
+        personal_layout.addWidget(start_personal_btn, 1, 2)
+
+        open_personal_btn = QPushButton("Open Folder")
+        open_personal_btn.clicked.connect(self._open_personal_folder)
+        personal_layout.addWidget(open_personal_btn, 1, 3)
+
+        tabs.addTab(personal_tab, "Personal")
+
         # Buttons
         btn_w = QWidget()
         hl = QHBoxLayout(btn_w)
@@ -151,6 +184,7 @@ class SettingsWindow(QDialog):
         self.auto_start_check.setChecked(self._settings.get("auto_start", True))
         self.start_minimized_check.setChecked(self._settings.get("start_minimized", False))
         self.always_on_top_check.setChecked(self._settings.get("always_on_top", False))
+        self._refresh_personal_status()
 
     def _on_provider_changed(self):
         provider = self.provider_combo.currentData()
@@ -200,3 +234,96 @@ class SettingsWindow(QDialog):
                 pass
 
         self.accept()
+
+    def _iagent_command(self):
+        for key in ("IAGENT_BIN", "JCODE_BIN", "IAGENT_JCODE_BIN"):
+            value = os.environ.get(key)
+            if value:
+                path = Path(value)
+                if path.exists():
+                    return str(path)
+                return value
+
+        for name in ("iagent", "jcode"):
+            resolved = shutil.which(name)
+            if resolved:
+                return resolved
+
+        if os.name == "nt":
+            base = os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))
+            installed = Path(base) / "iAgent" / "app" / "iagent.exe"
+            if installed.exists():
+                return str(installed)
+
+        return None
+
+    def _run_iagent(self, args, timeout=10):
+        command = self._iagent_command()
+        if not command:
+            raise RuntimeError("iAgent executable not found")
+
+        creationflags = 0
+        if os.name == "nt":
+            creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+        return subprocess.run(
+            [command, *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            creationflags=creationflags,
+        )
+
+    def _refresh_personal_status(self):
+        try:
+            result = self._run_iagent(["personal-daemon", "--status"], timeout=8)
+            text = result.stdout.strip() if result.returncode == 0 else result.stderr.strip()
+            self.personal_status_label.setText(text or "Personal daemon status unavailable")
+        except Exception as exc:
+            self.personal_status_label.setText(str(exc))
+
+    def _run_personal_tick(self):
+        try:
+            result = self._run_iagent(["personal-daemon", "--once", "--headless"], timeout=20)
+            if result.returncode != 0:
+                raise RuntimeError(result.stderr.strip() or "Personal tick failed")
+            QMessageBox.information(self, "Personal", result.stdout.strip() or "Tick complete")
+            self._refresh_personal_status()
+        except Exception as exc:
+            QMessageBox.warning(self, "Personal", str(exc))
+
+    def _start_personal_daemon(self):
+        command = self._iagent_command()
+        if not command:
+            QMessageBox.warning(self, "Personal", "iAgent executable not found")
+            return
+
+        creationflags = 0
+        if os.name == "nt":
+            creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+        try:
+            subprocess.Popen(
+                [command, "personal-daemon", "--headless"],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=creationflags,
+            )
+            QMessageBox.information(self, "Personal", "Personal daemon started")
+            self._refresh_personal_status()
+        except Exception as exc:
+            QMessageBox.warning(self, "Personal", str(exc))
+
+    def _open_personal_folder(self):
+        folder = Path(os.environ.get("JCODE_HOME", str(Path.home() / ".jcode"))) / "personal"
+        folder.mkdir(parents=True, exist_ok=True)
+        try:
+            if os.name == "nt":
+                os.startfile(folder)
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", str(folder)])
+            else:
+                subprocess.Popen(["xdg-open", str(folder)])
+        except Exception as exc:
+            QMessageBox.warning(self, "Personal", str(exc))

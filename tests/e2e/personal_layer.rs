@@ -1,6 +1,7 @@
 use crate::test_support::setup_test_env;
 use iagent::personal_daemon::{
-    PersonalDaemonSnapshot, personal_daemon_status, run_personal_daemon_tick,
+    PersonalDaemonSnapshot, apply_snippet_expansion_to_buffer, personal_daemon_status,
+    run_personal_daemon_tick,
 };
 use iagent::personal_layer::{
     ClearPersonalData, ClipboardInput, ComputerUseRequest, JobInput, PersonalSettings,
@@ -176,6 +177,12 @@ fn personal_store_covers_full_product_runtime_controls() {
             .expect("typed snippet wrong scope"),
         None
     );
+    let mut typed_buffer = "Thanks,\n/sig".to_string();
+    let hook_expansion = apply_snippet_expansion_to_buffer(&store, &mut typed_buffer, Some("Mail"))
+        .expect("hook expansion")
+        .expect("hook expansion result");
+    assert_eq!(hook_expansion.replacement, "Thomas");
+    assert!(typed_buffer.is_empty());
 
     let clipboard = store
         .record_clipboard(ClipboardInput {

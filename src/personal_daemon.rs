@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::personal_layer::{
     BackgroundJob, ClipboardEntry, PersonalSettings, PersonalStore, ProactiveSuggestion, Reminder,
-    RuntimeTickInput,
+    RuntimeTickInput, SnippetExpansion,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -14,6 +14,7 @@ pub struct PersonalDaemonConfig {
     pub run_jobs: bool,
     pub capture_clipboard: bool,
     pub capture_active_window: bool,
+    pub snippet_expansion_hook: bool,
     pub headless: bool,
 }
 
@@ -24,6 +25,7 @@ impl Default for PersonalDaemonConfig {
             run_jobs: true,
             capture_clipboard: true,
             capture_active_window: true,
+            snippet_expansion_hook: true,
             headless: true,
         }
     }
@@ -148,6 +150,7 @@ pub fn run_personal_daemon_tick(
 
 pub async fn run_personal_daemon(config: PersonalDaemonConfig) -> Result<()> {
     let store = PersonalStore::load()?;
+    let _snippet_hook = start_snippet_expansion_hook(&config);
     let mut interval =
         tokio::time::interval(Duration::from_secs(config.tick_interval_seconds.max(1)));
     interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
@@ -164,6 +167,39 @@ pub async fn run_personal_daemon(config: PersonalDaemonConfig) -> Result<()> {
     }
 
     Ok(())
+}
+
+pub fn apply_snippet_expansion_to_buffer(
+    store: &PersonalStore,
+    buffer: &mut String,
+    app_name: Option<&str>,
+) -> Result<Option<SnippetExpansion>> {
+    let expansion = store.expand_typed_snippet(buffer, app_name)?;
+    if expansion.is_some() {
+        buffer.clear();
+    }
+    Ok(expansion)
+}
+
+struct SnippetHookGuard {
+    #[cfg(target_os = "windows")]
+    _thread: std::thread::JoinHandle<()>,
+}
+
+fn start_snippet_expansion_hook(config: &PersonalDaemonConfig) -> Option<SnippetHookGuard> {
+    if !config.snippet_expansion_hook {
+        return None;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        windows_snippet_hook::start()
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        None
+    }
 }
 
 pub fn capture_snapshot(config: &PersonalDaemonConfig) -> PersonalDaemonSnapshot {
@@ -200,5 +236,198 @@ fn emit_notifications(tick: &PersonalDaemonTick, headless: bool) {
             "[personal-daemon] {} [{}]: {}",
             notification.title, notification.urgency, notification.body
         );
+    }
+}
+
+#[cfg(target_os = "windows")]
+mod windows_snippet_hook {
+    use std::mem::size_of;
+    use std::sync::{Mutex, OnceLock, mpsc};
+    use std::time::Duration;
+
+    use windows_sys::Win32::Foundation::{LPARAM, LRESULT, POINT, WPARAM};
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
+        INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, SendInput,
+        VK_BACK,
+    };
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        CallNextHookEx, DispatchMessageW, GetMessageW, KBDLLHOOKSTRUCT, LLKHF_INJECTED, MSG,
+        SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, WH_KEYBOARD_LL, WM_KEYDOWN,
+        WM_SYSKEYDOWN,
+    };
+
+    use super::{
+        PersonalStore, SnippetExpansion, SnippetHookGuard, apply_snippet_expansion_to_buffer,
+    };
+
+    const MAX_TYPED_BUFFER_CHARS: usize = 128;
+
+    #[derive(Default)]
+    struct SnippetHookState {
+        buffer: String,
+    }
+
+    static SNIPPET_HOOK_STATE: OnceLock<Mutex<SnippetHookState>> = OnceLock::new();
+
+    pub(super) fn start() -> Option<SnippetHookGuard> {
+        let (ready_tx, ready_rx) = mpsc::channel();
+        let thread = std::thread::Builder::new()
+            .name("iagent-snippet-hook".to_string())
+            .spawn(move || run_message_pump(ready_tx))
+            .ok()?;
+
+        if ready_rx.recv_timeout(Duration::from_secs(2)).ok()? {
+            Some(SnippetHookGuard { _thread: thread })
+        } else {
+            None
+        }
+    }
+
+    fn run_message_pump(ready_tx: mpsc::Sender<bool>) {
+        let hook = unsafe {
+            SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_proc), std::ptr::null_mut(), 0)
+        };
+        if hook.is_null() {
+            let _ = ready_tx.send(false);
+            return;
+        }
+        let _ = ready_tx.send(true);
+
+        let mut msg = MSG {
+            hwnd: std::ptr::null_mut(),
+            message: 0,
+            wParam: 0,
+            lParam: 0,
+            time: 0,
+            pt: POINT { x: 0, y: 0 },
+        };
+
+        while unsafe { GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) } > 0 {
+            unsafe {
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
+            }
+        }
+
+        unsafe {
+            UnhookWindowsHookEx(hook);
+        }
+    }
+
+    unsafe extern "system" fn keyboard_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+        if code >= 0 && (wparam as u32 == WM_KEYDOWN || wparam as u32 == WM_SYSKEYDOWN) {
+            let event = unsafe { *(lparam as *const KBDLLHOOKSTRUCT) };
+            if event.flags & LLKHF_INJECTED == 0 {
+                if let Some(expansion) = process_key_event(event.vkCode) {
+                    send_snippet_expansion(&expansion);
+                }
+            }
+        }
+
+        unsafe { CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam) }
+    }
+
+    fn process_key_event(vk_code: u32) -> Option<SnippetExpansion> {
+        let state = SNIPPET_HOOK_STATE.get_or_init(|| Mutex::new(SnippetHookState::default()));
+        let mut state = state.lock().ok()?;
+
+        match key_char(vk_code) {
+            KeyChar::Append(value) => {
+                state.buffer.push(value);
+                trim_buffer(&mut state.buffer);
+            }
+            KeyChar::Backspace => {
+                state.buffer.pop();
+                return None;
+            }
+            KeyChar::Clear => {
+                state.buffer.clear();
+                return None;
+            }
+            KeyChar::Ignore => return None,
+        }
+
+        let store = PersonalStore::load().ok()?;
+        let active_app = desktop_monitor::capture_window_context().map(|context| context.app_name);
+        apply_snippet_expansion_to_buffer(&store, &mut state.buffer, active_app.as_deref())
+            .ok()
+            .flatten()
+    }
+
+    enum KeyChar {
+        Append(char),
+        Backspace,
+        Clear,
+        Ignore,
+    }
+
+    fn key_char(vk_code: u32) -> KeyChar {
+        match vk_code {
+            0x08 => KeyChar::Backspace,
+            0x0D | 0x1B => KeyChar::Clear,
+            0x20 => KeyChar::Append(' '),
+            0x30..=0x39 => char::from_u32(vk_code).map_or(KeyChar::Ignore, KeyChar::Append),
+            0x41..=0x5A => char::from_u32(vk_code + 32).map_or(KeyChar::Ignore, KeyChar::Append),
+            0xBD => KeyChar::Append('-'),
+            0xBE => KeyChar::Append('.'),
+            0xBF => KeyChar::Append('/'),
+            _ => KeyChar::Ignore,
+        }
+    }
+
+    fn trim_buffer(buffer: &mut String) {
+        let extra_chars = buffer
+            .chars()
+            .count()
+            .saturating_sub(MAX_TYPED_BUFFER_CHARS);
+        if extra_chars > 0 {
+            let byte_index = buffer
+                .char_indices()
+                .nth(extra_chars)
+                .map(|(index, _)| index)
+                .unwrap_or(buffer.len());
+            buffer.drain(..byte_index);
+        }
+    }
+
+    fn send_snippet_expansion(expansion: &SnippetExpansion) {
+        for _ in expansion.trigger.chars() {
+            send_virtual_key(VK_BACK, false);
+            send_virtual_key(VK_BACK, true);
+        }
+
+        for code_unit in expansion.replacement.encode_utf16() {
+            send_unicode_key(code_unit, false);
+            send_unicode_key(code_unit, true);
+        }
+    }
+
+    fn send_virtual_key(key: u16, key_up: bool) {
+        let flags = if key_up { KEYEVENTF_KEYUP } else { 0 };
+        send_keyboard_input(key, 0, flags);
+    }
+
+    fn send_unicode_key(code_unit: u16, key_up: bool) {
+        let flags = KEYEVENTF_UNICODE | if key_up { KEYEVENTF_KEYUP } else { 0 };
+        send_keyboard_input(0, code_unit, flags);
+    }
+
+    fn send_keyboard_input(w_vk: u16, w_scan: u16, flags: u32) {
+        let input = INPUT {
+            r#type: INPUT_KEYBOARD,
+            Anonymous: INPUT_0 {
+                ki: KEYBDINPUT {
+                    wVk: w_vk,
+                    wScan: w_scan,
+                    dwFlags: flags,
+                    time: 0,
+                    dwExtraInfo: 0,
+                },
+            },
+        };
+
+        unsafe {
+            let _ = SendInput(1, &input, size_of::<INPUT>() as i32);
+        }
     }
 }
