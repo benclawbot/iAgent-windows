@@ -23,6 +23,7 @@ mod invalid;
 mod ls;
 mod lsp;
 pub mod mcp;
+mod meeting;
 mod memory;
 mod multiedit;
 mod open;
@@ -193,6 +194,7 @@ impl Registry {
             );
             Self::insert_tool_timed(&mut m, &mut timings, "invalid", invalid::InvalidTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "lsp", lsp::LspTool::new);
+            Self::insert_tool_timed(&mut m, &mut timings, "meeting", meeting::MeetingTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "todo", todo::TodoTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "bg", bg::BgTool::new);
             Self::insert_tool_timed(

@@ -226,6 +226,44 @@ async fn registry_exposes_recipe_catalog_tool() {
     assert_eq!(def.input_schema["properties"]["inputs"]["type"], "array");
 }
 
+#[tokio::test]
+async fn registry_exposes_meeting_memory_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "meeting")
+        .expect("meeting tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("meeting action enum");
+    for action in [
+        "start",
+        "append_segment",
+        "finish",
+        "get",
+        "list",
+        "convert_action_items",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "meeting tool should expose {action}"
+        );
+    }
+    assert_eq!(
+        def.input_schema["properties"]["session_id"]["type"],
+        "string"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["participants"]["type"],
+        "array"
+    );
+    assert_eq!(def.input_schema["properties"]["speaker"]["type"], "string");
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");

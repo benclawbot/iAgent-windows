@@ -46,6 +46,7 @@ pub mod id;
 pub mod import;
 pub mod login_qr;
 pub mod mcp;
+pub mod meeting_memory;
 pub mod memory;
 pub mod memory_agent;
 pub mod memory_graph;
