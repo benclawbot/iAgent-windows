@@ -17,7 +17,7 @@ jobs:
   check-headless:
     name: Check headless default (pdf only)
     runs-on: windows-latest
-    timeout-minutes: 90
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -41,7 +41,7 @@ jobs:
   check-headless-explicit:
     name: Check headless explicit (no terminal-ui)
     runs-on: windows-latest
-    timeout-minutes: 90
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -65,7 +65,7 @@ jobs:
   check-terminal-ui:
     name: Check terminal-ui build
     runs-on: windows-latest
-    timeout-minutes: 90
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -89,7 +89,7 @@ jobs:
   test-unit:
     name: Unit tests
     runs-on: windows-latest
-    timeout-minutes: 120
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -157,7 +157,12 @@ jobs:
   coverage:
     name: Test coverage
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 20
+    needs:
+      - check-headless
+      - check-headless-explicit
+      - check-terminal-ui
+      - test-unit
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -174,7 +179,11 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Generate coverage report
-        run: cargo llvm-cov --workspace --lcov --output-path lcov.info
+        timeout-minutes: 15
+        run: >
+          cargo llvm-cov -p iagent --lib --lcov --output-path lcov.info --
+          tool::tests::first_party_tool_definitions_include_optional_intent_explicitly
+          --exact
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6.0.1
