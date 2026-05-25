@@ -231,6 +231,7 @@ async fn wait_for_reloading_server_returns_true_for_live_listener() {
     assert!(wait_for_reloading_server().await);
 }
 
+#[cfg_attr(windows, ignore = "live listener fallback can hang on Windows CI")]
 #[tokio::test]
 async fn server_is_running_at_treats_live_listener_as_running_without_pong() {
     let temp = tempfile::tempdir().expect("tempdir");

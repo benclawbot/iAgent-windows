@@ -66,6 +66,8 @@ iAgent requires at least one LLM provider API key:
 | OpenRouter | `OPENROUTER_API_KEY` | https://openrouter.ai |
 | Gemini | `GEMINI_API_KEY` | https://aistudio.google.com |
 
+OpenAI OAuth uses `http://localhost:1455/auth/callback` as the default local callback URI.
+
 For GitHub operations (optional): Generate a PAT at https://github.com/settings/tokens
 
 ---

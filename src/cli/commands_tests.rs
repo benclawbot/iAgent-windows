@@ -301,6 +301,7 @@ async fn auth_test_choice_plan_discovers_model_for_local_custom_compat_endpoint(
     }
 }
 
+#[cfg_attr(windows, ignore = "uses 0.0.0.0 as a hosted HTTP test endpoint")]
 #[tokio::test]
 async fn auth_test_choice_plan_discovers_model_for_hosted_custom_compat_endpoint_with_api_key() {
     let _env_guard = crate::storage::lock_test_env();
