@@ -395,6 +395,18 @@ impl PersonalStore {
         Ok(record)
     }
 
+    pub fn capture_active_window(&self) -> Result<Option<AppWindowRecord>> {
+        let Some(context) = desktop_monitor::capture_window_context() else {
+            return Ok(None);
+        };
+
+        Ok(Some(self.record_app_window(
+            &context.app_name,
+            "",
+            &context.window_title,
+        )?))
+    }
+
     pub fn list_recent_app_windows(&self, limit: usize) -> Result<Vec<AppWindowRecord>> {
         Ok(self
             .state()?

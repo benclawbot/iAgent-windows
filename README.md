@@ -162,7 +162,7 @@ iAgent includes a local-first personal desktop layer for user-approved recall an
 - smart snippets such as `/sig` for reusable text expansions
 - contextual reminders tied to the current app/window title, including due/overdue reminder checks
 - recent clipboard recovery with duplicate handling, secret redaction, and opt-in capture from the system clipboard
-- recent app/window recall and Windows focus switching for commands like "switch to the spreadsheet from yesterday"
+- active-window capture, recent app/window recall, and Windows focus switching for commands like "switch to the spreadsheet from yesterday"
 - background job records plus safe built-in execution for folder summaries and batch-rename previews
 - window layout plans, Windows active-window snapping, and two-window tiling by app/window description
 

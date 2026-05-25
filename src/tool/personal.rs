@@ -91,7 +91,7 @@ impl Tool for PersonalTool {
                         "create_snippet", "list_snippets", "expand_snippet", "delete_snippet",
                         "create_reminder", "list_reminders", "due_reminders", "complete_reminder", "snooze_reminder",
                         "record_clipboard", "capture_clipboard", "clipboard_recent", "clipboard_clear",
-                        "record_app_window", "list_recent_apps", "resolve_app", "switch_to_app",
+                        "record_app_window", "capture_active_window", "list_recent_apps", "resolve_app", "switch_to_app",
                         "create_job", "list_jobs", "cancel_job", "retry_job", "run_job", "run_next_job",
                         "snap_window_plan", "tile_windows_plan", "snap_active_window", "tile_windows"
                     ]
@@ -308,6 +308,17 @@ impl Tool for PersonalTool {
                     record.process_name, record.window_title, record.id
                 )))
             }
+            "capture_active_window" => Ok(ToolOutput::new(
+                store
+                    .capture_active_window()?
+                    .map(|record| {
+                        format!(
+                            "Captured active window: {} - {} [id: {}]",
+                            record.process_name, record.window_title, record.id
+                        )
+                    })
+                    .unwrap_or_else(|| "No active window context available.".to_string()),
+            )),
             "list_recent_apps" => {
                 let records = store.list_recent_app_windows(input.limit.unwrap_or(10))?;
                 Ok(ToolOutput::new(if records.is_empty() {
