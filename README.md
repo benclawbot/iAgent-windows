@@ -90,10 +90,6 @@ IAGENT_PROVIDER=openai
 # Optional: Model selection (default: gpt-4o)
 IAGENT_MODEL=gpt-4o
 
-# Optional: Residential proxy for GitHub operations (prevents bot detection)
-HTTPS_PROXY=http://user:pass@proxyhost:port
-HTTP_PROXY=http://user:pass@proxyhost:port
-
 # Optional: Log level (default: info)
 RUST_LOG=info
 ```
