@@ -118,9 +118,7 @@ pub fn gather_feedback_memories(memory_manager: &crate::memory::MemoryManager) -
         Err(_) => return feedback,
     };
 
-    if transcripts_dir.exists()
-        && let Ok(dir) = std::fs::read_dir(&transcripts_dir)
-    {
+    if let Ok(dir) = std::fs::read_dir(&transcripts_dir) {
         let mut files: Vec<_> = dir.flatten().collect();
         // Sort by filename descending (most recent first)
         files.sort_by_key(|entry| std::cmp::Reverse(entry.file_name()));
@@ -128,10 +126,8 @@ pub fn gather_feedback_memories(memory_manager: &crate::memory::MemoryManager) -
         files.truncate(5);
 
         for entry in files {
-            if let Ok(content) = std::fs::read_to_string(entry.path())
-                && let Ok(transcript) =
-                    serde_json::from_str::<crate::safety::AmbientTranscript>(&content)
-            {
+            if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                let Ok(transcript) = serde_json::from_str::<crate::safety::AmbientTranscript>(&content) else { continue; };
                 let status = format!("{:?}", transcript.status);
                 let summary = transcript.summary.as_deref().unwrap_or("no summary");
                 let age = format_duration_rough(Utc::now() - transcript.started_at);
@@ -185,10 +181,9 @@ pub fn gather_recent_sessions(since: Option<DateTime<Utc>>) -> Vec<RecentSession
     if let Ok(entries) = std::fs::read_dir(&sessions_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.extension().map(|e| e == "json").unwrap_or(false)
-                && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
-                && let Ok(session) = crate::session::Session::load(stem)
-            {
+            if path.extension().map(|e| e == "json").unwrap_or(false) {
+                let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else { continue };
+                let Ok(session) = crate::session::Session::load(stem) else { continue };
                 // Skip debug sessions
                 if session.is_debug {
                     continue;

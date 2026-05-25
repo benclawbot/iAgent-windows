@@ -12,6 +12,11 @@ pub mod initiative;
 pub mod runner;
 pub mod scene_graph;
 pub mod scheduler;
+pub mod compliance;
+pub mod mem_audit;
+pub mod privacy;
+pub mod user_identity;
+pub mod mcp_toolbus;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RecordedFrame {

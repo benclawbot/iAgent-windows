@@ -168,10 +168,16 @@ impl AmbientLock {
 
         // Check existing lock
         if path.exists() {
-            if let Ok(contents) = std::fs::read_to_string(&path)
-                && let Ok(pid) = contents.trim().parse::<u32>()
-                && is_pid_alive(pid)
-            {
+            let stale = if let Ok(contents) = std::fs::read_to_string(&path) {
+                if let Ok(pid) = contents.trim().parse::<u32>() {
+                    is_pid_alive(pid)
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
+            if stale {
                 return Ok(None); // Another instance is running
             }
             let _ = std::fs::remove_file(&path);
