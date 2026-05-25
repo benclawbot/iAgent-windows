@@ -264,6 +264,46 @@ async fn registry_exposes_meeting_memory_tool() {
     assert_eq!(def.input_schema["properties"]["speaker"]["type"], "string");
 }
 
+#[tokio::test]
+async fn registry_exposes_connector_pack_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "connector")
+        .expect("connector tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("connector action enum");
+    for action in [
+        "list",
+        "get",
+        "grant_scope",
+        "revoke_grant",
+        "list_grants",
+        "preflight_write",
+        "record_write",
+        "audit_writes",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "connector tool should expose {action}"
+        );
+    }
+    assert_eq!(
+        def.input_schema["properties"]["connector_id"]["type"],
+        "string"
+    );
+    assert_eq!(def.input_schema["properties"]["scopes"]["type"], "array");
+    assert_eq!(
+        def.input_schema["properties"]["evidence_refs"]["type"],
+        "array"
+    );
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");

@@ -10,6 +10,7 @@ mod codesearch;
 mod communicate;
 mod compaction;
 mod computer;
+mod connector;
 mod conversation_search;
 mod debug_socket;
 mod edit;
@@ -172,6 +173,12 @@ impl Registry {
                 &mut timings,
                 "computer",
                 computer::ComputerTool::new,
+            );
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "connector",
+                connector::ConnectorTool::new,
             );
             Self::insert_tool_timed(&mut m, &mut timings, "open", open::OpenTool::new);
             Self::insert_tool_timed(

@@ -27,6 +27,7 @@ pub mod channel;
 pub mod cli;
 pub mod compaction;
 pub mod config;
+pub mod connector_packs;
 pub mod copilot_usage;
 pub mod core_loop_metrics;
 pub mod desktop_ambient;
