@@ -118,9 +118,7 @@ pub fn gather_feedback_memories(memory_manager: &crate::memory::MemoryManager) -
         Err(_) => return feedback,
     };
 
-    if transcripts_dir.exists()
-        && let Ok(dir) = std::fs::read_dir(&transcripts_dir)
-    {
+    if let Ok(dir) = std::fs::read_dir(&transcripts_dir) {
         let mut files: Vec<_> = dir.flatten().collect();
         // Sort by filename descending (most recent first)
         files.sort_by_key(|entry| std::cmp::Reverse(entry.file_name()));
@@ -128,10 +126,8 @@ pub fn gather_feedback_memories(memory_manager: &crate::memory::MemoryManager) -
         files.truncate(5);
 
         for entry in files {
-            if let Ok(content) = std::fs::read_to_string(entry.path())
-                && let Ok(transcript) =
-                    serde_json::from_str::<crate::safety::AmbientTranscript>(&content)
-            {
+            if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                let Ok(transcript) = serde_json::from_str::<crate::safety::AmbientTranscript>(&content) else { continue; };
                 let status = format!("{:?}", transcript.status);
                 let summary = transcript.summary.as_deref().unwrap_or("no summary");
                 let age = format_duration_rough(Utc::now() - transcript.started_at);
@@ -185,10 +181,9 @@ pub fn gather_recent_sessions(since: Option<DateTime<Utc>>) -> Vec<RecentSession
     if let Ok(entries) = std::fs::read_dir(&sessions_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.extension().map(|e| e == "json").unwrap_or(false)
-                && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
-                && let Ok(session) = crate::session::Session::load(stem)
-            {
+            if path.extension().map(|e| e == "json").unwrap_or(false) {
+                let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else { continue };
+                let Ok(session) = crate::session::Session::load(stem) else { continue };
                 // Skip debug sessions
                 if session.is_debug {
                     continue;
@@ -419,7 +414,62 @@ pub fn build_ambient_system_prompt(
                 dir.in_reply_to_cycle, ago, dir.text,
             ));
         }
-        prompt.push('\n');
+prompt.push('\n');
+    }
+
+    // --- User Identity (Feature #2) ---
+    let identity = crate::memory::identity::build_identity_profile(
+        &crate::memory::MemoryManager::new(),
+    );
+    let identity_section = crate::memory::identity::build_identity_prompt_section(&identity);
+    if !identity_section.is_empty() {
+        prompt.push_str(&identity_section);
+        prompt.push_str("\n\n");
+    }
+
+    // --- Initiative Engine (Feature #3) ---
+    let initiative_engine = crate::ambient::initiative::InitiativeEngine::new();
+    let initiatives = initiative_engine.analyze(&crate::memory::MemoryManager::new());
+    let initiative_section = crate::ambient::initiative::build_initiative_section(&initiatives);
+    if !initiative_section.is_empty() {
+        prompt.push_str(&initiative_section);
+        prompt.push_str("\n\n");
+    }
+
+    // --- Scene Context (Feature #5) ---
+    // Build scene context from the recent screenshots (window titles) in state.
+    // We extract unique window titles from any stored screenshot data.
+    let active_windows: Vec<String> = state
+        .recent_screenshots
+        .iter()
+        .filter_map(|s| s.window_title.clone())
+        .collect::<std::collections::HashSet<_>>()
+        .into_iter()
+        .take(5)
+        .collect();
+
+    let idle_minutes: u32 = state
+        .recent_screenshots
+        .last()
+        .map(|s| (Utc::now() - s.timestamp).num_minutes() as u32)
+        .unwrap_or(0);
+
+    let context_summary = if active_windows.is_empty() {
+        "No active windows".to_string()
+    } else {
+        active_windows.join(" | ")
+    };
+
+    let scene_section = crate::ambient::scene_graph::build_scene_context_section(
+        &crate::ambient::scene_graph::TemporalTracker::new(20),
+        &active_windows,
+        idle_minutes,
+        &context_summary,
+        None,
+    );
+    if !scene_section.is_empty() {
+        prompt.push_str(&scene_section);
+        prompt.push_str("\n\n");
     }
 
     // --- Instructions ---

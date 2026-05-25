@@ -237,6 +237,29 @@ pub(crate) enum Command {
     #[command(subcommand)]
     Ambient(AmbientCommand),
 
+    /// Run the always-on personal desktop daemon
+    PersonalDaemon {
+        /// Run one tick then exit.
+        #[arg(long)]
+        once: bool,
+
+        /// Print current daemon/store status then exit.
+        #[arg(long)]
+        status: bool,
+
+        /// Emit JSON for --status.
+        #[arg(long)]
+        json: bool,
+
+        /// Print notifications to stdout instead of relying on native UI.
+        #[arg(long)]
+        headless: bool,
+
+        /// Poll interval in seconds for continuous mode.
+        #[arg(long, default_value = "15")]
+        interval_secs: u64,
+    },
+
     /// Generate a pairing code for iOS/web client
     Pair {
         /// List paired devices instead of generating a code

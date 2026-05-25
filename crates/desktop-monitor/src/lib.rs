@@ -922,6 +922,8 @@ mod platform {
     };
 }
 
+pub use platform::capture_window_context;
+
 #[cfg(test)]
 mod tests {
     use super::{

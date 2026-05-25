@@ -8,6 +8,8 @@ pub struct IagentConfig {
     pub model: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub api_key: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub api_base: Option<String>,
     #[serde(default)]
     pub auto_start: bool,
     #[serde(default)]

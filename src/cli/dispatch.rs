@@ -216,6 +216,16 @@ pub(crate) async fn run_main(mut args: Args) -> Result<()> {
         Some(Command::Ambient(subcmd)) => {
             commands::run_ambient_command(map_ambient_subcommand(subcmd)).await?;
         }
+        Some(Command::PersonalDaemon {
+            once,
+            status,
+            json,
+            headless,
+            interval_secs,
+        }) => {
+            commands::run_personal_daemon_command(once, status, json, headless, interval_secs)
+                .await?;
+        }
         Some(Command::Pair { list, revoke }) => {
             commands::run_pair_command(list, revoke)?;
         }

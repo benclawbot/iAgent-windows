@@ -21,6 +21,8 @@
     Skip Alacritty install/setup helpers.
 .PARAMETER SkipHotkeySetup
     Skip Alt+; hotkey setup helpers.
+.PARAMETER SkipPersonalDaemonSetup
+    Skip personal ambient daemon startup helper.
 .PARAMETER SkipDesktopShortcut
     Skip creating the iAgent desktop shortcut.
 .PARAMETER SkipDockSetup
@@ -34,6 +36,7 @@ param(
     [string]$ArtifactTgzPath,
     [switch]$SkipAlacrittySetup,
     [switch]$SkipHotkeySetup,
+    [switch]$SkipPersonalDaemonSetup,
     [switch]$SkipDesktopShortcut,
     [switch]$SkipDockSetup
 )
@@ -64,6 +67,7 @@ $JcodeHome = if ($env:JCODE_HOME) {
 }
 
 $HotkeyDir = Join-Path $JcodeHome "hotkey"
+$PersonalDaemonDir = Join-Path $JcodeHome "personal-daemon"
 $SetupHintsPath = Join-Path $JcodeHome "setup_hints.json"
 
 function Write-Info($msg) { Write-Host $msg -ForegroundColor Blue }
@@ -442,6 +446,67 @@ function Install-IagentHotkey([string]$DockLauncherVbsPath) {
     }
 
     Write-Info "Configured Alt+; to launch the iAgent dock"
+    return $true
+}
+
+function Install-IagentPersonalDaemon([string]$IagentExePath) {
+    if (-not (Test-Path -LiteralPath $IagentExePath)) {
+        Write-Warn "Skipping personal daemon because iagent.exe was not found"
+        return $false
+    }
+
+    New-Item -ItemType Directory -Path $PersonalDaemonDir -Force | Out-Null
+
+    $ps1Path = Join-Path $PersonalDaemonDir "iagent-personal-daemon.ps1"
+    $logDir = Join-Path $env:LOCALAPPDATA "iAgent\logs"
+    $escapedExe = $IagentExePath.Replace("'", "''")
+    $escapedLogDir = $logDir.Replace("'", "''")
+    $ps1Content = @(
+        '$ErrorActionPreference = "Continue"',
+        ('$iagent = ''{0}''' -f $escapedExe),
+        ('$logDir = ''{0}''' -f $escapedLogDir),
+        'New-Item -ItemType Directory -Path $logDir -Force | Out-Null',
+        '$logPath = Join-Path $logDir "personal-daemon.log"',
+        'while ($true) {',
+        '    try {',
+        '        & $iagent personal-daemon --headless *> $logPath',
+        '    } catch {',
+        '        Add-Content -Path $logPath -Value "[$(Get-Date -Format o)] $($_.Exception.Message)"',
+        '    }',
+        '    Start-Sleep -Seconds 10',
+        '}'
+    ) -join "`r`n"
+    Set-Content -Path $ps1Path -Value $ps1Content -Encoding UTF8
+
+    $vbsPath = Join-Path $PersonalDaemonDir "iagent-personal-daemon-launcher.vbs"
+    $escapedPs1Path = $ps1Path.Replace('"', '""')
+    $vbsContent = @(
+        'Set objShell = CreateObject("WScript.Shell")',
+        ('objShell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{0}""", 0, False' -f $escapedPs1Path)
+    ) -join "`r`n"
+    Set-Content -Path $vbsPath -Value $vbsContent -Encoding ASCII
+
+    $startupDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup"
+    New-Item -ItemType Directory -Path $startupDir -Force | Out-Null
+    $startupShortcutPath = (Join-Path $startupDir "iagent-personal-daemon.lnk").Replace("'", "''")
+    $escapedVbsPath = $vbsPath.Replace("'", "''")
+    $shortcutLines = @(
+        '$shell = New-Object -ComObject WScript.Shell',
+        "`$shortcut = `$shell.CreateShortcut('$startupShortcutPath')",
+        "`$shortcut.TargetPath = 'wscript.exe'",
+        ("`$shortcut.Arguments = '""{0}""'" -f $escapedVbsPath),
+        "`$shortcut.Description = 'iAgent personal ambient daemon'",
+        '$shortcut.WindowStyle = 7',
+        '$shortcut.Save()',
+        "Write-Output 'OK'"
+    )
+    $shortcutOutput = & powershell -NoProfile -Command ($shortcutLines -join "`r`n")
+    if ($LASTEXITCODE -ne 0 -or -not ($shortcutOutput -match 'OK')) {
+        Write-Warn "Created personal daemon files, but could not create the Startup shortcut"
+        return $false
+    }
+
+    Write-Info "Configured personal ambient daemon startup"
     return $true
 }
 
@@ -992,6 +1057,7 @@ $env:Path = "$InstallDir;$env:Path"
 
 $installedAlacritty = $false
 $configuredHotkey = $false
+$configuredPersonalDaemon = $false
 $configuredDesktopShortcut = $false
 $dockLauncher = $null
 
@@ -1015,6 +1081,12 @@ if ($SkipHotkeySetup) {
     Write-Info "Skipping Alt+; hotkey setup"
 } elseif ($dockLauncher) {
     $configuredHotkey = Install-IagentHotkey -DockLauncherVbsPath $dockLauncher.VbsPath
+}
+
+if ($SkipPersonalDaemonSetup) {
+    Write-Info "Skipping personal ambient daemon setup"
+} else {
+    $configuredPersonalDaemon = Install-IagentPersonalDaemon -IagentExePath $LauncherPath
 }
 
 if ($SkipDesktopShortcut) {
@@ -1043,6 +1115,11 @@ if (Test-AlacrittyInstalled) {
 
 if ($configuredHotkey) {
     Write-Info "Global hotkey ready: Alt+; opens the iAgent dock"
+    Write-Host ""
+}
+
+if ($configuredPersonalDaemon) {
+    Write-Info "Personal ambient daemon ready: clipboard, reminders, jobs, and proactive suggestions run at login"
     Write-Host ""
 }
 

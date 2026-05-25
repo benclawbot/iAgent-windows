@@ -56,6 +56,8 @@ pub mod network_retry;
 pub mod notifications;
 pub mod overnight;
 pub mod perf;
+pub mod personal_daemon;
+pub mod personal_layer;
 pub mod plan;
 pub mod platform;
 pub mod process_memory;
