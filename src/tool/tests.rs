@@ -366,6 +366,47 @@ async fn registry_exposes_intent_manifest_tool() {
     );
 }
 
+#[tokio::test]
+async fn registry_exposes_remote_dispatch_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "dispatch")
+        .expect("dispatch tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("dispatch action enum");
+    for action in [
+        "create_client",
+        "submit",
+        "approve",
+        "complete",
+        "fail",
+        "status",
+        "list",
+        "watch",
+        "due",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "dispatch tool should expose {action}"
+        );
+    }
+    assert_eq!(
+        def.input_schema["properties"]["client_token"]["type"],
+        "string"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["evidence_refs"]["type"],
+        "array"
+    );
+    assert_eq!(def.input_schema["properties"]["context"]["type"], "object");
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");

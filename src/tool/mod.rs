@@ -14,6 +14,7 @@ mod computer;
 mod connector;
 mod conversation_search;
 mod debug_socket;
+mod dispatch;
 mod edit;
 mod file_ops;
 mod flight_recorder;
@@ -170,6 +171,7 @@ impl Registry {
             Self::insert_tool_timed(&mut m, &mut timings, "ls", ls::LsTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "bash", bash::BashTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "browser", browser::BrowserTool::new);
+            Self::insert_tool_timed(&mut m, &mut timings, "dispatch", dispatch::DispatchTool::new);
             Self::insert_tool_timed(
                 &mut m,
                 &mut timings,

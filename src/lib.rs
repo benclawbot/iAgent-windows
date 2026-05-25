@@ -71,6 +71,7 @@ pub mod protocol;
 pub mod provider;
 pub mod provider_catalog;
 pub mod recipe_catalog;
+pub mod remote_dispatch;
 pub mod registry;
 pub mod restart_snapshot;
 pub mod runtime_memory_log;

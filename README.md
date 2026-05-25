@@ -160,6 +160,7 @@ That loop is backed by runtime safety systems rather than prompt-only promises:
 - connector write preflight decisions that require active write scopes before any external-system mutation, plus a write-evidence ledger that records run ids, tool-call ids, targets, grant ids, required scopes, summaries, and evidence references for every approved connector write
 - Proactive Briefings and Next-Best Actions for morning briefings, end-of-task recaps, meeting prep cards, project resume cards, contextual recommendations, and durable "never suggest this again" feedback
 - Windows App Intent Manifests through `iagent.intent.json`, letting local apps and scripts declare safe structured actions, parameters, examples, approval levels, and rollback hints for import into iAgent tools and recipe-ready plans
+- Remote Dispatch and Watch Mode for authenticated local/remote task submission, mobile-friendly status cards, scheduled jobs, approval-needed notifications, completion evidence, and failure packets
 - explicit separation between observation actions and mutating actions such as click, type, hotkey, scroll, app launch, and delegated communication
 
 ---
@@ -220,6 +221,7 @@ Integrated tooling includes:
 - `briefing` proactive actions for morning briefings, end-task recaps, meeting prep, project resume, low-noise next-best recommendations, saved recaps, and never-suggest feedback rules
 - `connector` pack actions for inspecting built-in connector definitions, granting/revoking explicit read/write scopes, preflighting writes, and auditing recorded write evidence
 - `intent` manifest actions for discovering, validating, importing, listing, and planning local `iagent.intent.json` app/script capabilities without turning manifest import into arbitrary-code execution
+- `dispatch` watch-mode actions for creating authenticated dispatch clients, submitting local/remote tasks, approving work, checking mobile-friendly status, watching notifications, listing due scheduled tasks, completing with evidence, and attaching failure packets
 - `recipe` catalog and command palette actions for searchable, hotkey-ready workflows with typed inputs, approval policies, required tools, and non-executing dispatch plans
 - `meeting` memory actions for start/append/finish meeting capture, local speaker/time transcript segments, source-linked decisions/questions/action items, and conversion into reminders, jobs, or delegation drafts
 - `flight_recorder` action timeline for user-readable run evidence, approval state, screenshots, undo metadata, and follow-up queues
@@ -669,10 +671,7 @@ This repository is structured more like an operating layer for AI workflows than
 
 # Product Roadmap
 
-This roadmap lists final product deliveries that are not yet fully integrated. When one is delivered, remove it from this section and document it above as current behavior.
-
-1. Remote Dispatch and Watch Mode
-   - Authenticated local/remote task dispatch, mobile-friendly status, scheduled jobs, approval-needed notifications, completion evidence, and failure packets.
+All final roadmap deliveries identified for this pass are now integrated above as current behavior.
 
 ---
 

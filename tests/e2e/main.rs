@@ -16,6 +16,7 @@ mod personal_layer;
 mod proactive_briefings;
 mod provider_behavior;
 mod recipe_catalog;
+mod remote_dispatch;
 mod safety;
 mod session_flow;
 mod smoke;
