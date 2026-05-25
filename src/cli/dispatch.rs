@@ -8,6 +8,8 @@ use super::args::{
     AmbientCommand, Args, AuthCommand, Command, MemoryCommand, ModelCommand, ProviderCommand,
     RestartCommand, SessionCommand,
 };
+#[cfg(feature = "terminal-ui")]
+use crate::tui;
 use crate::{
     agent, auth, build, provider, provider_catalog, server, session, setup_hints, startup_profile,
 };
@@ -215,6 +217,16 @@ pub(crate) async fn run_main(mut args: Args) -> Result<()> {
         },
         Some(Command::Ambient(subcmd)) => {
             commands::run_ambient_command(map_ambient_subcommand(subcmd)).await?;
+        }
+        Some(Command::PersonalDaemon {
+            once,
+            status,
+            json,
+            headless,
+            interval_secs,
+        }) => {
+            commands::run_personal_daemon_command(once, status, json, headless, interval_secs)
+                .await?;
         }
         Some(Command::Pair { list, revoke }) => {
             commands::run_pair_command(list, revoke)?;

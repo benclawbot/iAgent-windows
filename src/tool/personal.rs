@@ -1,8 +1,9 @@
 use super::{Tool, ToolContext, ToolOutput};
 use crate::personal_layer::{
-    ClearPersonalData, ClipboardInput, JobInput, PersonalSettingsInput, PersonalStore,
-    ReminderInput, RuntimeTickInput, SavedWindowLayoutInput, SnippetInput, WindowBounds,
-    WindowPlacement, plan_snap_window, plan_tile_two_windows, snap_active_window,
+    ClearPersonalData, ClipboardInput, ComputerUseRequest, JobInput, PersonalSettingsInput,
+    PersonalStore, ProjectWorkspaceInput, ReminderInput, RuntimeTickInput, SavedWindowLayoutInput,
+    SnippetInput, TimelineEntryInput, TimelineSearch, WindowBounds, WindowPlacement,
+    plan_snap_window, plan_tile_two_windows, snap_active_window,
 };
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
@@ -104,6 +105,38 @@ struct PersonalInput {
     clear_app_windows: bool,
     #[serde(default)]
     clear_layouts: bool,
+    #[serde(default)]
+    clear_timeline: bool,
+    #[serde(default)]
+    clear_workspaces: bool,
+    #[serde(default)]
+    timeline_enabled: Option<bool>,
+    #[serde(default)]
+    app_history_enabled: Option<bool>,
+    #[serde(default)]
+    screenshots_enabled: Option<bool>,
+    #[serde(default)]
+    ocr_enabled: Option<bool>,
+    #[serde(default)]
+    uia_text_enabled: Option<bool>,
+    #[serde(default)]
+    computer_use_enabled: Option<bool>,
+    #[serde(default)]
+    prompt_injection_defense_enabled: Option<bool>,
+    #[serde(default)]
+    encrypted_sensitive_storage: Option<bool>,
+    #[serde(default)]
+    require_approval_for_personal_actions: Option<bool>,
+    #[serde(default)]
+    excluded_apps: Option<Vec<String>>,
+    #[serde(default)]
+    private_title_patterns: Option<Vec<String>>,
+    #[serde(default)]
+    layout_name: Option<String>,
+    #[serde(default)]
+    app_queries: Vec<String>,
+    #[serde(default)]
+    observation_text: Option<String>,
 }
 
 #[async_trait]
@@ -126,14 +159,18 @@ impl Tool for PersonalTool {
                     "type": "string",
                     "enum": [
                         "get_settings", "update_settings", "runtime_tick", "clear_personal_data",
+                        "control_panel",
                         "create_snippet", "list_snippets", "expand_snippet", "delete_snippet",
                         "expand_typed_snippet",
                         "create_reminder", "list_reminders", "due_reminders", "complete_reminder", "snooze_reminder",
                         "record_clipboard", "capture_clipboard", "clipboard_recent", "clipboard_clear",
                         "clipboard_pin", "clipboard_delete",
+                        "record_timeline", "search_timeline", "delete_timeline",
+                        "computer_use_plan",
                         "record_app_window", "capture_active_window", "list_recent_apps", "resolve_app", "switch_to_app",
                         "create_job", "list_jobs", "cancel_job", "retry_job", "run_job", "run_next_job",
                         "snap_window_plan", "tile_windows_plan", "save_window_layout", "list_window_layouts", "window_layout_plan",
+                        "save_project_workspace", "list_project_workspaces",
                         "snap_active_window", "tile_windows"
                     ]
                 },
@@ -177,6 +214,22 @@ impl Tool for PersonalTool {
                 "clear_jobs": {"type": "boolean"},
                 "clear_app_windows": {"type": "boolean"},
                 "clear_layouts": {"type": "boolean"},
+                "clear_timeline": {"type": "boolean"},
+                "clear_workspaces": {"type": "boolean"},
+                "timeline_enabled": {"type": "boolean"},
+                "app_history_enabled": {"type": "boolean"},
+                "screenshots_enabled": {"type": "boolean"},
+                "ocr_enabled": {"type": "boolean"},
+                "uia_text_enabled": {"type": "boolean"},
+                "computer_use_enabled": {"type": "boolean"},
+                "prompt_injection_defense_enabled": {"type": "boolean"},
+                "encrypted_sensitive_storage": {"type": "boolean"},
+                "require_approval_for_personal_actions": {"type": "boolean"},
+                "excluded_apps": {"type": "array", "items": {"type": "string"}},
+                "private_title_patterns": {"type": "array", "items": {"type": "string"}},
+                "layout_name": {"type": "string"},
+                "app_queries": {"type": "array", "items": {"type": "string"}},
+                "observation_text": {"type": "string"},
                 "direction": {"type": "string", "enum": ["left", "right", "top", "bottom", "center", "maximize", "full"]},
                 "monitor": {
                     "type": "object",
@@ -209,14 +262,28 @@ impl Tool for PersonalTool {
                     snippet_expansion_enabled: input.snippet_expansion_enabled,
                     max_clipboard_entries: input.max_clipboard_entries,
                     retention_days: input.retention_days,
+                    timeline_enabled: input.timeline_enabled,
+                    app_history_enabled: input.app_history_enabled,
+                    screenshots_enabled: input.screenshots_enabled,
+                    ocr_enabled: input.ocr_enabled,
+                    uia_text_enabled: input.uia_text_enabled,
+                    computer_use_enabled: input.computer_use_enabled,
+                    prompt_injection_defense_enabled: input.prompt_injection_defense_enabled,
+                    encrypted_sensitive_storage: input.encrypted_sensitive_storage,
+                    require_approval_for_personal_actions: input
+                        .require_approval_for_personal_actions,
+                    excluded_apps: input.excluded_apps,
+                    private_title_patterns: input.private_title_patterns,
                 })?;
                 Ok(ToolOutput::new(format!(
-                    "Personal settings updated: clipboard_history={} reminders={} jobs={} proactive={} snippets={} max_clipboard_entries={} retention_days={}",
+                    "Personal settings updated: clipboard_history={} reminders={} jobs={} proactive={} snippets={} timeline={} computer_use={} max_clipboard_entries={} retention_days={}",
                     settings.clipboard_history_enabled,
                     settings.reminder_notifications_enabled,
                     settings.background_jobs_enabled,
                     settings.proactive_suggestions_enabled,
                     settings.snippet_expansion_enabled,
+                    settings.timeline_enabled,
+                    settings.computer_use_enabled,
                     settings.max_clipboard_entries,
                     settings.retention_days
                 )))
@@ -250,17 +317,24 @@ impl Tool for PersonalTool {
                     jobs: input.clear_jobs,
                     app_windows: input.clear_app_windows,
                     layouts: input.clear_layouts,
+                    timeline: input.clear_timeline,
+                    workspaces: input.clear_workspaces,
                 })?;
                 Ok(ToolOutput::new(format!(
-                    "Cleared personal data: clipboard={} reminders={} snippets={} jobs={} app_windows={} layouts={}",
+                    "Cleared personal data: clipboard={} reminders={} snippets={} jobs={} app_windows={} layouts={} timeline={} workspaces={}",
                     cleared.clipboard,
                     cleared.reminders,
                     cleared.snippets,
                     cleared.jobs,
                     cleared.app_windows,
-                    cleared.layouts
+                    cleared.layouts,
+                    cleared.timeline,
+                    cleared.workspaces
                 )))
             }
+            "control_panel" => Ok(ToolOutput::new(serde_json::to_string_pretty(
+                &store.control_panel_summary()?,
+            )?)),
             "create_snippet" => {
                 let snippet = store.create_snippet(SnippetInput {
                     trigger: required(input.trigger, "trigger")?,
@@ -446,6 +520,71 @@ impl Tool for PersonalTool {
                     format!("Clipboard entry not found: {}", id)
                 }))
             }
+            "record_timeline" => {
+                let entry = store.record_timeline_entry(TimelineEntryInput {
+                    app_name: required(input.source_app.or(input.active_app), "source_app")?,
+                    window_title: required(
+                        input.source_title.or(input.active_window_title),
+                        "source_title",
+                    )?,
+                    activity: input
+                        .description
+                        .unwrap_or_else(|| "Observed activity".to_string()),
+                    text_excerpt: input.content,
+                    screenshot_path: input
+                        .input_json
+                        .as_ref()
+                        .and_then(|value| value.get("screenshot_path"))
+                        .and_then(Value::as_str)
+                        .map(ToOwned::to_owned),
+                    source: input.kind.unwrap_or_else(|| "manual".to_string()),
+                })?;
+                Ok(ToolOutput::new(
+                    entry
+                        .map(|entry| format!("Timeline entry recorded [id: {}]", entry.id))
+                        .unwrap_or_else(|| {
+                            "Timeline entry skipped by privacy settings.".to_string()
+                        }),
+                ))
+            }
+            "search_timeline" => {
+                let entries = store.search_timeline(TimelineSearch {
+                    query: input.query,
+                    app_name: input.source_app.or(input.active_app),
+                    limit: input.limit.unwrap_or(10),
+                })?;
+                Ok(ToolOutput::new(if entries.is_empty() {
+                    "No timeline entries matched.".to_string()
+                } else {
+                    entries
+                        .into_iter()
+                        .map(|entry| {
+                            format!(
+                                "- {} - {}: {} [id: {}]",
+                                entry.app_name, entry.window_title, entry.activity, entry.id
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                }))
+            }
+            "delete_timeline" => {
+                let id = required(input.id, "id")?;
+                Ok(ToolOutput::new(if store.delete_timeline_entry(&id)? {
+                    format!("Deleted timeline entry: {}", id)
+                } else {
+                    format!("Timeline entry not found: {}", id)
+                }))
+            }
+            "computer_use_plan" => {
+                let plan = store.draft_computer_use_plan(ComputerUseRequest {
+                    goal: required(input.description.or(input.query), "description")?,
+                    app_name: input.source_app.or(input.active_app),
+                    window_title: input.source_title.or(input.active_window_title),
+                    observation_text: input.observation_text.or(input.content),
+                })?;
+                Ok(ToolOutput::new(serde_json::to_string_pretty(&plan)?))
+            }
             "record_app_window" => {
                 let record = store.record_app_window(
                     &required(input.process_name, "process_name")?,
@@ -622,6 +761,37 @@ impl Tool for PersonalTool {
                         .map(|placements| format_placements(&placements))
                         .unwrap_or_else(|| format!("Window layout not found: {}", name)),
                 ))
+            }
+            "save_project_workspace" => {
+                let workspace = store.save_project_workspace(ProjectWorkspaceInput {
+                    name: required(input.title.or(input.description), "title")?,
+                    layout_name: input.layout_name,
+                    app_queries: input.app_queries,
+                    notes: input.note,
+                })?;
+                Ok(ToolOutput::new(format!(
+                    "Saved project workspace: {} [id: {}]",
+                    workspace.name, workspace.id
+                )))
+            }
+            "list_project_workspaces" => {
+                let workspaces = store.list_project_workspaces()?;
+                Ok(ToolOutput::new(if workspaces.is_empty() {
+                    "No project workspaces saved.".to_string()
+                } else {
+                    workspaces
+                        .into_iter()
+                        .map(|workspace| {
+                            format!(
+                                "- {} ({} app query/queries) [id: {}]",
+                                workspace.name,
+                                workspace.app_queries.len(),
+                                workspace.id
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                }))
             }
             "snap_active_window" => {
                 let direction = required(input.direction, "direction")?;

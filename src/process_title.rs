@@ -133,6 +133,7 @@ pub(crate) fn initial_title(args: &Args) -> String {
         Some(Command::Memory(_)) => "jcode memory".to_string(),
         Some(Command::Session(_)) => "jcode session".to_string(),
         Some(Command::Ambient(_)) => "jcode ambient".to_string(),
+        Some(Command::PersonalDaemon { .. }) => "jcode personal daemon".to_string(),
         Some(Command::Pair { .. }) => "jcode pair".to_string(),
         Some(Command::Dictate { .. }) => "jcode dictate".to_string(),
         Some(Command::SetupHotkey {

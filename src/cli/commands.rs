@@ -1,5 +1,5 @@
 #![cfg_attr(test, allow(clippy::await_holding_lock))]
-use crate::{browser, gateway, memory, session, storage};
+use crate::{browser, gateway, memory, personal_daemon, session, storage};
 use anyhow::Result;
 use serde::Serialize;
 use std::collections::BTreeSet;
@@ -43,6 +43,100 @@ pub async fn run_ambient_command(cmd: AmbientSubcommand) -> Result<()> {
         }
         AmbientSubcommand::Stop => {
             super::debug::run_debug_command("ambient:stop", "", None, None, false).await
+        }
+    }
+}
+
+pub async fn run_personal_daemon_command(
+    once: bool,
+    status: bool,
+    json: bool,
+    headless: bool,
+    interval_secs: u64,
+) -> Result<()> {
+    let config = personal_daemon::PersonalDaemonConfig {
+        tick_interval_seconds: interval_secs.max(1),
+        headless,
+        ..personal_daemon::PersonalDaemonConfig::default()
+    };
+
+    if status {
+        let store = crate::personal_layer::PersonalStore::load()?;
+        let status = personal_daemon::personal_daemon_status(&store)?;
+        if json {
+            println!("{}", serde_json::to_string_pretty(&status)?);
+        } else {
+            println!("Personal daemon");
+            println!(
+                "  settings: clipboard={} reminders={} jobs={} proactive={} snippets={}",
+                status.settings.clipboard_history_enabled,
+                status.settings.reminder_notifications_enabled,
+                status.settings.background_jobs_enabled,
+                status.settings.proactive_suggestions_enabled,
+                status.settings.snippet_expansion_enabled
+            );
+            println!("  pending reminders: {}", status.pending_reminders);
+            println!("  pending jobs: {}", status.pending_jobs);
+            println!("  clipboard entries: {}", status.recent_clipboard_entries);
+            println!("  app/window records: {}", status.recent_app_windows);
+            println!("  saved layouts: {}", status.saved_layouts);
+            println!("  timeline entries: {}", status.timeline_entries);
+            println!("  project workspaces: {}", status.project_workspaces);
+        }
+        return Ok(());
+    }
+
+    if once {
+        let store = crate::personal_layer::PersonalStore::load()?;
+        let snapshot = personal_daemon::capture_snapshot(&config);
+        let tick = personal_daemon::run_personal_daemon_tick(&store, snapshot, config.run_jobs)?;
+        if headless {
+            println!(
+                "personal daemon tick: reminders={} clipboard={} job={} suggestions={} notifications={}",
+                tick.due_reminders.len(),
+                tick.captured_clipboard.is_some(),
+                tick.completed_job
+                    .as_ref()
+                    .map(|job| job.status.as_str())
+                    .unwrap_or("none"),
+                tick.suggestions.len(),
+                tick.notifications.len()
+            );
+        }
+        return Ok(());
+    }
+
+    personal_daemon::run_personal_daemon(config).await
+}
+
+pub async fn run_transcript_command(
+    text: Option<String>,
+    mode: crate::protocol::TranscriptMode,
+    session: Option<String>,
+) -> Result<()> {
+    let text = if let Some(text) = text {
+        text
+    } else {
+        let mut stdin = String::new();
+        std::io::stdin().read_to_string(&mut stdin)?;
+        let trimmed = stdin.trim_end_matches(['\r', '\n']);
+        if trimmed.is_empty() {
+            anyhow::bail!("Provide transcript text as an argument or pipe it via stdin")
+        }
+        trimmed.to_string()
+    };
+
+    let mut client = crate::server::Client::connect_debug().await?;
+    let request_id = client.send_transcript(&text, mode, session).await?;
+
+    loop {
+        match client.read_event().await? {
+            crate::protocol::ServerEvent::Ack { id } if id == request_id => {}
+            crate::protocol::ServerEvent::Done { id } if id == request_id => return Ok(()),
+            crate::protocol::ServerEvent::Error { id, message, .. } if id == request_id => {
+                anyhow::bail!(message)
+            }
+            _ => {}
         }
     }
 }

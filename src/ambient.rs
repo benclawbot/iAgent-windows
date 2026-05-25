@@ -8,8 +8,17 @@ mod manager;
 mod paths;
 mod persistence;
 mod prompt;
+pub mod initiative;
 pub mod runner;
+pub mod scene_graph;
 pub mod scheduler;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RecordedFrame {
+    pub timestamp: DateTime<Utc>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub window_title: Option<String>,
+}
 
 pub use directives::{
     UserDirective, add_directive, has_pending_directives, load_directives, take_pending_directives,
@@ -141,6 +150,8 @@ pub struct AmbientState {
     pub last_compactions: Option<u32>,
     pub last_memories_modified: Option<u32>,
     pub total_cycles: u64,
+    #[serde(default)]
+    pub recent_screenshots: Vec<RecordedFrame>,
 }
 
 /// Result from an ambient cycle

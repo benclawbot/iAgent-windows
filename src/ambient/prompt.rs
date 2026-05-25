@@ -419,7 +419,62 @@ pub fn build_ambient_system_prompt(
                 dir.in_reply_to_cycle, ago, dir.text,
             ));
         }
-        prompt.push('\n');
+prompt.push('\n');
+    }
+
+    // --- User Identity (Feature #2) ---
+    let identity = crate::memory::identity::build_identity_profile(
+        &crate::memory::MemoryManager::new(),
+    );
+    let identity_section = crate::memory::identity::build_identity_prompt_section(&identity);
+    if !identity_section.is_empty() {
+        prompt.push_str(&identity_section);
+        prompt.push_str("\n\n");
+    }
+
+    // --- Initiative Engine (Feature #3) ---
+    let initiative_engine = crate::ambient::initiative::InitiativeEngine::new();
+    let initiatives = initiative_engine.analyze(&crate::memory::MemoryManager::new());
+    let initiative_section = crate::ambient::initiative::build_initiative_section(&initiatives);
+    if !initiative_section.is_empty() {
+        prompt.push_str(&initiative_section);
+        prompt.push_str("\n\n");
+    }
+
+    // --- Scene Context (Feature #5) ---
+    // Build scene context from the recent screenshots (window titles) in state.
+    // We extract unique window titles from any stored screenshot data.
+    let active_windows: Vec<String> = state
+        .recent_screenshots
+        .iter()
+        .filter_map(|s| s.window_title.clone())
+        .collect::<std::collections::HashSet<_>>()
+        .into_iter()
+        .take(5)
+        .collect();
+
+    let idle_minutes: u32 = state
+        .recent_screenshots
+        .last()
+        .map(|s| (Utc::now() - s.timestamp).num_minutes() as u32)
+        .unwrap_or(0);
+
+    let context_summary = if active_windows.is_empty() {
+        "No active windows".to_string()
+    } else {
+        active_windows.join(" | ")
+    };
+
+    let scene_section = crate::ambient::scene_graph::build_scene_context_section(
+        &crate::ambient::scene_graph::TemporalTracker::new(20),
+        &active_windows,
+        idle_minutes,
+        &context_summary,
+        None,
+    );
+    if !scene_section.is_empty() {
+        prompt.push_str(&scene_section);
+        prompt.push_str("\n\n");
     }
 
     // --- Instructions ---

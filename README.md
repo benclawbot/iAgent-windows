@@ -162,15 +162,23 @@ iAgent includes a local-first personal desktop layer for user-approved recall an
 - smart snippets such as `/sig` for reusable text expansions
 - typed snippet expansion support for text that ends with a saved trigger, with optional app scoping
 - contextual reminders tied to the current app/window title, including due/overdue reminder checks
-- runtime tick handling for due reminders, clipboard capture, one queued background job, and proactive suggestion events
+- an always-on personal daemon contract for clipboard capture, app/window snapshots, due reminders, one queued background job, and proactive suggestion events
+- a `personal-daemon` CLI that can run once, print status, or stay resident as a headless login daemon
 - recent clipboard recovery with duplicate handling, secret redaction, and opt-in capture from the system clipboard
 - clipboard pin/delete/clear controls and local retention limits
 - active-window capture, recent app/window recall, and Windows focus switching for commands like "switch to the spreadsheet from yesterday"
 - background job records plus safe built-in execution for folder summaries and batch-rename previews, with JSON job logs
-- window layout plans, saved named layouts, Windows active-window snapping, and two-window tiling by app/window description
-- privacy/settings controls for clipboard history, reminder notifications, background jobs, proactive suggestions, snippet expansion, retention, and personal-data clearing
+- searchable Recall-like timeline entries with retention, filters, app exclusions, private-title filtering, and delete controls
+- computer-use action planning with observe/act/verify steps, retry-ready verification, permission tiers, and prompt-injection risk flags
+- window layout plans, saved named layouts, project workspaces, Windows active-window snapping, and two-window tiling by app/window description
+- privacy/settings controls for clipboard history, reminder notifications, background jobs, proactive suggestions, snippet expansion, timeline capture modes, retention, app exclusions, and personal-data clearing
+- UI-ready control-panel summaries for snippets, reminders, clipboard, jobs, privacy, layouts, timeline, and project workspaces
 
 The `personal` tool stores this helper data under the local iAgent/JCode home directory and keeps it separate from durable long-term memory unless the user explicitly asks to remember something.
+
+The Windows installer creates a hidden `iagent-personal-daemon` Startup shortcut by default. Use `-SkipPersonalDaemonSetup` to opt out, or run `iagent personal-daemon --status` to inspect the local daemon state.
+
+Run `iagent personal-daemon --headless` to keep the personal layer active in the background, `iagent personal-daemon --once --headless` for a single watcher tick, and `iagent personal-daemon --status` to inspect counts for reminders, jobs, clipboard, timeline, layouts, and project workspaces. The Windows installer creates a hidden Startup shortcut for this daemon unless `-SkipPersonalDaemonSetup` is supplied.
 
 ---
 

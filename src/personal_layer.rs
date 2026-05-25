@@ -31,6 +31,10 @@ pub struct PersonalState {
     pub jobs: Vec<BackgroundJob>,
     #[serde(default)]
     pub layouts: Vec<SavedWindowLayout>,
+    #[serde(default)]
+    pub timeline: Vec<TimelineEntry>,
+    #[serde(default)]
+    pub workspaces: Vec<ProjectWorkspace>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -49,6 +53,28 @@ pub struct PersonalSettings {
     pub max_clipboard_entries: usize,
     #[serde(default = "default_retention_days")]
     pub retention_days: u32,
+    #[serde(default = "default_true")]
+    pub timeline_enabled: bool,
+    #[serde(default = "default_true")]
+    pub app_history_enabled: bool,
+    #[serde(default)]
+    pub screenshots_enabled: bool,
+    #[serde(default)]
+    pub ocr_enabled: bool,
+    #[serde(default = "default_true")]
+    pub uia_text_enabled: bool,
+    #[serde(default = "default_true")]
+    pub computer_use_enabled: bool,
+    #[serde(default = "default_true")]
+    pub prompt_injection_defense_enabled: bool,
+    #[serde(default)]
+    pub encrypted_sensitive_storage: bool,
+    #[serde(default = "default_true")]
+    pub require_approval_for_personal_actions: bool,
+    #[serde(default)]
+    pub excluded_apps: Vec<String>,
+    #[serde(default)]
+    pub private_title_patterns: Vec<String>,
 }
 
 impl Default for PersonalSettings {
@@ -61,6 +87,17 @@ impl Default for PersonalSettings {
             snippet_expansion_enabled: true,
             max_clipboard_entries: default_max_clipboard_entries(),
             retention_days: default_retention_days(),
+            timeline_enabled: true,
+            app_history_enabled: true,
+            screenshots_enabled: false,
+            ocr_enabled: false,
+            uia_text_enabled: true,
+            computer_use_enabled: true,
+            prompt_injection_defense_enabled: true,
+            encrypted_sensitive_storage: false,
+            require_approval_for_personal_actions: true,
+            excluded_apps: Vec::new(),
+            private_title_patterns: Vec::new(),
         }
     }
 }
@@ -74,6 +111,17 @@ pub struct PersonalSettingsInput {
     pub snippet_expansion_enabled: Option<bool>,
     pub max_clipboard_entries: Option<usize>,
     pub retention_days: Option<u32>,
+    pub timeline_enabled: Option<bool>,
+    pub app_history_enabled: Option<bool>,
+    pub screenshots_enabled: Option<bool>,
+    pub ocr_enabled: Option<bool>,
+    pub uia_text_enabled: Option<bool>,
+    pub computer_use_enabled: Option<bool>,
+    pub prompt_injection_defense_enabled: Option<bool>,
+    pub encrypted_sensitive_storage: Option<bool>,
+    pub require_approval_for_personal_actions: Option<bool>,
+    pub excluded_apps: Option<Vec<String>>,
+    pub private_title_patterns: Option<Vec<String>>,
 }
 
 impl From<PersonalSettings> for PersonalSettingsInput {
@@ -86,6 +134,19 @@ impl From<PersonalSettings> for PersonalSettingsInput {
             snippet_expansion_enabled: Some(settings.snippet_expansion_enabled),
             max_clipboard_entries: Some(settings.max_clipboard_entries),
             retention_days: Some(settings.retention_days),
+            timeline_enabled: Some(settings.timeline_enabled),
+            app_history_enabled: Some(settings.app_history_enabled),
+            screenshots_enabled: Some(settings.screenshots_enabled),
+            ocr_enabled: Some(settings.ocr_enabled),
+            uia_text_enabled: Some(settings.uia_text_enabled),
+            computer_use_enabled: Some(settings.computer_use_enabled),
+            prompt_injection_defense_enabled: Some(settings.prompt_injection_defense_enabled),
+            encrypted_sensitive_storage: Some(settings.encrypted_sensitive_storage),
+            require_approval_for_personal_actions: Some(
+                settings.require_approval_for_personal_actions,
+            ),
+            excluded_apps: Some(settings.excluded_apps),
+            private_title_patterns: Some(settings.private_title_patterns),
         }
     }
 }
@@ -252,6 +313,8 @@ pub struct ClearPersonalData {
     pub jobs: bool,
     pub app_windows: bool,
     pub layouts: bool,
+    pub timeline: bool,
+    pub workspaces: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -262,6 +325,113 @@ pub struct ClearPersonalDataResult {
     pub jobs: usize,
     pub app_windows: usize,
     pub layouts: usize,
+    pub timeline: usize,
+    pub workspaces: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TimelineEntry {
+    pub id: String,
+    pub observed_at: DateTime<Utc>,
+    pub app_name: String,
+    pub window_title: String,
+    pub activity: String,
+    pub text_excerpt: Option<String>,
+    pub screenshot_path: Option<String>,
+    pub source: String,
+    #[serde(default)]
+    pub capture_modes: Vec<String>,
+    #[serde(default)]
+    pub risk_flags: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TimelineEntryInput {
+    pub app_name: String,
+    pub window_title: String,
+    pub activity: String,
+    pub text_excerpt: Option<String>,
+    pub screenshot_path: Option<String>,
+    pub source: String,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct TimelineSearch {
+    pub query: Option<String>,
+    pub app_name: Option<String>,
+    pub limit: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ComputerUseActionPlan {
+    pub kind: String,
+    pub target: Option<String>,
+    pub value: Option<String>,
+    pub rationale: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ComputerUseRequest {
+    pub goal: String,
+    pub app_name: Option<String>,
+    pub window_title: Option<String>,
+    pub observation_text: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ComputerUsePlan {
+    pub goal: String,
+    pub app_name: Option<String>,
+    pub window_title: Option<String>,
+    pub actions: Vec<ComputerUseActionPlan>,
+    pub verification_required: bool,
+    pub permission_tier: String,
+    #[serde(default)]
+    pub risk_flags: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ProjectWorkspace {
+    pub id: String,
+    pub name: String,
+    pub layout_name: Option<String>,
+    #[serde(default)]
+    pub app_queries: Vec<String>,
+    pub notes: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ProjectWorkspaceInput {
+    pub name: String,
+    pub layout_name: Option<String>,
+    pub app_queries: Vec<String>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PersonalControlPanelSummary {
+    pub snippets: usize,
+    pub reminders: usize,
+    pub clipboard_entries: usize,
+    pub jobs: usize,
+    pub recent_app_windows: usize,
+    pub saved_layouts: usize,
+    pub timeline_entries: usize,
+    pub project_workspaces: usize,
+    pub privacy: PersonalPrivacySummary,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PersonalPrivacySummary {
+    pub timeline_enabled: bool,
+    pub screenshots_enabled: bool,
+    pub ocr_enabled: bool,
+    pub uia_text_enabled: bool,
+    pub encrypted_sensitive_storage: bool,
+    pub excluded_apps: Vec<String>,
+    pub private_title_patterns: Vec<String>,
 }
 
 impl PersonalStore {
@@ -318,6 +488,39 @@ impl PersonalStore {
         }
         if let Some(value) = input.retention_days {
             settings.retention_days = value.clamp(1, 3650);
+        }
+        if let Some(value) = input.timeline_enabled {
+            settings.timeline_enabled = value;
+        }
+        if let Some(value) = input.app_history_enabled {
+            settings.app_history_enabled = value;
+        }
+        if let Some(value) = input.screenshots_enabled {
+            settings.screenshots_enabled = value;
+        }
+        if let Some(value) = input.ocr_enabled {
+            settings.ocr_enabled = value;
+        }
+        if let Some(value) = input.uia_text_enabled {
+            settings.uia_text_enabled = value;
+        }
+        if let Some(value) = input.computer_use_enabled {
+            settings.computer_use_enabled = value;
+        }
+        if let Some(value) = input.prompt_injection_defense_enabled {
+            settings.prompt_injection_defense_enabled = value;
+        }
+        if let Some(value) = input.encrypted_sensitive_storage {
+            settings.encrypted_sensitive_storage = value;
+        }
+        if let Some(value) = input.require_approval_for_personal_actions {
+            settings.require_approval_for_personal_actions = value;
+        }
+        if let Some(value) = input.excluded_apps {
+            settings.excluded_apps = normalize_list(value);
+        }
+        if let Some(value) = input.private_title_patterns {
+            settings.private_title_patterns = normalize_list(value);
         }
 
         let settings = settings.clone();
@@ -941,6 +1144,234 @@ impl PersonalStore {
             .map(|layout| layout.placements))
     }
 
+    pub fn should_observe_app(&self, app_name: &str, window_title: &str) -> Result<bool> {
+        let settings = self.settings()?;
+        Ok(should_observe_with_settings(
+            &settings,
+            app_name,
+            window_title,
+        ))
+    }
+
+    pub fn record_timeline_entry(
+        &self,
+        input: TimelineEntryInput,
+    ) -> Result<Option<TimelineEntry>> {
+        let mut state = self.state()?;
+        if !state.settings.timeline_enabled
+            || !should_observe_with_settings(&state.settings, &input.app_name, &input.window_title)
+        {
+            return Ok(None);
+        }
+
+        let mut capture_modes = Vec::new();
+        if state.settings.uia_text_enabled && input.text_excerpt.is_some() {
+            capture_modes.push("uia_text".to_string());
+        }
+        if state.settings.ocr_enabled {
+            capture_modes.push("ocr".to_string());
+        }
+        if state.settings.screenshots_enabled && input.screenshot_path.is_some() {
+            capture_modes.push("screenshot".to_string());
+        }
+
+        let entry = TimelineEntry {
+            id: Uuid::new_v4().to_string(),
+            observed_at: Utc::now(),
+            app_name: input.app_name,
+            window_title: input.window_title,
+            activity: input.activity,
+            text_excerpt: input.text_excerpt.map(|text| truncate_chars(&text, 500)),
+            screenshot_path: if state.settings.screenshots_enabled {
+                input.screenshot_path
+            } else {
+                None
+            },
+            source: input.source,
+            capture_modes,
+            risk_flags: Vec::new(),
+        };
+
+        state.timeline.insert(0, entry.clone());
+        prune_timeline(&mut state);
+        self.save_state(&state)?;
+        Ok(Some(entry))
+    }
+
+    pub fn search_timeline(&self, search: TimelineSearch) -> Result<Vec<TimelineEntry>> {
+        let query_terms: Vec<String> = search
+            .query
+            .as_deref()
+            .unwrap_or_default()
+            .to_lowercase()
+            .split_whitespace()
+            .map(ToOwned::to_owned)
+            .collect();
+        let app_filter = search.app_name.unwrap_or_default().to_lowercase();
+        let limit = search.limit.max(1);
+
+        Ok(self
+            .state()?
+            .timeline
+            .into_iter()
+            .filter(|entry| {
+                app_filter.is_empty() || entry.app_name.to_lowercase().contains(&app_filter)
+            })
+            .filter(|entry| {
+                if query_terms.is_empty() {
+                    return true;
+                }
+                let haystack = format!(
+                    "{} {} {} {}",
+                    entry.app_name,
+                    entry.window_title,
+                    entry.activity,
+                    entry.text_excerpt.as_deref().unwrap_or_default()
+                )
+                .to_lowercase();
+                query_terms.iter().all(|term| haystack.contains(term))
+            })
+            .take(limit)
+            .collect())
+    }
+
+    pub fn delete_timeline_entry(&self, id: &str) -> Result<bool> {
+        let mut state = self.state()?;
+        let before = state.timeline.len();
+        state.timeline.retain(|entry| entry.id != id);
+        let removed = state.timeline.len() != before;
+        if removed {
+            self.save_state(&state)?;
+        }
+        Ok(removed)
+    }
+
+    pub fn draft_computer_use_plan(&self, request: ComputerUseRequest) -> Result<ComputerUsePlan> {
+        let settings = self.settings()?;
+        if !settings.computer_use_enabled {
+            return Err(anyhow!("computer-use action loop is disabled"));
+        }
+
+        let observation = request.observation_text.unwrap_or_default();
+        let mut risk_flags = Vec::new();
+        if settings.prompt_injection_defense_enabled && looks_like_prompt_injection(&observation) {
+            risk_flags.push("prompt_injection".to_string());
+        }
+        if let (Some(app), Some(title)) = (&request.app_name, &request.window_title)
+            && !should_observe_with_settings(&settings, app, title)
+        {
+            risk_flags.push("private_or_excluded_app".to_string());
+        }
+
+        let mut actions = vec![ComputerUseActionPlan {
+            kind: "observe".to_string(),
+            target: request.window_title.clone(),
+            value: None,
+            rationale: "Capture screenshot/UI tree before acting.".to_string(),
+        }];
+        actions.push(ComputerUseActionPlan {
+            kind: "act".to_string(),
+            target: request.app_name.clone(),
+            value: Some(request.goal.clone()),
+            rationale: "Execute bounded click/type/scroll/wait steps after approval.".to_string(),
+        });
+        actions.push(ComputerUseActionPlan {
+            kind: "verify".to_string(),
+            target: request.window_title.clone(),
+            value: None,
+            rationale: "Re-observe and confirm the requested state changed.".to_string(),
+        });
+
+        Ok(ComputerUsePlan {
+            goal: request.goal,
+            app_name: request.app_name,
+            window_title: request.window_title,
+            actions,
+            verification_required: true,
+            permission_tier: if risk_flags.is_empty()
+                && !settings.require_approval_for_personal_actions
+            {
+                "auto".to_string()
+            } else {
+                "confirm".to_string()
+            },
+            risk_flags,
+        })
+    }
+
+    pub fn save_project_workspace(&self, input: ProjectWorkspaceInput) -> Result<ProjectWorkspace> {
+        if input.name.trim().is_empty() {
+            return Err(anyhow!("workspace name is required"));
+        }
+        let mut state = self.state()?;
+        let now = Utc::now();
+        if let Some(existing) = state
+            .workspaces
+            .iter_mut()
+            .find(|workspace| workspace.name == input.name)
+        {
+            existing.layout_name = input.layout_name;
+            existing.app_queries = normalize_list(input.app_queries);
+            existing.notes = input.notes;
+            existing.updated_at = now;
+            let workspace = existing.clone();
+            self.save_state(&state)?;
+            return Ok(workspace);
+        }
+
+        let workspace = ProjectWorkspace {
+            id: Uuid::new_v4().to_string(),
+            name: input.name,
+            layout_name: input.layout_name,
+            app_queries: normalize_list(input.app_queries),
+            notes: input.notes,
+            created_at: now,
+            updated_at: now,
+        };
+        state.workspaces.push(workspace.clone());
+        self.save_state(&state)?;
+        Ok(workspace)
+    }
+
+    pub fn list_project_workspaces(&self) -> Result<Vec<ProjectWorkspace>> {
+        let mut workspaces = self.state()?.workspaces;
+        workspaces.sort_by(|a, b| a.name.cmp(&b.name));
+        Ok(workspaces)
+    }
+
+    pub fn control_panel_summary(&self) -> Result<PersonalControlPanelSummary> {
+        let state = self.state()?;
+        let pending_reminders = state
+            .reminders
+            .iter()
+            .filter(|reminder| reminder.status == "pending")
+            .count();
+        let active_jobs = state
+            .jobs
+            .iter()
+            .filter(|job| matches!(job.status.as_str(), "pending" | "running"))
+            .count();
+        Ok(PersonalControlPanelSummary {
+            snippets: state.snippets.len(),
+            reminders: pending_reminders,
+            clipboard_entries: state.clipboard.len(),
+            jobs: active_jobs,
+            recent_app_windows: state.app_windows.len(),
+            saved_layouts: state.layouts.len(),
+            timeline_entries: state.timeline.len(),
+            project_workspaces: state.workspaces.len(),
+            privacy: PersonalPrivacySummary {
+                timeline_enabled: state.settings.timeline_enabled,
+                screenshots_enabled: state.settings.screenshots_enabled,
+                ocr_enabled: state.settings.ocr_enabled,
+                uia_text_enabled: state.settings.uia_text_enabled,
+                encrypted_sensitive_storage: state.settings.encrypted_sensitive_storage,
+                excluded_apps: state.settings.excluded_apps,
+                private_title_patterns: state.settings.private_title_patterns,
+            },
+        })
+    }
+
     pub fn clear_personal_data(&self, clear: ClearPersonalData) -> Result<ClearPersonalDataResult> {
         let mut state = self.state()?;
         let mut result = ClearPersonalDataResult::default();
@@ -968,6 +1399,14 @@ impl PersonalStore {
         if clear.layouts {
             result.layouts = state.layouts.len();
             state.layouts.clear();
+        }
+        if clear.timeline {
+            result.timeline = state.timeline.len();
+            state.timeline.clear();
+        }
+        if clear.workspaces {
+            result.workspaces = state.workspaces.len();
+            state.workspaces.clear();
         }
 
         self.save_state(&state)?;
@@ -1358,6 +1797,60 @@ fn default_max_clipboard_entries() -> usize {
 
 fn default_retention_days() -> u32 {
     30
+}
+
+fn normalize_list(values: Vec<String>) -> Vec<String> {
+    let mut values: Vec<String> = values
+        .into_iter()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .collect();
+    values.sort();
+    values.dedup();
+    values
+}
+
+fn should_observe_with_settings(
+    settings: &PersonalSettings,
+    app_name: &str,
+    window_title: &str,
+) -> bool {
+    let app = app_name.to_lowercase();
+    let title = window_title.to_lowercase();
+    if settings
+        .excluded_apps
+        .iter()
+        .any(|excluded| app.contains(&excluded.to_lowercase()))
+    {
+        return false;
+    }
+    !settings
+        .private_title_patterns
+        .iter()
+        .any(|pattern| title.contains(&pattern.to_lowercase()))
+}
+
+fn prune_timeline(state: &mut PersonalState) {
+    let max_entries = (state.settings.retention_days as usize).clamp(1, 3650) * 24;
+    state.timeline.truncate(max_entries);
+}
+
+fn truncate_chars(value: &str, max_chars: usize) -> String {
+    value.chars().take(max_chars).collect()
+}
+
+fn looks_like_prompt_injection(value: &str) -> bool {
+    let value = value.to_lowercase();
+    [
+        "ignore previous instructions",
+        "ignore all previous",
+        "system prompt",
+        "developer message",
+        "do not ask",
+        "without asking",
+    ]
+    .iter()
+    .any(|needle| value.contains(needle))
 }
 
 fn validate_trigger(trigger: &str) -> Result<()> {
