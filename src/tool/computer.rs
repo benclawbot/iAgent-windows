@@ -971,9 +971,8 @@ fn capture_screenshot_windows() -> Result<ScreenshotResult> {
 #[cfg(windows)]
 fn click_windows(x: i32, y: i32, button: MouseButton) -> Result<()> {
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
-        INPUT, INPUT_0, INPUT_MOUSE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP,
-        MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP,
-        MOUSEINPUT, SendInput,
+        MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP,
+        MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP,
     };
     use windows_sys::Win32::UI::WindowsAndMessaging::SetCursorPos;
 

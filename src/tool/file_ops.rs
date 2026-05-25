@@ -3,7 +3,7 @@
 //! Wraps desktop_monitor::file_ops functions with XDG shortcut support.
 //! All operations enforce home-directory boundaries and protected directory rules.
 
-use crate::tool::{Tool, ToolContext, ToolOutput};
+use crate::tool::{Tool, ToolContext, ToolOutput, intent_schema_property};
 use anyhow::Result;
 use async_trait::async_trait;
 use desktop_monitor::file_ops;
@@ -99,7 +99,8 @@ impl Tool for FileOpsTool {
                 "name_pattern": { "type": "string", "description": "Filter files by name pattern (case-insensitive)" },
                 "extension": { "type": "string", "description": "Filter files by extension (without dot)" },
                 "max_results": { "type": "integer", "description": "Maximum search results (default: 100)" },
-                "max_dirs": { "type": "integer", "description": "Maximum directories to scan (default: 100)" }
+                "max_dirs": { "type": "integer", "description": "Maximum directories to scan (default: 100)" },
+                "intent": intent_schema_property()
             }
         })
     }

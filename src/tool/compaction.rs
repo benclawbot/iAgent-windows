@@ -9,7 +9,7 @@
 //! and controlled via config.toml. This tool provides visibility only.
 
 use crate::compaction::CompactionManager;
-use crate::tool::{Tool, ToolContext, ToolOutput};
+use crate::tool::{Tool, ToolContext, ToolOutput, intent_schema_property};
 use anyhow::Result;
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -56,7 +56,8 @@ impl Tool for CompactionTool {
                     "type": "string",
                     "enum": ["status", "trigger"],
                     "description": "Action to perform: 'status' to view stats, 'trigger' to manually compact"
-                }
+                },
+                "intent": intent_schema_property()
             }
         })
     }
