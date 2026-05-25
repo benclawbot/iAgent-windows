@@ -165,6 +165,39 @@ async fn registry_exposes_action_flight_recorder_tool() {
     );
 }
 
+#[tokio::test]
+async fn personal_tool_schema_exposes_sensitive_context_firewall_actions() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "personal")
+        .expect("personal tool should be registered");
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("personal action enum");
+
+    for action in [
+        "sensitive_context_status",
+        "preview_redaction",
+        "pause_capture",
+        "resume_capture",
+        "forget_recent_context",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "personal tool should expose {action}"
+        );
+    }
+    assert_eq!(
+        def.input_schema["properties"]["duration_minutes"]["type"],
+        "integer"
+    );
+    assert_eq!(def.input_schema["properties"]["reason"]["type"], "string");
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");
