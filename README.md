@@ -111,17 +111,6 @@ IAGENT_PROVIDER=openrouter
 IAGENT_PROVIDER=gemini
 ```
 
-## Proxy Setup (Stealth Mode)
-
-If using automated GitHub operations, configure a residential proxy to avoid bot detection:
-
-```bash
-# Set proxy environment variables
-export HTTPS_PROXY=http://user:pass@proxyhost:port
-export HTTP_PROXY=http://user:pass@proxyhost:port
-```
-
-**Recommended proxy providers**: Luminati, SmartProxy, Oxylabs (residential rotating proxies)
 
 ---
 
