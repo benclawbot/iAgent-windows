@@ -493,15 +493,6 @@ set OPENAI_API_KEY=sk-...
 "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222
 ```
 
-### GitHub Bot Detection
-
-**Error**: `API rate limit exceeded` or `Access blocked`
-
-**Solution**: Configure residential proxy to avoid bot detection:
-```bash
-export HTTPS_PROXY=http://user:pass@proxyhost:port
-```
-
 ### Rust Build Errors
 
 **Error**: `linker command not found` or compilation failures
