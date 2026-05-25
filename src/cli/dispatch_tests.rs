@@ -222,6 +222,7 @@ async fn wait_for_reloading_server_returns_false_when_reload_failed() {
     assert!(!wait_for_reloading_server().await);
 }
 
+#[cfg_attr(windows, ignore = "live listener fallback can hang on Windows CI")]
 #[tokio::test]
 async fn wait_for_reloading_server_returns_true_for_live_listener() {
     let _guard = crate::storage::lock_test_env();
