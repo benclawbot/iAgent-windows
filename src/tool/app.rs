@@ -298,7 +298,8 @@ impl Tool for AppTool {
                         "dry_run": { "type": "boolean" },
                         "max_items": { "type": "integer" }
                     }
-                }
+                },
+                "intent": super::intent_schema_property()
             }
         })
     }

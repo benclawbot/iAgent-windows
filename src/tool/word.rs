@@ -1,4 +1,6 @@
 use super::{Tool, ToolContext, ToolOutput};
+#[cfg(windows)]
+use anyhow::Context;
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 #[cfg(windows)]
