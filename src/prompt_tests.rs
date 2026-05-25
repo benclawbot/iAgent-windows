@@ -28,7 +28,7 @@ fn test_skill_prompt_integration() {
     let prompt = build_system_prompt(Some(skill_prompt), &[]);
 
     // The prompt should contain our default system prompt
-    assert!(prompt.contains("You are the Jcode Agent"));
+    assert!(prompt.contains("You are the iAgent"));
 
     // The prompt should contain the skill prompt
     assert!(prompt.contains(skill_prompt));

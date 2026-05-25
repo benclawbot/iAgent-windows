@@ -664,7 +664,6 @@ function Install-IagentDockApp([string]$TargetAppDir) {
             Stop-IagentDockProcesses -TargetAppDir $TargetAppDir
             Remove-Item -LiteralPath $TargetAppDir -Recurse -Force
         }
-
         if ($usesLegacyLayout) {
             Move-Item -LiteralPath $extractedRoot -Destination $TargetAppDir -Force
         } else {

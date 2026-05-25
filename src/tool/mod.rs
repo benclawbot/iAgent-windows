@@ -9,6 +9,7 @@ mod browser;
 mod codesearch;
 mod communicate;
 mod compaction;
+mod computer;
 mod conversation_search;
 mod debug_socket;
 mod edit;
@@ -35,6 +36,7 @@ mod task;
 mod todo;
 mod webfetch;
 mod websearch;
+mod word;
 mod write;
 
 use crate::compaction::CompactionManager;
@@ -155,6 +157,12 @@ impl Registry {
             Self::insert_tool_timed(&mut m, &mut timings, "ls", ls::LsTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "bash", bash::BashTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "browser", browser::BrowserTool::new);
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "computer",
+                computer::ComputerTool::new,
+            );
             Self::insert_tool_timed(&mut m, &mut timings, "open", open::OpenTool::new);
             Self::insert_tool_timed(
                 &mut m,
@@ -193,6 +201,7 @@ impl Registry {
             Self::insert_tool_timed(&mut m, &mut timings, "memory", memory::MemoryTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "goal", goal::GoalTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "gmail", gmail::GmailTool::new);
+            Self::insert_tool_timed(&mut m, &mut timings, "word", word::WordTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "schedule", ambient::ScheduleTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "selfdev", selfdev::SelfDevTool::new);
             let nonzero: Vec<String> = timings
