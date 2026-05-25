@@ -3,7 +3,7 @@ use crate::{browser, gateway, memory, personal_daemon, session, storage};
 use anyhow::Result;
 use serde::Serialize;
 use std::collections::BTreeSet;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::net::ToSocketAddrs;
 mod provider_setup;
 mod report_info;

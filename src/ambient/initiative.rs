@@ -4,13 +4,13 @@
 // Detects patterns in the memory graph and surfaces proactive opportunities
 // to the LLM. Replaces pure clock-driven scheduling with goal-driven reasoning.
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::Utc;
 use std::collections::HashMap;
 
+use crate::ambient::Priority;
 use crate::memory::MemoryManager;
 use crate::memory_graph::MemoryGraph;
 use crate::memory_types::MemoryCategory;
-use crate::ambient::Priority;
 
 /// A trigger that caused an initiative candidate to be generated.
 #[derive(Debug, Clone)]
@@ -66,10 +66,7 @@ impl InitiativeCandidate {
         Self {
             trigger,
             reason: reason.to_string(),
-            suggested_actions: suggested_actions
-                .into_iter()
-                .map(String::from)
-                .collect(),
+            suggested_actions: suggested_actions.into_iter().map(String::from).collect(),
             confidence,
         }
     }
@@ -107,14 +104,12 @@ impl InitiativeEngine {
             let global_candidates = self.analyze_graph(graph);
             // Only keep global candidates that don't overlap with project ones
             for gc in global_candidates {
-                let overlapping = candidates.iter().any(|c| {
-                    match (&gc.trigger, &c.trigger) {
-                        (
-                            InitiativeTrigger::MemoryPattern { description: a, .. },
-                            InitiativeTrigger::MemoryPattern { description: b, .. },
-                        ) => a == b,
-                        _ => false,
-                    }
+                let overlapping = candidates.iter().any(|c| match (&gc.trigger, &c.trigger) {
+                    (
+                        InitiativeTrigger::MemoryPattern { description: a, .. },
+                        InitiativeTrigger::MemoryPattern { description: b, .. },
+                    ) => a == b,
+                    _ => false,
                 });
                 if !overlapping {
                     candidates.push(gc);
@@ -146,14 +141,6 @@ impl InitiativeEngine {
                 .collect();
 
             if mems_with_tag.len() >= 3 {
-                let top_memory = mems_with_tag.first().map(|m| {
-                    if m.content.len() > 60 {
-                        format!("{}...", &m.content[..60])
-                    } else {
-                        m.content.clone()
-                    }
-                }).unwrap_or_default();
-
                 candidates.push(InitiativeCandidate::new(
                     InitiativeTrigger::MemoryPattern {
                         description: format!("Topic '{}' appears in {} memories", tag, count),
@@ -200,7 +187,10 @@ impl InitiativeEngine {
                         content_snippet: snippet.clone(),
                         days_since_access: days_since,
                     },
-                    &format!("Fact '{}' has not been accessed in {} days — may need verification.", snippet, days_since),
+                    &format!(
+                        "Fact '{}' has not been accessed in {} days — may need verification.",
+                        snippet, days_since
+                    ),
                     vec![
                         "Verify this fact is still accurate",
                         "Update the memory with current information if needed",
@@ -262,8 +252,11 @@ impl InitiativeEngine {
             let member_ids: Vec<String> = graph
                 .edges
                 .iter()
-                .filter(|(src, edges)| {
-                    edges.iter().any(|e| e.target == *cluster_id && matches!(e.kind, crate::memory_graph::EdgeKind::InCluster))
+                .filter(|(_src, edges)| {
+                    edges.iter().any(|e| {
+                        e.target == *cluster_id
+                            && matches!(e.kind, crate::memory_graph::EdgeKind::InCluster)
+                    })
                 })
                 .map(|(src, _)| src.clone())
                 .collect();
@@ -283,13 +276,15 @@ impl InitiativeEngine {
             }
 
             // Check if any member was accessed recently
-            let recent_access = members.iter().map(|m| m.updated_at).fold(None, |acc, ts| {
-                match acc {
-                    None => Some(ts),
-                    Some(prev) if ts > prev => Some(ts),
-                    other => other,
-                }
-            });
+            let recent_access =
+                members
+                    .iter()
+                    .map(|m| m.updated_at)
+                    .fold(None, |acc, ts| match acc {
+                        None => Some(ts),
+                        Some(prev) if ts > prev => Some(ts),
+                        other => other,
+                    });
 
             let days_since = recent_access.map_or(999, |ts| (now - ts).num_days() as u32);
 
@@ -331,13 +326,17 @@ impl InitiativeEngine {
                 continue;
             }
             let lower = mem.content.to_lowercase();
-            if lower.contains("goal:") || lower.contains("aim:") || lower.contains("working toward") {
+            if lower.contains("goal:") || lower.contains("aim:") || lower.contains("working toward")
+            {
                 let key = if mem.content.len() > 80 {
                     format!("{}...", &mem.content[..80])
                 } else {
                     mem.content.clone()
                 };
-                goal_memories.entry(key).or_insert_with(Vec::new).push(mem.id.clone());
+                goal_memories
+                    .entry(key)
+                    .or_insert_with(Vec::new)
+                    .push(mem.id.clone());
             }
         }
         for (goal_text, memory_ids) in goal_memories {
@@ -398,7 +397,12 @@ pub fn build_initiative_section(candidates: &[InitiativeCandidate]) -> String {
     lines.push(String::new());
 
     for (i, candidate) in candidates.iter().enumerate().take(8) {
-        lines.push(format!("### Opportunity {} (confidence: {:.0}%)\n{}", i + 1, candidate.confidence * 100.0, candidate.reason));
+        lines.push(format!(
+            "### Opportunity {} (confidence: {:.0}%)\n{}",
+            i + 1,
+            candidate.confidence * 100.0,
+            candidate.reason
+        ));
 
         // Suggested actions
         if !candidate.suggested_actions.is_empty() {
