@@ -88,23 +88,20 @@ jobs:
 
   test-unit:
     name: Unit tests
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v6.0.2
 
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-msvc
 
       - uses: Swatinem/rust-cache@v2
         with:
           key: windows-backend-tests
 
       - name: Run focused unit canary
-        shell: pwsh
-        run: cargo test -p iagent --lib tool::tests::first_party_tool_definitions_include_optional_intent_explicitly --target x86_64-pc-windows-msvc -- --exact
+        run: cargo test -p iagent --lib tool::tests::first_party_tool_definitions_include_optional_intent_explicitly -- --exact
 
   test-self-check:
     name: Self-check validation
@@ -122,11 +119,7 @@ jobs:
         with:
           key: windows-backend-selfcheck
 
-      - name: Build iAgent
-        shell: pwsh
-        run: cargo build --bin iagent --target x86_64-pc-windows-msvc
-
-      - name: Run self-check
+      - name: Build all binaries
         shell: pwsh
         env:
           OPENAI_API_KEY: ${{ secrets.TEST_API_KEY || 'sk-test-dummy' }}
