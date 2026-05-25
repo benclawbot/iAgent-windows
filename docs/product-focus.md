@@ -27,6 +27,7 @@ Ship one high-confidence loop end to end:
 5. Learning and memory
 - Persist accepted/denied actions and safety decisions for future policy routing.
 - Record action transcripts with context and outcomes.
+- Preserve user-approved personal desktop context through snippets, contextual reminders, clipboard recovery, recent app/window recall, background job records, and window layout plans.
 
 ## Out of Scope (Default Path)
 

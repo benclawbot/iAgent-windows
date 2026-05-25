@@ -208,6 +208,7 @@ const AUTO_ALLOWED: &[&str] = &[
     "grep",
     "ls",
     "memory",
+    "personal",
     "todo",
     "todowrite",
     "todoread",

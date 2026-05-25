@@ -26,6 +26,7 @@ mod memory;
 mod multiedit;
 mod open;
 mod patch;
+mod personal;
 mod read;
 pub mod selfdev;
 mod session_search;
@@ -199,6 +200,12 @@ impl Registry {
                 session_search::SessionSearchTool::new,
             );
             Self::insert_tool_timed(&mut m, &mut timings, "memory", memory::MemoryTool::new);
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "personal",
+                personal::PersonalTool::new,
+            );
             Self::insert_tool_timed(&mut m, &mut timings, "goal", goal::GoalTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "gmail", gmail::GmailTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "word", word::WordTool::new);

@@ -154,6 +154,22 @@ Dedicated memory and storage layers enable:
 
 ---
 
+## Personal Desktop Layer
+
+iAgent includes a local-first personal desktop layer for user-approved recall and recovery workflows:
+
+- explicit personal memory through the existing `memory` tool
+- smart snippets such as `/sig` for reusable text expansions
+- contextual reminders tied to the current app/window title
+- recent clipboard recovery with duplicate handling, secret redaction, and opt-in capture from the system clipboard
+- recent app/window recall for commands like "switch to the spreadsheet from yesterday"
+- background job records plus safe built-in execution for folder summaries and batch-rename previews
+- window layout plans and Windows active-window snapping for left, right, top, bottom, centered, or full-screen placement
+
+The `personal` tool stores this helper data under the local iAgent/JCode home directory and keeps it separate from durable long-term memory unless the user explicitly asks to remember something.
+
+---
+
 ## Tool Ecosystem
 
 Integrated tooling includes:
@@ -270,6 +286,7 @@ flowchart TB
         SERVER[Runtime Server]
         AGENT[Agent Executor]
         MEMORY[Memory System]
+        PERSONAL[Personal Desktop Layer]
         SESSION[Session Manager]
         PLAN[Planning Engine]
         AMBIENT[Ambient Jobs]
@@ -296,6 +313,7 @@ flowchart TB
     DOCK --> SERVER
     SERVER --> AGENT
     AGENT --> MEMORY
+    AGENT --> PERSONAL
     AGENT --> SESSION
     AGENT --> PLAN
     AGENT --> AMBIENT

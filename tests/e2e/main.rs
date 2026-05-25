@@ -9,6 +9,7 @@ mod test_support;
 mod ambient;
 mod binary_integration;
 mod burst_spawn;
+mod personal_layer;
 mod provider_behavior;
 mod safety;
 mod session_flow;
