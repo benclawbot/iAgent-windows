@@ -89,7 +89,7 @@ jobs:
   test-unit:
     name: Unit tests
     runs-on: windows-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -101,10 +101,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: windows-backend-tests
-
-      - name: Compile unit test binaries
-        shell: pwsh
-        run: cargo test --workspace --no-run --target x86_64-pc-windows-msvc
 
       - name: Run focused unit canary
         shell: pwsh
