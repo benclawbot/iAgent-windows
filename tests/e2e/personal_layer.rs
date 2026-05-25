@@ -1,6 +1,7 @@
 use crate::test_support::setup_test_env;
 use iagent::personal_layer::{
     ClipboardInput, JobInput, PersonalStore, ReminderInput, SnippetInput, WindowBounds,
+    plan_tile_two_windows,
 };
 use std::fs;
 
@@ -94,6 +95,18 @@ fn personal_store_covers_recovery_reminders_snippets_apps_jobs_and_layouts() {
     .expect("snap left");
     assert_eq!(snapped.width, 960);
     assert_eq!(snapped.height, 1080);
+
+    let tiled = plan_tile_two_windows(WindowBounds {
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+    })
+    .expect("tile two windows");
+    assert_eq!(tiled[0].label, "left");
+    assert_eq!(tiled[0].bounds.width, 960);
+    assert_eq!(tiled[1].label, "right");
+    assert_eq!(tiled[1].bounds.x, 960);
 }
 
 fn folder() -> tempfile::TempDir {

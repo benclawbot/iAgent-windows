@@ -131,6 +131,12 @@ pub struct WindowBounds {
     pub height: i32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct WindowPlacement {
+    pub label: String,
+    pub bounds: WindowBounds,
+}
+
 impl PersonalStore {
     pub fn load() -> Result<Self> {
         let dir = crate::storage::jcode_dir()?.join("personal");
@@ -402,6 +408,28 @@ impl PersonalStore {
         }))
     }
 
+    pub fn switch_to_app_description(&self, query: &str) -> Result<Option<AppWindowRecord>> {
+        let Some(record) = self.resolve_app_description(query)? else {
+            return Ok(None);
+        };
+        focus_recorded_window(&record)?;
+        Ok(Some(record))
+    }
+
+    pub fn tile_app_descriptions(
+        &self,
+        left_query: &str,
+        right_query: &str,
+    ) -> Result<Option<Vec<WindowPlacement>>> {
+        let Some(left) = self.resolve_app_description(left_query)? else {
+            return Ok(None);
+        };
+        let Some(right) = self.resolve_app_description(right_query)? else {
+            return Ok(None);
+        };
+        tile_recorded_windows(&left, &right).map(Some)
+    }
+
     pub fn create_job(&self, input: JobInput) -> Result<BackgroundJob> {
         if input.kind.trim().is_empty() {
             return Err(anyhow!("job kind is required"));
@@ -551,78 +579,232 @@ pub fn plan_snap_window(monitor: WindowBounds, direction: &str) -> Result<Window
     }
 }
 
+pub fn plan_tile_two_windows(monitor: WindowBounds) -> Result<Vec<WindowPlacement>> {
+    Ok(vec![
+        WindowPlacement {
+            label: "left".to_string(),
+            bounds: plan_snap_window(monitor, "left")?,
+        },
+        WindowPlacement {
+            label: "right".to_string(),
+            bounds: plan_snap_window(monitor, "right")?,
+        },
+    ])
+}
+
 pub fn snap_active_window(direction: &str) -> Result<WindowBounds> {
     platform_snap_active_window(direction)
 }
 
+pub fn focus_recorded_window(record: &AppWindowRecord) -> Result<()> {
+    platform_focus_recorded_window(record)
+}
+
+pub fn tile_recorded_windows(
+    left: &AppWindowRecord,
+    right: &AppWindowRecord,
+) -> Result<Vec<WindowPlacement>> {
+    platform_tile_recorded_windows(left, right)
+}
+
 #[cfg(windows)]
 fn platform_snap_active_window(direction: &str) -> Result<WindowBounds> {
-    use windows_sys::Win32::Foundation::{HWND, RECT};
-    use windows_sys::Win32::Graphics::Gdi::{
-        GetMonitorInfoW, MONITOR_DEFAULTTONEAREST, MONITORINFO, MonitorFromWindow,
-    };
+    unsafe {
+        let hwnd = foreground_window()?;
+        let monitor = monitor_bounds_for_window(hwnd)?;
+        let bounds = plan_snap_window(monitor, direction)?;
+        move_window(hwnd, bounds, false)?;
+        Ok(bounds)
+    }
+}
+
+#[cfg(windows)]
+fn platform_focus_recorded_window(record: &AppWindowRecord) -> Result<()> {
     use windows_sys::Win32::UI::WindowsAndMessaging::{
-        GetForegroundWindow, SWP_NOACTIVATE, SWP_NOZORDER, SetWindowPos,
+        SW_RESTORE, SetForegroundWindow, ShowWindow,
     };
 
     unsafe {
-        let hwnd: HWND = GetForegroundWindow();
-        if hwnd.is_null() {
-            return Err(anyhow!("no foreground window"));
+        let hwnd = find_window_for_record(record)?;
+        ShowWindow(hwnd, SW_RESTORE);
+        if SetForegroundWindow(hwnd) == 0 {
+            return Err(anyhow!("failed to focus window '{}'", record.window_title));
         }
+        Ok(())
+    }
+}
 
-        let monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-        if monitor.is_null() {
-            return Err(anyhow!("no monitor for foreground window"));
-        }
+#[cfg(windows)]
+fn platform_tile_recorded_windows(
+    left: &AppWindowRecord,
+    right: &AppWindowRecord,
+) -> Result<Vec<WindowPlacement>> {
+    unsafe {
+        let left_hwnd = find_window_for_record(left)?;
+        let right_hwnd = find_window_for_record(right)?;
+        let monitor = monitor_bounds_for_window(left_hwnd)?;
+        let placements = plan_tile_two_windows(monitor)?;
+        move_window(left_hwnd, placements[0].bounds, true)?;
+        move_window(right_hwnd, placements[1].bounds, true)?;
+        Ok(placements)
+    }
+}
 
-        let mut info = MONITORINFO {
-            cbSize: std::mem::size_of::<MONITORINFO>() as u32,
-            rcMonitor: RECT {
-                left: 0,
-                top: 0,
-                right: 0,
-                bottom: 0,
-            },
-            rcWork: RECT {
-                left: 0,
-                top: 0,
-                right: 0,
-                bottom: 0,
-            },
-            dwFlags: 0,
-        };
+#[cfg(windows)]
+unsafe fn foreground_window() -> Result<windows_sys::Win32::Foundation::HWND> {
+    use windows_sys::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
 
-        if GetMonitorInfoW(monitor, &mut info) == 0 {
-            return Err(anyhow!("failed to read monitor info"));
-        }
+    let hwnd = unsafe { GetForegroundWindow() };
+    if hwnd.is_null() {
+        return Err(anyhow!("no foreground window"));
+    }
+    Ok(hwnd)
+}
 
-        let work = info.rcWork;
-        let bounds = plan_snap_window(
-            WindowBounds {
-                x: work.left,
-                y: work.top,
-                width: work.right - work.left,
-                height: work.bottom - work.top,
-            },
-            direction,
-        )?;
+#[cfg(windows)]
+unsafe fn monitor_bounds_for_window(
+    hwnd: windows_sys::Win32::Foundation::HWND,
+) -> Result<WindowBounds> {
+    use windows_sys::Win32::Foundation::RECT;
+    use windows_sys::Win32::Graphics::Gdi::{
+        GetMonitorInfoW, MONITOR_DEFAULTTONEAREST, MONITORINFO, MonitorFromWindow,
+    };
 
-        if SetWindowPos(
+    let monitor = unsafe { MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) };
+    if monitor.is_null() {
+        return Err(anyhow!("no monitor for window"));
+    }
+
+    let mut info = MONITORINFO {
+        cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+        rcMonitor: RECT {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+        },
+        rcWork: RECT {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+        },
+        dwFlags: 0,
+    };
+
+    if unsafe { GetMonitorInfoW(monitor, &mut info) } == 0 {
+        return Err(anyhow!("failed to read monitor info"));
+    }
+
+    let work = info.rcWork;
+    Ok(WindowBounds {
+        x: work.left,
+        y: work.top,
+        width: work.right - work.left,
+        height: work.bottom - work.top,
+    })
+}
+
+#[cfg(windows)]
+unsafe fn move_window(
+    hwnd: windows_sys::Win32::Foundation::HWND,
+    bounds: WindowBounds,
+    activate: bool,
+) -> Result<()> {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{SWP_NOACTIVATE, SWP_NOZORDER, SetWindowPos};
+
+    let flags = if activate {
+        SWP_NOZORDER
+    } else {
+        SWP_NOZORDER | SWP_NOACTIVATE
+    };
+    if unsafe {
+        SetWindowPos(
             hwnd,
             std::ptr::null_mut(),
             bounds.x,
             bounds.y,
             bounds.width,
             bounds.height,
-            SWP_NOZORDER | SWP_NOACTIVATE,
-        ) == 0
-        {
-            return Err(anyhow!("failed to move foreground window"));
+            flags,
+        )
+    } == 0
+    {
+        return Err(anyhow!("failed to move window"));
+    }
+    Ok(())
+}
+
+#[cfg(windows)]
+unsafe fn find_window_for_record(
+    record: &AppWindowRecord,
+) -> Result<windows_sys::Win32::Foundation::HWND> {
+    let candidates = unsafe { enumerate_visible_windows()? };
+    let title = record.window_title.trim().to_lowercase();
+    let process = record.process_name.trim().to_lowercase();
+    let aliases: Vec<String> = record
+        .aliases
+        .iter()
+        .map(|alias| alias.to_lowercase())
+        .collect();
+
+    candidates
+        .into_iter()
+        .find(|candidate| {
+            let candidate_title = candidate.title.to_lowercase();
+            (!title.is_empty()
+                && (candidate_title.contains(&title) || title.contains(&candidate_title)))
+                || (!process.is_empty() && candidate_title.contains(&process))
+                || aliases.iter().any(|alias| candidate_title.contains(alias))
+        })
+        .map(|candidate| candidate.hwnd)
+        .ok_or_else(|| anyhow!("no visible window matched '{}'", record.window_title))
+}
+
+#[cfg(windows)]
+#[derive(Debug)]
+struct VisibleWindow {
+    hwnd: windows_sys::Win32::Foundation::HWND,
+    title: String,
+}
+
+#[cfg(windows)]
+unsafe fn enumerate_visible_windows() -> Result<Vec<VisibleWindow>> {
+    use windows_sys::Win32::Foundation::{BOOL, HWND, LPARAM};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        EnumWindows, GetWindowTextLengthW, GetWindowTextW, IsWindowVisible,
+    };
+
+    unsafe extern "system" fn enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
+        let windows = unsafe { &mut *(lparam as *mut Vec<VisibleWindow>) };
+        if unsafe { IsWindowVisible(hwnd) } == 0 {
+            return 1;
         }
 
-        Ok(bounds)
+        let len = unsafe { GetWindowTextLengthW(hwnd) };
+        if len <= 0 {
+            return 1;
+        }
+
+        let mut buf = vec![0u16; (len + 1) as usize];
+        let copied = unsafe { GetWindowTextW(hwnd, buf.as_mut_ptr(), buf.len() as i32) };
+        if copied <= 0 {
+            return 1;
+        }
+
+        buf.truncate(copied as usize);
+        let title = String::from_utf16_lossy(&buf);
+        if !title.trim().is_empty() {
+            windows.push(VisibleWindow { hwnd, title });
+        }
+        1
     }
+
+    let mut windows = Vec::new();
+    if unsafe { EnumWindows(Some(enum_proc), &mut windows as *mut _ as isize) } == 0 {
+        return Err(anyhow!("failed to enumerate windows"));
+    }
+    Ok(windows)
 }
 
 #[cfg(not(windows))]
@@ -630,6 +812,19 @@ fn platform_snap_active_window(_direction: &str) -> Result<WindowBounds> {
     Err(anyhow!(
         "active window snapping is only available on Windows"
     ))
+}
+
+#[cfg(not(windows))]
+fn platform_focus_recorded_window(_record: &AppWindowRecord) -> Result<()> {
+    Err(anyhow!("window focusing is only available on Windows"))
+}
+
+#[cfg(not(windows))]
+fn platform_tile_recorded_windows(
+    _left: &AppWindowRecord,
+    _right: &AppWindowRecord,
+) -> Result<Vec<WindowPlacement>> {
+    Err(anyhow!("window tiling is only available on Windows"))
 }
 
 fn run_builtin_job(job: &BackgroundJob) -> Result<Value> {

@@ -1,7 +1,7 @@
 use super::{Tool, ToolContext, ToolOutput};
 use crate::personal_layer::{
     ClipboardInput, JobInput, PersonalStore, ReminderInput, SnippetInput, WindowBounds,
-    plan_snap_window, snap_active_window,
+    WindowPlacement, plan_snap_window, plan_tile_two_windows, snap_active_window,
 };
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
@@ -54,6 +54,10 @@ struct PersonalInput {
     #[serde(default)]
     query: Option<String>,
     #[serde(default)]
+    left_query: Option<String>,
+    #[serde(default)]
+    right_query: Option<String>,
+    #[serde(default)]
     kind: Option<String>,
     #[serde(default)]
     input_json: Option<Value>,
@@ -85,9 +89,9 @@ impl Tool for PersonalTool {
                         "create_snippet", "list_snippets", "expand_snippet", "delete_snippet",
                         "create_reminder", "list_reminders", "complete_reminder", "snooze_reminder",
                         "record_clipboard", "capture_clipboard", "clipboard_recent", "clipboard_clear",
-                        "record_app_window", "list_recent_apps", "resolve_app",
+                        "record_app_window", "list_recent_apps", "resolve_app", "switch_to_app",
                         "create_job", "list_jobs", "cancel_job", "retry_job", "run_job", "run_next_job",
-                        "snap_window_plan", "snap_active_window"
+                        "snap_window_plan", "tile_windows_plan", "snap_active_window", "tile_windows"
                     ]
                 },
                 "id": {"type": "string"},
@@ -107,6 +111,8 @@ impl Tool for PersonalTool {
                 "exe_path": {"type": "string"},
                 "window_title": {"type": "string"},
                 "query": {"type": "string"},
+                "left_query": {"type": "string"},
+                "right_query": {"type": "string"},
                 "kind": {"type": "string"},
                 "input_json": {"type": "object", "additionalProperties": true},
                 "direction": {"type": "string", "enum": ["left", "right", "top", "bottom", "center", "maximize", "full"]},
@@ -304,6 +310,20 @@ impl Tool for PersonalTool {
                         .unwrap_or_else(|| format!("No app/window matched '{}'.", query)),
                 ))
             }
+            "switch_to_app" => {
+                let query = required(input.query, "query")?;
+                Ok(ToolOutput::new(
+                    store
+                        .switch_to_app_description(&query)?
+                        .map(|record| {
+                            format!(
+                                "Switched to {} - {} [id: {}]",
+                                record.process_name, record.window_title, record.id
+                            )
+                        })
+                        .unwrap_or_else(|| format!("No app/window matched '{}'.", query)),
+                ))
+            }
             "create_job" => {
                 let job = store.create_job(JobInput {
                     kind: required(input.kind, "kind")?,
@@ -369,6 +389,13 @@ impl Tool for PersonalTool {
                     bounds.x, bounds.y, bounds.width, bounds.height
                 )))
             }
+            "tile_windows_plan" => {
+                let monitor = input
+                    .monitor
+                    .ok_or_else(|| anyhow!("monitor bounds required"))?;
+                let placements = plan_tile_two_windows(monitor)?;
+                Ok(ToolOutput::new(format_placements(&placements)))
+            }
             "snap_active_window" => {
                 let direction = required(input.direction, "direction")?;
                 let bounds = snap_active_window(&direction)?;
@@ -377,9 +404,43 @@ impl Tool for PersonalTool {
                     bounds.x, bounds.y, bounds.width, bounds.height
                 )))
             }
+            "tile_windows" => {
+                let left_query = required(input.left_query, "left_query")?;
+                let right_query = required(input.right_query, "right_query")?;
+                Ok(ToolOutput::new(
+                    store
+                        .tile_app_descriptions(&left_query, &right_query)?
+                        .map(|placements| {
+                            format!("Tiled windows:\n{}", format_placements(&placements))
+                        })
+                        .unwrap_or_else(|| {
+                            format!(
+                                "Could not resolve both windows for '{}' and '{}'.",
+                                left_query, right_query
+                            )
+                        }),
+                ))
+            }
             other => Err(anyhow!("Unknown personal action: {}", other)),
         }
     }
+}
+
+fn format_placements(placements: &[WindowPlacement]) -> String {
+    placements
+        .iter()
+        .map(|placement| {
+            format!(
+                "- {}: x={} y={} width={} height={}",
+                placement.label,
+                placement.bounds.x,
+                placement.bounds.y,
+                placement.bounds.width,
+                placement.bounds.height
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 fn required(value: Option<String>, name: &str) -> Result<String> {

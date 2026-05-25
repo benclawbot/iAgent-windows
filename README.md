@@ -162,9 +162,9 @@ iAgent includes a local-first personal desktop layer for user-approved recall an
 - smart snippets such as `/sig` for reusable text expansions
 - contextual reminders tied to the current app/window title
 - recent clipboard recovery with duplicate handling, secret redaction, and opt-in capture from the system clipboard
-- recent app/window recall for commands like "switch to the spreadsheet from yesterday"
+- recent app/window recall and Windows focus switching for commands like "switch to the spreadsheet from yesterday"
 - background job records plus safe built-in execution for folder summaries and batch-rename previews
-- window layout plans and Windows active-window snapping for left, right, top, bottom, centered, or full-screen placement
+- window layout plans, Windows active-window snapping, and two-window tiling by app/window description
 
 The `personal` tool stores this helper data under the local iAgent/JCode home directory and keeps it separate from durable long-term memory unless the user explicitly asks to remember something.
 
