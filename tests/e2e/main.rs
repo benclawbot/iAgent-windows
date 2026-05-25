@@ -7,6 +7,7 @@ mod mock_provider;
 mod test_support;
 
 mod ambient;
+mod attention_budget;
 mod binary_integration;
 mod burst_spawn;
 mod connector_packs;

@@ -16,6 +16,7 @@ pub mod agent;
 pub mod ambient;
 pub mod ambient_runner;
 pub mod ambient_scheduler;
+pub mod attention_budget;
 pub mod auth;
 pub mod background;
 pub mod browser;

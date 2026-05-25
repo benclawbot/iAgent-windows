@@ -407,6 +407,46 @@ async fn registry_exposes_remote_dispatch_tool() {
     assert_eq!(def.input_schema["properties"]["context"]["type"], "object");
 }
 
+#[tokio::test]
+async fn registry_exposes_attention_budget_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "attention")
+        .expect("attention tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("attention action enum");
+    for action in [
+        "get_settings",
+        "update_settings",
+        "preflight",
+        "record",
+        "snooze",
+        "resume",
+        "digest",
+        "history",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "attention tool should expose {action}"
+        );
+    }
+    assert_eq!(def.input_schema["properties"]["priority"]["type"], "string");
+    assert_eq!(
+        def.input_schema["properties"]["max_interruptions_per_hour"]["type"],
+        "integer"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["quiet_hours_start"]["type"],
+        "string"
+    );
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");

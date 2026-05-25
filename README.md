@@ -161,6 +161,7 @@ That loop is backed by runtime safety systems rather than prompt-only promises:
 - Proactive Briefings and Next-Best Actions for morning briefings, end-of-task recaps, meeting prep cards, project resume cards, contextual recommendations, and durable "never suggest this again" feedback
 - Windows App Intent Manifests through `iagent.intent.json`, letting local apps and scripts declare safe structured actions, parameters, examples, approval levels, and rollback hints for import into iAgent tools and recipe-ready plans
 - Remote Dispatch and Watch Mode for authenticated local/remote task submission, mobile-friendly status cards, scheduled jobs, approval-needed notifications, completion evidence, and failure packets
+- Attention Budget and Interruption Control for quiet hours, hourly/daily notification caps, snooze/resume, critical-approval bypass, preflight decisions, delivery history, and digest summaries
 - explicit separation between observation actions and mutating actions such as click, type, hotkey, scroll, app launch, and delegated communication
 
 ---
@@ -218,6 +219,7 @@ Integrated tooling includes:
 - `computer` actions for screenshots, active-window context, app listing/opening, clicks, typing, hotkeys, waits, and scrolling
 - `personal` actions for snippets, reminders, clipboard recovery, app/window recall, jobs, layouts, and project workspaces
 - `personal` Sensitive Context Firewall actions for privacy status, redaction preview, capture pause/resume, and recent-context deletion
+- `attention` budget actions for managing quiet hours, interruption caps, snooze/resume, preflighting notifications or suggestions, recording delivery outcomes, and producing attention digests
 - `briefing` proactive actions for morning briefings, end-task recaps, meeting prep, project resume, low-noise next-best recommendations, saved recaps, and never-suggest feedback rules
 - `connector` pack actions for inspecting built-in connector definitions, granting/revoking explicit read/write scopes, preflighting writes, and auditing recorded write evidence
 - `intent` manifest actions for discovering, validating, importing, listing, and planning local `iagent.intent.json` app/script capabilities without turning manifest import into arbitrary-code execution
@@ -671,7 +673,7 @@ This repository is structured more like an operating layer for AI workflows than
 
 # Product Roadmap
 
-All final roadmap deliveries identified for this pass are now integrated above as current behavior.
+All final roadmap deliveries identified for this pass are now integrated above as current behavior. Follow-on comparison work also integrated the Attention Budget and Interruption Control layer as current behavior.
 
 ---
 
