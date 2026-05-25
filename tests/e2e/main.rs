@@ -12,6 +12,7 @@ mod burst_spawn;
 mod connector_packs;
 mod meeting_memory;
 mod personal_layer;
+mod proactive_briefings;
 mod provider_behavior;
 mod recipe_catalog;
 mod safety;

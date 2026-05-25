@@ -5,6 +5,7 @@ mod apply_patch;
 mod bash;
 mod batch;
 mod bg;
+mod briefing;
 mod browser;
 mod codesearch;
 mod communicate;
@@ -204,6 +205,7 @@ impl Registry {
             Self::insert_tool_timed(&mut m, &mut timings, "meeting", meeting::MeetingTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "todo", todo::TodoTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "bg", bg::BgTool::new);
+            Self::insert_tool_timed(&mut m, &mut timings, "briefing", briefing::BriefingTool::new);
             Self::insert_tool_timed(
                 &mut m,
                 &mut timings,

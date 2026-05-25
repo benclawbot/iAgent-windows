@@ -158,6 +158,7 @@ That loop is backed by runtime safety systems rather than prompt-only promises:
 - filters for recorder entries by action text, risk level, disposition, result limit, and optional structured context payloads
 - Connector Packs With Permission Scopes for Outlook/Gmail/Calendar, Slack/Teams, GitHub/Linear/Jira, Notion/Obsidian, and file-share style integrations
 - connector write preflight decisions that require active write scopes before any external-system mutation, plus a write-evidence ledger that records run ids, tool-call ids, targets, grant ids, required scopes, summaries, and evidence references for every approved connector write
+- Proactive Briefings and Next-Best Actions for morning briefings, end-of-task recaps, meeting prep cards, project resume cards, contextual recommendations, and durable "never suggest this again" feedback
 - explicit separation between observation actions and mutating actions such as click, type, hotkey, scroll, app launch, and delegated communication
 
 ---
@@ -215,6 +216,7 @@ Integrated tooling includes:
 - `computer` actions for screenshots, active-window context, app listing/opening, clicks, typing, hotkeys, waits, and scrolling
 - `personal` actions for snippets, reminders, clipboard recovery, app/window recall, jobs, layouts, and project workspaces
 - `personal` Sensitive Context Firewall actions for privacy status, redaction preview, capture pause/resume, and recent-context deletion
+- `briefing` proactive actions for morning briefings, end-task recaps, meeting prep, project resume, low-noise next-best recommendations, saved recaps, and never-suggest feedback rules
 - `connector` pack actions for inspecting built-in connector definitions, granting/revoking explicit read/write scopes, preflighting writes, and auditing recorded write evidence
 - `recipe` catalog and command palette actions for searchable, hotkey-ready workflows with typed inputs, approval policies, required tools, and non-executing dispatch plans
 - `meeting` memory actions for start/append/finish meeting capture, local speaker/time transcript segments, source-linked decisions/questions/action items, and conversion into reminders, jobs, or delegation drafts
@@ -667,13 +669,10 @@ This repository is structured more like an operating layer for AI workflows than
 
 This roadmap lists final product deliveries that are not yet fully integrated. When one is delivered, remove it from this section and document it above as current behavior.
 
-1. Proactive Briefings and Next-Best Actions
-   - Morning briefings, end-of-task recaps, meeting prep cards, project-resume suggestions, and low-noise contextual recommendations with "never suggest this again" feedback.
-
-2. Windows App Intent Manifests
+1. Windows App Intent Manifests
    - `iagent.intent.json` support so local apps and scripts can declare safe structured actions, parameters, examples, approval levels, and rollback hints for import into tools and recipes.
 
-3. Remote Dispatch and Watch Mode
+2. Remote Dispatch and Watch Mode
    - Authenticated local/remote task dispatch, mobile-friendly status, scheduled jobs, approval-needed notifications, completion evidence, and failure packets.
 
 ---

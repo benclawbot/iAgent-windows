@@ -304,6 +304,40 @@ async fn registry_exposes_connector_pack_tool() {
     );
 }
 
+#[tokio::test]
+async fn registry_exposes_proactive_briefing_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "briefing")
+        .expect("briefing tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("briefing action enum");
+    for action in [
+        "morning",
+        "end_task_recap",
+        "meeting_prep",
+        "project_resume",
+        "recommend",
+        "never_suggest",
+        "list_recaps",
+        "list_feedback",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "briefing tool should expose {action}"
+        );
+    }
+    assert_eq!(def.input_schema["properties"]["calendar"]["type"], "array");
+    assert_eq!(def.input_schema["properties"]["projects"]["type"], "array");
+    assert_eq!(def.input_schema["properties"]["signals"]["type"], "array");
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");
