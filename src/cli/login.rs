@@ -422,7 +422,8 @@ fn maybe_persist_default_provider_after_login(
     if let Err(err) = crate::config::Config::set_default_model(model_to_save, Some(provider_id)) {
         log_warn!((
             "Failed to save {} as the default provider after login: {}",
-            provider_id, err
+            provider_id,
+            err
         ));
     }
 }

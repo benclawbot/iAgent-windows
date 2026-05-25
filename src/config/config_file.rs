@@ -10,6 +10,7 @@ impl Config {
 
     /// Load config from file, with environment variable overrides
     pub fn load() -> Self {
+        apply_iagent_env_aliases();
         let mut config = Self::load_from_file().unwrap_or_default();
         config.apply_env_overrides();
         config
@@ -259,10 +260,7 @@ impl Config {
             cfg.auth.trusted_external_source_paths.dedup();
             cfg.save()?;
         }
-        log_info!((
-            "Saved trusted external auth source path: {}",
-            entry
-        ));
+        log_info!(("Saved trusted external auth source path: {}", entry));
         Ok(())
     }
 
@@ -278,11 +276,27 @@ impl Config {
             .retain(|value| !value.trim().eq_ignore_ascii_case(&entry));
         if cfg.auth.trusted_external_source_paths.len() != before {
             cfg.save()?;
-            log_info!((
-                "Removed trusted external auth source path: {}",
-                entry
-            ));
+            log_info!(("Removed trusted external auth source path: {}", entry));
         }
         Ok(())
+    }
+}
+
+fn apply_iagent_env_aliases() {
+    for (key, value) in std::env::vars_os() {
+        let key = key.to_string_lossy().to_string();
+        if !key.starts_with("IAGENT_") {
+            continue;
+        }
+        let legacy = key.replacen("IAGENT_", "JCODE_", 1);
+        if std::env::var_os(&legacy).is_none() {
+            crate::env::set_var(&legacy, value);
+        }
+    }
+
+    if std::env::var_os("JCODE_HOME").is_none()
+        && let Some(value) = std::env::var_os("IAGENT_HOME")
+    {
+        crate::env::set_var("JCODE_HOME", value);
     }
 }

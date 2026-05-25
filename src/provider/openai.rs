@@ -444,7 +444,8 @@ impl OpenAIProvider {
         {
             log_info!((
                 "Warning: '{}' is not supported; falling back to '{}'",
-                model, DEFAULT_MODEL
+                model,
+                DEFAULT_MODEL
             ));
             model = DEFAULT_MODEL.to_string();
         }
@@ -603,7 +604,8 @@ impl OpenAIProvider {
             Err(_) => {
                 log_warn!((
                     "Invalid JCODE_OPENAI_MAX_OUTPUT_TOKENS='{}'; using default {}",
-                    raw, DEFAULT_MAX_OUTPUT_TOKENS
+                    raw,
+                    DEFAULT_MAX_OUTPUT_TOKENS
                 ));
                 Some(DEFAULT_MAX_OUTPUT_TOKENS)
             }
@@ -632,10 +634,7 @@ impl OpenAIProvider {
         match Self::normalize_service_tier(raw) {
             Ok(value) => value,
             Err(err) => {
-                log_warn!((
-                    "{}; ignoring configured service tier override",
-                    err
-                ));
+                log_warn!(("{}; ignoring configured service tier override", err));
                 None
             }
         }
@@ -646,10 +645,7 @@ impl OpenAIProvider {
         let parsed = Self::parse_max_output_tokens(raw.as_deref());
         if raw.is_some() {
             match parsed {
-                Some(value) => log_info!((
-                    "OpenAI max_output_tokens configured to {}",
-                    value
-                )),
+                Some(value) => log_info!(("OpenAI max_output_tokens configured to {}", value)),
                 None => crate::logging::info(
                     "OpenAI max_output_tokens disabled (JCODE_OPENAI_MAX_OUTPUT_TOKENS=0)",
                 ),
@@ -755,7 +751,8 @@ impl OpenAIProvider {
                 if let Some(detail) = availability.reason {
                     log_info!((
                         "Model '{}' currently unavailable ({}); selecting fallback",
-                        current, detail
+                        current,
+                        detail
                     ));
                 }
                 if let Some(fallback) = crate::provider::get_best_available_openai_model()
@@ -763,7 +760,8 @@ impl OpenAIProvider {
                 {
                     log_info!((
                         "Model '{}' not available for account; falling back to '{}'",
-                        current, fallback
+                        current,
+                        fallback
                     ));
                     {
                         let mut w = self.model.write().await;

@@ -3,6 +3,8 @@
 //! These tests verify the full flow from user input to response
 //! without making actual API calls.
 
+#![allow(dead_code)]
+
 pub(crate) use crate::mock_provider::MockProvider;
 pub(crate) use anyhow::{Context, Result};
 pub(crate) use async_trait::async_trait;
@@ -15,7 +17,8 @@ pub(crate) use iagent::server;
 pub(crate) use iagent::session::{Session, StoredCompactionState};
 pub(crate) use iagent::tool::Registry;
 pub(crate) use std::ffi::OsString;
-pub(crate) use std::io::Read;
+#[cfg(unix)]
+use std::io::Read;
 pub(crate) use std::net::TcpListener as StdTcpListener;
 #[cfg(unix)]
 use std::os::fd::FromRawFd;

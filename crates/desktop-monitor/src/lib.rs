@@ -1,12 +1,14 @@
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::OnceLock;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
 use anyhow::Result as AnyhowResult;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
-
 pub type DesktopMonitorResult<T> = AnyhowResult<T>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -40,10 +42,20 @@ pub struct RawNotification {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ImportantNotification {
+    pub id: String,
     pub app: String,
     pub title: String,
     pub preview: String,
     pub importance: f32,
+    pub state: NotificationState,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum NotificationState {
+    New,
+    Updated,
+    Dismissed,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -80,7 +92,11 @@ impl ImportanceScorer {
         }
 
         let keywords = if self.patterns.urgent_keywords.is_empty() {
-            vec!["urgent".to_string(), "important".to_string(), "deadline".to_string()]
+            vec![
+                "urgent".to_string(),
+                "important".to_string(),
+                "deadline".to_string(),
+            ]
         } else {
             self.patterns.urgent_keywords.clone()
         };
@@ -106,6 +122,20 @@ impl ImportanceScorer {
 pub struct NotificationDetector {
     scorer: ImportanceScorer,
     check_interval: Duration,
+    pending: Arc<Mutex<VecDeque<RawNotification>>>,
+    dedupe_window: Duration,
+    throttle_window: Duration,
+    stale_after: Duration,
+    min_score: f32,
+    redaction_policy: RedactionPolicy,
+}
+
+#[derive(Debug, Clone)]
+struct ActiveNotification {
+    raw: RawNotification,
+    importance: f32,
+    last_seen: Instant,
+    last_emitted: Instant,
 }
 
 impl NotificationDetector {
@@ -113,6 +143,54 @@ impl NotificationDetector {
         Self {
             scorer,
             check_interval,
+            pending: Arc::new(Mutex::new(VecDeque::new())),
+            dedupe_window: Duration::from_secs(30),
+            throttle_window: Duration::from_secs(10),
+            stale_after: Duration::from_secs(90),
+            min_score: 1.0,
+            redaction_policy: RedactionPolicy::default(),
+        }
+    }
+
+    pub fn with_dedupe_window(mut self, dedupe_window: Duration) -> Self {
+        self.dedupe_window = dedupe_window;
+        self
+    }
+
+    pub fn with_throttle_window(mut self, throttle_window: Duration) -> Self {
+        self.throttle_window = throttle_window;
+        self
+    }
+
+    pub fn with_stale_after(mut self, stale_after: Duration) -> Self {
+        self.stale_after = stale_after;
+        self
+    }
+
+    pub fn with_min_score(mut self, min_score: f32) -> Self {
+        self.min_score = min_score;
+        self
+    }
+
+    pub fn with_redaction_policy(mut self, redaction_policy: RedactionPolicy) -> Self {
+        self.redaction_policy = redaction_policy;
+        self
+    }
+
+    /// Push an externally observed notification into the detector queue.
+    pub fn ingest_notification(&self, notification: RawNotification) {
+        if let Ok(mut queue) = self.pending.lock() {
+            queue.push_back(notification);
+        }
+    }
+
+    fn drain_pending_notifications(
+        pending: &Arc<Mutex<VecDeque<RawNotification>>>,
+    ) -> Vec<RawNotification> {
+        if let Ok(mut queue) = pending.lock() {
+            queue.drain(..).collect()
+        } else {
+            Vec::new()
         }
     }
 
@@ -120,16 +198,210 @@ impl NotificationDetector {
         let (tx, rx) = mpsc::unbounded_channel();
         let scorer = self.scorer.clone();
         let interval = self.check_interval;
+        let dedupe_window = self.dedupe_window;
+        let throttle_window = self.throttle_window;
+        let stale_after = self.stale_after;
+        let min_score = self.min_score;
+        let redaction_policy = self.redaction_policy.clone();
+        let pending = self.pending.clone();
         tokio::spawn(async move {
+            let mut active: HashMap<String, ActiveNotification> = HashMap::new();
             loop {
-                // Phase 1 baseline: source integration arrives in next iteration.
-                // The detector stays idle but keeps the event channel active.
-                let _ = (&tx, &scorer);
+                let now = Instant::now();
+                let mut notifications = Self::drain_pending_notifications(&pending);
+                notifications.extend(platform::poll_notifications());
+                let mut seen_keys = HashSet::new();
+
+                for raw in notifications {
+                    let raw = redact_notification(raw, &redaction_policy);
+                    let key = notification_key(&raw);
+                    seen_keys.insert(key.clone());
+                    let importance = scorer.score(&raw);
+                    if importance < min_score {
+                        continue;
+                    }
+
+                    if let Some(existing) = active.get_mut(&key) {
+                        let content_changed =
+                            existing.raw.title != raw.title || existing.raw.preview != raw.preview;
+                        existing.raw = raw.clone();
+                        existing.importance = importance;
+                        existing.last_seen = now;
+
+                        if content_changed
+                            && now.duration_since(existing.last_emitted) >= throttle_window
+                        {
+                            let important = ImportantNotification {
+                                id: key.clone(),
+                                app: raw.app.clone(),
+                                title: raw.title.clone(),
+                                preview: raw.preview.clone(),
+                                importance,
+                                state: NotificationState::Updated,
+                            };
+                            if tx.send(important).is_err() {
+                                return;
+                            }
+                            existing.last_emitted = now;
+                        }
+                        continue;
+                    }
+
+                    let should_emit_new = match active.get(&key) {
+                        Some(existing) => {
+                            now.duration_since(existing.last_emitted) >= dedupe_window
+                        }
+                        None => true,
+                    };
+                    if !should_emit_new {
+                        continue;
+                    }
+
+                    let important = ImportantNotification {
+                        id: key.clone(),
+                        app: raw.app.clone(),
+                        title: raw.title.clone(),
+                        preview: raw.preview.clone(),
+                        importance,
+                        state: NotificationState::New,
+                    };
+                    if tx.send(important).is_err() {
+                        return;
+                    }
+                    active.insert(
+                        key,
+                        ActiveNotification {
+                            raw,
+                            importance,
+                            last_seen: now,
+                            last_emitted: now,
+                        },
+                    );
+                }
+
+                let stale_keys: Vec<String> = active
+                    .iter()
+                    .filter_map(|(key, tracked)| {
+                        if seen_keys.contains(key) {
+                            return None;
+                        }
+                        if now.duration_since(tracked.last_seen) >= stale_after {
+                            Some(key.clone())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+                for key in stale_keys {
+                    if let Some(tracked) = active.remove(&key) {
+                        let important = ImportantNotification {
+                            id: key.clone(),
+                            app: tracked.raw.app,
+                            title: tracked.raw.title,
+                            preview: tracked.raw.preview,
+                            importance: tracked.importance,
+                            state: NotificationState::Dismissed,
+                        };
+                        if tx.send(important).is_err() {
+                            return;
+                        }
+                    }
+                }
+
                 tokio::time::sleep(interval).await;
             }
         });
         rx
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RedactionPolicy {
+    pub mask_email_addresses: bool,
+    pub mask_api_tokens: bool,
+    pub mask_potential_financial_numbers: bool,
+}
+
+impl Default for RedactionPolicy {
+    fn default() -> Self {
+        Self {
+            mask_email_addresses: true,
+            mask_api_tokens: true,
+            mask_potential_financial_numbers: true,
+        }
+    }
+}
+
+fn compile_regex(pattern: &str) -> Option<Regex> {
+    Regex::new(pattern).ok()
+}
+
+fn redact_text(text: &str, policy: &RedactionPolicy) -> String {
+    let mut out = text.to_string();
+
+    if policy.mask_api_tokens {
+        static TOKEN_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
+        let token_patterns = TOKEN_PATTERNS.get_or_init(|| {
+            [
+                r"sk-[A-Za-z0-9_-]{20,}",
+                r"ghp_[A-Za-z0-9]{20,}",
+                r"github_pat_[A-Za-z0-9_]{20,}",
+                r"AKIA[0-9A-Z]{16}",
+            ]
+            .iter()
+            .filter_map(|p| compile_regex(p))
+            .collect()
+        });
+        for re in token_patterns {
+            out = re.replace_all(&out, "[REDACTED_TOKEN]").into_owned();
+        }
+    }
+
+    if policy.mask_email_addresses {
+        static EMAIL_RE: OnceLock<Option<Regex>> = OnceLock::new();
+        if let Some(re) = EMAIL_RE
+            .get_or_init(|| compile_regex(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"))
+            .as_ref()
+        {
+            out = re.replace_all(&out, "[REDACTED_EMAIL]").into_owned();
+        }
+    }
+
+    if policy.mask_potential_financial_numbers {
+        static CARD_RE: OnceLock<Option<Regex>> = OnceLock::new();
+        if let Some(re) = CARD_RE
+            .get_or_init(|| compile_regex(r"\b(?:\d[ -]*?){13,19}\b"))
+            .as_ref()
+        {
+            out = re.replace_all(&out, "[REDACTED_NUMBER]").into_owned();
+        }
+    }
+
+    out
+}
+
+fn redact_notification(raw: RawNotification, policy: &RedactionPolicy) -> RawNotification {
+    RawNotification {
+        app: raw.app,
+        title: redact_text(&raw.title, policy),
+        preview: redact_text(&raw.preview, policy),
+        sender: raw.sender.map(|value| redact_text(&value, policy)),
+        cc_only: raw.cc_only,
+    }
+}
+
+fn notification_key(notification: &RawNotification) -> String {
+    format!(
+        "{}|{}|{}",
+        notification.app.to_ascii_lowercase(),
+        notification.title.to_ascii_lowercase(),
+        notification
+            .sender
+            .as_deref()
+            .unwrap_or_default()
+            .to_ascii_lowercase()
+    )
 }
 
 #[derive(Debug, Clone)]
@@ -304,8 +576,6 @@ fn should_emit_update(
 }
 
 mod platform {
-    use super::WindowContext;
-
     #[cfg(windows)]
     mod windows_impl {
         use std::path::Path;
@@ -326,15 +596,14 @@ mod platform {
             UnhookWinEvent, WINEVENTPROC,
         };
         use windows::Win32::UI::WindowsAndMessaging::{
-            EVENT_OBJECT_FOCUS, EVENT_SYSTEM_FOREGROUND, WINEVENT_OUTOFCONTEXT,
+            EVENT_OBJECT_FOCUS, EVENT_SYSTEM_FOREGROUND, GetClassNameW, GetCursorPos,
+            GetForegroundWindow, GetWindowTextW, GetWindowThreadProcessId, WINEVENT_OUTOFCONTEXT,
             WINEVENT_SKIPOWNPROCESS,
-            GetClassNameW, GetCursorPos, GetForegroundWindow, GetWindowTextW,
-            GetWindowThreadProcessId,
         };
         use windows::core::PWSTR;
 
-        use super::WindowContext;
         use crate::DesktopMonitorResult;
+        use crate::{RawNotification, WindowContext};
 
         static FOCUS_EVENT_EPOCH: AtomicU64 = AtomicU64::new(0);
 
@@ -364,15 +633,15 @@ mod platform {
         impl Drop for FocusHookGuard {
             fn drop(&mut self) {
                 unsafe {
-                    if let Some(hook) = self.foreground_hook.take() {
-                        if !hook.is_invalid() {
-                            let _ = UnhookWinEvent(hook);
-                        }
+                    if let Some(hook) = self.foreground_hook.take()
+                        && !hook.is_invalid()
+                    {
+                        let _ = UnhookWinEvent(hook);
                     }
-                    if let Some(hook) = self.object_focus_hook.take() {
-                        if !hook.is_invalid() {
-                            let _ = UnhookWinEvent(hook);
-                        }
+                    if let Some(hook) = self.object_focus_hook.take()
+                        && !hook.is_invalid()
+                    {
+                        let _ = UnhookWinEvent(hook);
                     }
                 }
             }
@@ -460,7 +729,8 @@ mod platform {
 
                 let window_title = window_text(hwnd);
                 let window_class = window_class(hwnd);
-                let app_name = process_name_for_window(hwnd).unwrap_or_else(|| "unknown".to_string());
+                let app_name =
+                    process_name_for_window(hwnd).unwrap_or_else(|| "unknown".to_string());
 
                 let mut cursor = POINT::default();
                 let _ = GetCursorPos(&mut cursor);
@@ -478,6 +748,37 @@ mod platform {
                     cursor_position: (cursor.x, cursor.y),
                 })
             }
+        }
+
+        pub fn poll_notifications() -> Vec<RawNotification> {
+            let Some(context) = capture_window_context() else {
+                return Vec::new();
+            };
+
+            let app = context.app_name.to_ascii_lowercase();
+            let app_is_message_surface = app.contains("outlook")
+                || app.contains("teams")
+                || app.contains("slack")
+                || app.contains("discord")
+                || app.contains("chrome")
+                || app.contains("msedge");
+
+            if !app_is_message_surface {
+                return Vec::new();
+            }
+
+            let preview = context.text_content.unwrap_or_default();
+            if context.window_title.trim().is_empty() && preview.trim().is_empty() {
+                return Vec::new();
+            }
+
+            vec![RawNotification {
+                app: context.app_name,
+                title: context.window_title,
+                preview,
+                sender: None,
+                cc_only: false,
+            }]
         }
 
         fn window_text(hwnd: HWND) -> String {
@@ -582,8 +883,8 @@ mod platform {
 
     #[cfg(not(windows))]
     mod windows_impl {
-        use super::WindowContext;
         use crate::DesktopMonitorResult;
+        use crate::{RawNotification, WindowContext};
 
         pub struct ComGuard;
         pub struct FocusHookGuard;
@@ -609,19 +910,25 @@ mod platform {
         pub fn capture_window_context() -> Option<WindowContext> {
             None
         }
+
+        pub fn poll_notifications() -> Vec<RawNotification> {
+            Vec::new()
+        }
     }
 
     pub use windows_impl::{
         ComGuard, capture_window_context, ensure_automation_available, focus_event_epoch,
-        install_focus_change_hook,
+        install_focus_change_hook, poll_notifications,
     };
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        ContextType, DesktopMonitor, ImportanceScorer, RawNotification, UserPatterns, WindowContext,
+        ContextType, DesktopMonitor, ImportanceScorer, NotificationDetector, NotificationState,
+        RawNotification, RedactionPolicy, UserPatterns, WindowContext, redact_text,
     };
+    use std::time::Duration;
 
     #[test]
     fn context_detection_maps_known_processes() {
@@ -675,4 +982,193 @@ mod tests {
         });
         assert!(score >= 90.0);
     }
+
+    #[tokio::test]
+    async fn notification_detector_emits_ingested_events() {
+        let scorer = ImportanceScorer::new(UserPatterns {
+            vip_senders: vec![],
+            urgent_keywords: vec!["urgent".to_string()],
+        });
+        let detector = NotificationDetector::new(scorer, Duration::from_millis(20))
+            .with_stale_after(Duration::from_secs(2));
+        detector.ingest_notification(RawNotification {
+            app: "Outlook".to_string(),
+            title: "urgent: budget".to_string(),
+            preview: "Need response today".to_string(),
+            sender: Some("pm@company.com".to_string()),
+            cc_only: false,
+        });
+
+        let mut rx = detector.monitor_notifications().await;
+        let event = tokio::time::timeout(Duration::from_secs(1), rx.recv())
+            .await
+            .expect("detector timeout")
+            .expect("event");
+        assert_eq!(event.app, "Outlook");
+        assert!(event.importance > 0.0);
+        assert_eq!(event.state, NotificationState::New);
+    }
+
+    #[tokio::test]
+    async fn notification_detector_marks_updates() {
+        let scorer = ImportanceScorer::new(UserPatterns {
+            vip_senders: vec![],
+            urgent_keywords: vec!["urgent".to_string()],
+        });
+        let detector = NotificationDetector::new(scorer, Duration::from_millis(20))
+            .with_throttle_window(Duration::from_millis(1))
+            .with_stale_after(Duration::from_secs(2));
+        let mut rx = detector.monitor_notifications().await;
+
+        detector.ingest_notification(RawNotification {
+            app: "Outlook".to_string(),
+            title: "urgent: budget".to_string(),
+            preview: "Need response today".to_string(),
+            sender: Some("pm@company.com".to_string()),
+            cc_only: false,
+        });
+
+        let first = tokio::time::timeout(Duration::from_secs(1), rx.recv())
+            .await
+            .expect("first event timeout")
+            .expect("first event");
+        assert_eq!(first.state, NotificationState::New);
+
+        detector.ingest_notification(RawNotification {
+            app: "Outlook".to_string(),
+            title: "urgent: budget".to_string(),
+            preview: "Need response now".to_string(),
+            sender: Some("pm@company.com".to_string()),
+            cc_only: false,
+        });
+
+        let second = tokio::time::timeout(Duration::from_secs(1), rx.recv())
+            .await
+            .expect("second event timeout")
+            .expect("second event");
+        assert_eq!(second.state, NotificationState::Updated);
+    }
+
+    #[tokio::test]
+    async fn notification_detector_throttles_rapid_updates() {
+        let scorer = ImportanceScorer::new(UserPatterns {
+            vip_senders: vec![],
+            urgent_keywords: vec!["urgent".to_string()],
+        });
+        let detector = NotificationDetector::new(scorer, Duration::from_millis(20))
+            .with_throttle_window(Duration::from_millis(200))
+            .with_stale_after(Duration::from_secs(5));
+        let mut rx = detector.monitor_notifications().await;
+
+        detector.ingest_notification(RawNotification {
+            app: "Outlook".to_string(),
+            title: "urgent: budget".to_string(),
+            preview: "v1".to_string(),
+            sender: Some("pm@company.com".to_string()),
+            cc_only: false,
+        });
+        let _ = tokio::time::timeout(Duration::from_secs(1), rx.recv())
+            .await
+            .expect("new event timeout");
+
+        tokio::time::sleep(Duration::from_millis(220)).await;
+
+        detector.ingest_notification(RawNotification {
+            app: "Outlook".to_string(),
+            title: "urgent: budget".to_string(),
+            preview: "v2".to_string(),
+            sender: Some("pm@company.com".to_string()),
+            cc_only: false,
+        });
+        let _updated = tokio::time::timeout(Duration::from_secs(1), rx.recv())
+            .await
+            .expect("first update timeout")
+            .expect("first update");
+
+        detector.ingest_notification(RawNotification {
+            app: "Outlook".to_string(),
+            title: "urgent: budget".to_string(),
+            preview: "v3".to_string(),
+            sender: Some("pm@company.com".to_string()),
+            cc_only: false,
+        });
+
+        let throttled = tokio::time::timeout(Duration::from_millis(150), rx.recv()).await;
+        assert!(
+            throttled.is_err(),
+            "rapid updates should be throttled and not emit immediately"
+        );
+    }
+
+    #[tokio::test]
+    async fn notification_detector_emits_dismissed_state() {
+        let scorer = ImportanceScorer::new(UserPatterns {
+            vip_senders: vec![],
+            urgent_keywords: vec!["urgent".to_string()],
+        });
+        let detector = NotificationDetector::new(scorer, Duration::from_millis(20))
+            .with_stale_after(Duration::from_millis(80));
+        let mut rx = detector.monitor_notifications().await;
+
+        detector.ingest_notification(RawNotification {
+            app: "Outlook".to_string(),
+            title: "urgent: budget".to_string(),
+            preview: "Need response today".to_string(),
+            sender: Some("pm@company.com".to_string()),
+            cc_only: false,
+        });
+        let first = tokio::time::timeout(Duration::from_secs(1), rx.recv())
+            .await
+            .expect("first event timeout")
+            .expect("first event");
+        assert_eq!(first.state, NotificationState::New);
+
+        let dismissed = tokio::time::timeout(Duration::from_secs(2), rx.recv())
+            .await
+            .expect("dismissed timeout")
+            .expect("dismissed event");
+        assert_eq!(dismissed.state, NotificationState::Dismissed);
+    }
+
+    #[test]
+    fn redaction_masks_common_sensitive_patterns() {
+        let policy = RedactionPolicy::default();
+        let redacted = redact_text(
+            "Contact alice@example.com with token sk-test_1234567890ABCDEFGHIJK and card 4111 1111 1111 1111",
+            &policy,
+        );
+        assert!(!redacted.contains("alice@example.com"));
+        assert!(!redacted.contains("sk-test_1234567890ABCDEFGHIJK"));
+        assert!(!redacted.contains("4111 1111 1111 1111"));
+        assert!(redacted.contains("[REDACTED_EMAIL]"));
+        assert!(redacted.contains("[REDACTED_TOKEN]"));
+        assert!(redacted.contains("[REDACTED_NUMBER]"));
+    }
+
+    #[tokio::test]
+    async fn detector_emits_redacted_notification_content() {
+        let scorer = ImportanceScorer::new(UserPatterns {
+            vip_senders: vec!["alice".to_string()],
+            urgent_keywords: vec!["urgent".to_string()],
+        });
+        let detector = NotificationDetector::new(scorer, Duration::from_millis(20))
+            .with_stale_after(Duration::from_secs(2))
+            .with_redaction_policy(RedactionPolicy::default());
+        detector.ingest_notification(RawNotification {
+            app: "Outlook".to_string(),
+            title: "urgent: wire".to_string(),
+            preview: "Send to alice@example.com token=ghp_1234567890ABCDEFGHIJKL".to_string(),
+            sender: Some("alice@example.com".to_string()),
+            cc_only: false,
+        });
+
+        let mut rx = detector.monitor_notifications().await;
+        let event = tokio::time::timeout(Duration::from_secs(1), rx.recv())
+            .await
+            .expect("detector timeout")
+            .expect("event");
+        assert!(event.preview.contains("[REDACTED_EMAIL]"));
+        assert!(event.preview.contains("[REDACTED_TOKEN]"));
+    }
 }
+pub mod file_ops;

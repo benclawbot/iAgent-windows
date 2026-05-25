@@ -13,21 +13,28 @@
 //! frames by a relay task.
 
 use anyhow::Result;
+use chrono::TimeZone;
 use futures::SinkExt;
 use futures::stream::StreamExt;
 use std::net::SocketAddr;
-use std::sync::Arc;
-use std::time::Duration;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::{Arc, OnceLock};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpListener;
 use tokio_tungstenite::tungstenite::Message;
 
 use crate::logging;
+use crate::process_memory;
+use crate::safety::SafetySystem;
+use crate::storage;
+use crate::tool::Registry;
 mod auth;
 mod registry;
 use auth::{WsAuth, WsAuthSource, extract_ws_auth, ws_error_response};
 #[cfg(test)]
 pub(crate) use auth::{is_valid_hex_token, parse_bearer_token, parse_query_token};
+use chrono::Utc;
 pub use jcode_gateway_types::{PairedDevice, PairingCode};
 pub use registry::DeviceRegistry;
 
@@ -56,6 +63,86 @@ impl Default for GatewayConfig {
     }
 }
 
+// ------------------------------------------------------------------
+// Gateway state tracking
+// ------------------------------------------------------------------
+
+/// Gateway global state (singleton, shared across all connections)
+static GATEWAY_STATE: OnceLock<GatewayState> = OnceLock::new();
+
+/// Shared state for /status endpoint
+struct GatewayState {
+    /// When the gateway started
+    start_time: Instant,
+    /// Connected WebSocket client count
+    connected_clients: AtomicUsize,
+    /// Last activity as Unix timestamp in seconds (atomic for lock-free updates)
+    last_activity_secs: AtomicU64,
+    /// Shared SafetySystem for queue depth reporting
+    safety_system: Arc<SafetySystem>,
+    /// Shared tool Registry for tools available count
+    registry: Arc<Registry>,
+}
+
+impl Default for GatewayState {
+    fn default() -> Self {
+        Self {
+            start_time: Instant::now(),
+            connected_clients: AtomicUsize::new(0),
+            last_activity_secs: AtomicU64::new(current_unix_secs()),
+            safety_system: Arc::new(SafetySystem::new()),
+            registry: Arc::new(Registry::empty()),
+        }
+    }
+}
+
+impl GatewayState {
+    fn get() -> &'static GatewayState {
+        GATEWAY_STATE.get_or_init(GatewayState::default)
+    }
+
+    /// Initialize gateway state with shared SafetySystem and Registry
+    fn init(safety_system: Arc<SafetySystem>, registry: Arc<Registry>) {
+        let _ = GATEWAY_STATE.set(GatewayState {
+            start_time: Instant::now(),
+            connected_clients: AtomicUsize::new(0),
+            last_activity_secs: AtomicU64::new(current_unix_secs()),
+            safety_system,
+            registry,
+        });
+    }
+
+    fn record_activity() {
+        Self::get()
+            .last_activity_secs
+            .store(current_unix_secs(), Ordering::Relaxed);
+    }
+}
+
+/// Returns current Unix timestamp in seconds
+fn current_unix_secs() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
+
+/// Increment connected client count on WebSocket connect
+fn ws_client_connected() {
+    GatewayState::get()
+        .connected_clients
+        .fetch_add(1, Ordering::Relaxed);
+    GatewayState::record_activity();
+}
+
+/// Decrement connected client count on WebSocket disconnect
+fn ws_client_disconnected() {
+    GatewayState::get()
+        .connected_clients
+        .fetch_sub(1, Ordering::Relaxed);
+    GatewayState::record_activity();
+}
+
 // ---------------------------------------------------------------------------
 // Gateway listener
 // ---------------------------------------------------------------------------
@@ -71,16 +158,21 @@ impl Default for GatewayConfig {
 pub async fn run_gateway(
     config: GatewayConfig,
     client_tx: tokio::sync::mpsc::UnboundedSender<GatewayClient>,
+    safety_system: Arc<SafetySystem>,
+    registry: Arc<Registry>,
 ) -> Result<()> {
+    // Initialize gateway state with shared SafetySystem and Registry
+    GatewayState::init(safety_system, registry);
+
     let addr = format!("{}:{}", config.bind_addr, config.port);
     let listener = TcpListener::bind(&addr).await?;
     logging::info(&format!("WebSocket gateway listening on {}", addr));
 
-    let registry = Arc::new(tokio::sync::RwLock::new(DeviceRegistry::load()));
+    let device_registry = Arc::new(tokio::sync::RwLock::new(DeviceRegistry::load()));
 
     loop {
         let (tcp_stream, peer_addr) = listener.accept().await?;
-        let registry = Arc::clone(&registry);
+        let registry = Arc::clone(&device_registry);
         let client_tx = client_tx.clone();
 
         tokio::spawn(async move {
@@ -205,6 +297,7 @@ async fn handle_ws_connection(
         "Gateway: {} connected (device: {}, addr: {})",
         device_name, device_id, peer_addr
     ));
+    ws_client_connected();
 
     // Create a virtual Unix socket pair
     let (server_stream, bridge_stream) = crate::transport::stream_pair()
@@ -316,6 +409,7 @@ async fn handle_ws_connection(
     unix_to_ws.abort();
     keepalive.abort();
 
+    ws_client_disconnected();
     logging::info(&format!("Gateway: {} disconnected", device_name));
     Ok(())
 }
@@ -365,6 +459,58 @@ async fn handle_http(
                 "status": "ok",
                 "version": env!("JCODE_VERSION"),
                 "gateway": true,
+            });
+            http_response(200, "OK", &body.to_string())
+        }
+
+        ("GET", "/status") => {
+            // Record this HTTP request as activity
+            GatewayState::record_activity();
+
+            let state = GatewayState::get();
+            let uptime_secs = state.start_time.elapsed().as_secs();
+            let connected_clients = state.connected_clients.load(Ordering::Relaxed);
+            let last_activity_secs = state.last_activity_secs.load(Ordering::Relaxed);
+            let last_activity_iso = Utc
+                .timestamp_opt(last_activity_secs as i64, 0)
+                .single()
+                .map(|dt| dt.to_rfc3339())
+                .unwrap_or_else(|| "1970-01-01T00:00:00Z".to_string());
+
+            // Collect session counts
+            let active_sessions = crate::session::active_session_ids().len();
+            let total_sessions = std::fs::read_dir(
+                storage::jcode_dir()
+                    .map(|d| d.join("sessions"))
+                    .unwrap_or_default(),
+            )
+            .ok()
+            .map(|entries| entries.filter_map(|e| e.ok()).count())
+            .unwrap_or(0);
+
+            // Memory usage
+            let mem_snapshot = process_memory::snapshot();
+            let memory_usage_mb = mem_snapshot.rss_bytes.map(|b| b / 1024 / 1024).unwrap_or(0);
+
+            // Queue depth from SafetySystem pending requests
+            let queue_depth = state.safety_system.pending_requests().len();
+
+            // Tools available from Registry
+            let tools_available = state.registry.tool_names().await.len();
+
+            let body = serde_json::json!({
+                "status": "running",
+                "version": env!("JCODE_VERSION"),
+                "gateway": true,
+                "backend": "iAgent",
+                "uptime_seconds": uptime_secs,
+                "active_sessions": active_sessions,
+                "total_sessions": total_sessions,
+                "connected_clients": connected_clients,
+                "queue_depth": queue_depth,
+                "memory_usage_mb": memory_usage_mb,
+                "tools_available": tools_available,
+                "last_activity": last_activity_iso,
             });
             http_response(200, "OK", &body.to_string())
         }

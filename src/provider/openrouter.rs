@@ -135,7 +135,8 @@ fn configured_api_base() -> String {
     normalize_api_base(&raw).unwrap_or_else(|| {
         log_warn!((
             "Ignoring invalid JCODE_OPENROUTER_API_BASE '{}'; using {}",
-            raw, DEFAULT_API_BASE
+            raw,
+            DEFAULT_API_BASE
         ));
         DEFAULT_API_BASE.to_string()
     })
@@ -153,7 +154,8 @@ fn configured_api_key_name() -> String {
     } else {
         log_warn!((
             "Ignoring invalid JCODE_OPENROUTER_API_KEY_NAME '{}'; using {}",
-            raw, DEFAULT_API_KEY_NAME
+            raw,
+            DEFAULT_API_KEY_NAME
         ));
         DEFAULT_API_KEY_NAME.to_string()
     }
@@ -171,7 +173,8 @@ fn configured_env_file_name() -> String {
     } else {
         log_warn!((
             "Ignoring invalid JCODE_OPENROUTER_ENV_FILE '{}'; using {}",
-            raw, DEFAULT_ENV_FILE
+            raw,
+            DEFAULT_ENV_FILE
         ));
         DEFAULT_ENV_FILE.to_string()
     }

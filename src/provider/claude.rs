@@ -126,7 +126,8 @@ impl ClaudeCliConfig {
         if !AVAILABLE_MODELS.contains(&model.as_str()) {
             log_info!((
                 "Warning: '{}' is not supported; falling back to '{}'",
-                model, DEFAULT_MODEL
+                model,
+                DEFAULT_MODEL
             ));
             model = DEFAULT_MODEL.to_string();
         }

@@ -32,7 +32,8 @@ pub fn enter_selfdev_session(
             Err(err) => {
                 log_warn!((
                     "Failed to load parent session {} for self-dev enter; starting fresh session: {}",
-                    parent_session_id, err
+                    parent_session_id,
+                    err
                 ));
                 session::Session::create(None, Some("Self-development session".to_string()))
             }
@@ -58,15 +59,12 @@ pub fn enter_selfdev_session(
         });
     }
 
-    let exe = SelfDevTool::launch_binary()?;
-    let launched = tui_launch::spawn_selfdev_in_new_terminal(&exe, &session_id, &repo_dir)?;
-
     Ok(SelfDevLaunchResult {
         session_id,
         repo_dir,
-        launched,
+        launched: false,
         test_mode: false,
-        exe: Some(exe),
+        exe: None,
         inherited_context,
     })
 }
@@ -83,7 +81,8 @@ pub fn schedule_selfdev_prompt_delivery(session_id: String, prompt: String) {
                 {
                     log_warn!((
                         "Failed to auto-deliver prompt to spawned self-dev session {}: {}",
-                        session_id, err
+                        session_id,
+                        err
                     ));
                 }
             }

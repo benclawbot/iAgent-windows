@@ -6,17 +6,13 @@ use std::time::Instant;
 
 use super::args::{
     AmbientCommand, Args, AuthCommand, Command, MemoryCommand, ModelCommand, ProviderCommand,
-    RestartCommand, SessionCommand, TranscriptModeArg,
+    RestartCommand, SessionCommand,
 };
 use crate::{
     agent, auth, build, provider, provider_catalog, server, session, setup_hints, startup_profile,
 };
-#[cfg(feature = "terminal-ui")]
-use crate::tui;
 
-use super::{
-    commands, debug, hot_exec, login, output, provider_init, selfdev, terminal, tui_launch,
-};
+use super::{commands, debug, hot_exec, login, output, provider_init, selfdev, terminal};
 use provider_init::ProviderChoice;
 
 pub(crate) async fn run_main(mut args: Args) -> Result<()> {
@@ -61,7 +57,9 @@ pub(crate) async fn run_main(mut args: Args) -> Result<()> {
             server.run().await?;
         }
         Some(Command::Connect) => {
-            tui_launch::run_client().await?;
+            anyhow::bail!(
+                "interactive terminal UI has been retired; use `iagent serve`, `iagent run`, or the Python frontend"
+            );
         }
         Some(Command::Run {
             message,
@@ -221,19 +219,6 @@ pub(crate) async fn run_main(mut args: Args) -> Result<()> {
         Some(Command::Pair { list, revoke }) => {
             commands::run_pair_command(list, revoke)?;
         }
-        Some(Command::Permissions) => {
-            #[cfg(feature = "terminal-ui")]
-            tui::permissions::run_permissions()?;
-            #[cfg(not(feature = "terminal-ui"))]
-            anyhow::bail!("permissions UI requires a build compiled with terminal-ui");
-        }
-        Some(Command::Transcript {
-            text,
-            mode,
-            session,
-        }) => {
-            commands::run_transcript_command(text, map_transcript_mode(mode), session).await?;
-        }
         Some(Command::Dictate { r#type }) => {
             commands::run_dictate_command(r#type).await?;
         }
@@ -247,42 +232,6 @@ pub(crate) async fn run_main(mut args: Args) -> Result<()> {
         }
         Some(Command::Browser { action }) => {
             commands::run_browser(&action).await?;
-        }
-        Some(Command::Replay {
-            session,
-            swarm,
-            export,
-            speed,
-            timeline,
-            auto_edit,
-            video,
-            cols,
-            rows,
-            fps,
-            centered,
-            no_centered,
-        }) => {
-            let centered_override = if centered {
-                Some(true)
-            } else if no_centered {
-                Some(false)
-            } else {
-                None
-            };
-            tui_launch::run_replay_command(
-                &session,
-                swarm,
-                export,
-                auto_edit,
-                speed,
-                timeline.as_deref(),
-                video.as_deref(),
-                cols,
-                rows,
-                fps,
-                centered_override,
-            )
-            .await?;
         }
         Some(Command::Model(subcmd)) => match subcmd {
             ModelCommand::List { json, verbose } => {
@@ -342,7 +291,9 @@ fn auth_doctor_provider_arg<'a>(
 fn resolve_resume_arg(args: &mut Args) -> Result<()> {
     if let Some(ref resume_id) = args.resume {
         if resume_id.is_empty() {
-            return tui_launch::list_sessions();
+            anyhow::bail!(
+                "interactive resume selection has been retired; pass a concrete session id"
+            );
         }
 
         match resolve_resume_id(resume_id) {
@@ -402,16 +353,6 @@ fn map_ambient_subcommand(subcmd: AmbientCommand) -> commands::AmbientSubcommand
         AmbientCommand::Trigger => commands::AmbientSubcommand::Trigger,
         AmbientCommand::Stop => commands::AmbientSubcommand::Stop,
         AmbientCommand::Desktop { headless } => commands::AmbientSubcommand::Desktop { headless },
-        AmbientCommand::RunVisible => commands::AmbientSubcommand::RunVisible,
-    }
-}
-
-fn map_transcript_mode(mode: TranscriptModeArg) -> crate::protocol::TranscriptMode {
-    match mode {
-        TranscriptModeArg::Insert => crate::protocol::TranscriptMode::Insert,
-        TranscriptModeArg::Append => crate::protocol::TranscriptMode::Append,
-        TranscriptModeArg::Replace => crate::protocol::TranscriptMode::Replace,
-        TranscriptModeArg::Send => crate::protocol::TranscriptMode::Send,
     }
 }
 
@@ -499,19 +440,10 @@ async fn run_default_command(args: Args) -> Result<()> {
         .await?;
     }
 
-    startup_profile::mark("pre_tui_client");
-    if std::env::var("JCODE_RESUMING").is_err() && server_running {
-        output::stderr_info("Connecting to server...");
-    }
-    tui_launch::run_tui_client(
-        args.resume,
-        startup_hints,
-        !server_running,
-        args.fresh_spawn,
+    let _ = (server_running, startup_hints);
+    anyhow::bail!(
+        "interactive terminal UI has been retired; use `iagent run <message>`, `iagent serve`, or the Python frontend"
     )
-    .await?;
-
-    Ok(())
 }
 
 pub(crate) async fn server_is_running() -> bool {
@@ -777,6 +709,7 @@ pub(crate) async fn spawn_server(
     {
         let _child = server::spawn_server_notify(&mut cmd).await?;
         startup_profile::mark("server_ready");
+        Ok(())
     }
     #[cfg(not(unix))]
     {
@@ -786,14 +719,13 @@ pub(crate) async fn spawn_server(
         let start = std::time::Instant::now();
         let timeout = std::time::Duration::from_secs(5);
         while start.elapsed() < timeout {
-            if crate::transport::is_socket_path(&server::socket_path()) {
-                if crate::transport::Stream::connect(server::socket_path())
+            if crate::transport::is_socket_path(&server::socket_path())
+                && crate::transport::Stream::connect(server::socket_path())
                     .await
                     .is_ok()
-                {
-                    startup_profile::mark("server_ready");
-                    return Ok(());
-                }
+            {
+                startup_profile::mark("server_ready");
+                return Ok(());
             }
 
             if let Some(status) = child.try_wait()? {
@@ -821,8 +753,6 @@ pub(crate) async fn spawn_server(
             timeout.as_millis()
         );
     }
-
-    Ok(())
 }
 
 #[cfg(test)]

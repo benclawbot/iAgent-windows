@@ -9,11 +9,51 @@ use lru::LruCache;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Suggestion {
     pub variant_label: String,
     pub text: String,
     pub reasoning: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent: Option<SuggestionIntent>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub confidence: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub action: Option<ActionCard>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub debug: Option<SuggestionDebug>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum SuggestionIntent {
+    SummarizeEmail,
+    DraftReply,
+    ExtractTasks,
+    PrepareJiraTicket,
+    BuildSlideOutline,
+    FillForm,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ActionCard {
+    pub intent: SuggestionIntent,
+    pub confidence: f32,
+    pub risk_level: String,
+    pub approval_required: bool,
+    pub required_inputs: Vec<String>,
+    pub payload: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SuggestionDebug {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent_detected: Option<SuggestionIntent>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent_confidence: Option<f32>,
+    pub fallback_to_rewrite: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fallback_reason: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -23,6 +63,7 @@ pub struct EngineConfig {
     pub context_aware: bool,
     pub cache_ttl_secs: u64,
     pub cache_capacity: usize,
+    pub intent_confidence_threshold: f32,
 }
 
 impl Default for EngineConfig {
@@ -33,6 +74,7 @@ impl Default for EngineConfig {
             context_aware: true,
             cache_ttl_secs: 300,
             cache_capacity: 512,
+            intent_confidence_threshold: 0.55,
         }
     }
 }
@@ -79,9 +121,34 @@ impl SuggestionEngine {
             return Ok(cached);
         }
 
+        let intent_candidate = self.classify_intent(text, context);
+        if let Some(intent_suggestion) =
+            self.intent_card_suggestion(text, context, &intent_candidate)
+        {
+            let suggestions = vec![intent_suggestion];
+            self.update_cache(cache_key, suggestions.clone()).await;
+            return Ok(suggestions);
+        }
+
         let prompt = self.build_prompt(text, context);
         let response = self.provider.complete(&prompt).await?;
-        let suggestions = self.parse_suggestions(&response)?;
+        let mut suggestions = self.parse_suggestions(&response)?;
+        if let Some((intent, confidence)) = intent_candidate
+            && confidence < self.config.intent_confidence_threshold
+        {
+            let fallback_reason = format!(
+                "intent_confidence {:.2} below threshold {:.2}",
+                confidence, self.config.intent_confidence_threshold
+            );
+            for suggestion in &mut suggestions {
+                suggestion.debug = Some(SuggestionDebug {
+                    intent_detected: Some(intent.clone()),
+                    intent_confidence: Some(confidence),
+                    fallback_to_rewrite: true,
+                    fallback_reason: Some(fallback_reason.clone()),
+                });
+            }
+        }
         self.update_cache(cache_key, suggestions.clone()).await;
         Ok(suggestions)
     }
@@ -110,7 +177,9 @@ impl SuggestionEngine {
     fn cache_key(text: &str, context: &WindowContext) -> String {
         format!(
             "{:?}:{}:{}",
-            context.context_type, context.app_name, text.trim()
+            context.context_type,
+            context.app_name,
+            text.trim()
         )
     }
 
@@ -126,9 +195,7 @@ impl SuggestionEngine {
                 ContextType::Presentation => {
                     "This is slide content. Prefer concise, high-impact wording."
                 }
-                ContextType::Code => {
-                    "This is code-related text. Keep terms technically precise."
-                }
+                ContextType::Code => "This is code-related text. Keep terms technically precise.",
                 ContextType::Chat => "This is chat text. Provide casual and professional variants.",
                 ContextType::Browser => {
                     "This is browser-authored text. Improve readability and tone."
@@ -159,6 +226,73 @@ Return JSON only with this schema:
         )
     }
 
+    fn intent_card_suggestion(
+        &self,
+        text: &str,
+        context: &WindowContext,
+        intent_candidate: &Option<(SuggestionIntent, f32)>,
+    ) -> Option<Suggestion> {
+        let (intent, confidence) = intent_candidate.clone()?;
+        if confidence < self.config.intent_confidence_threshold {
+            return None;
+        }
+        let card = build_action_card(intent.clone(), confidence, text, context);
+        Some(Suggestion {
+            variant_label: format!("Action: {:?}", intent),
+            text: action_title(&intent).to_string(),
+            reasoning: Some(format!(
+                "Detected intent {:?} with confidence {:.2}.",
+                intent, confidence
+            )),
+            intent: Some(intent.clone()),
+            confidence: Some(confidence),
+            action: Some(card),
+            debug: Some(SuggestionDebug {
+                intent_detected: Some(intent),
+                intent_confidence: Some(confidence),
+                fallback_to_rewrite: false,
+                fallback_reason: None,
+            }),
+        })
+    }
+
+    fn classify_intent(
+        &self,
+        text: &str,
+        context: &WindowContext,
+    ) -> Option<(SuggestionIntent, f32)> {
+        let lowered = text.to_ascii_lowercase();
+
+        let contains_any = |patterns: &[&str]| -> bool {
+            patterns.iter().any(|pattern| lowered.contains(pattern))
+        };
+
+        if contains_any(&["fill form", "form", "submit", "checkbox"]) {
+            return Some((SuggestionIntent::FillForm, 0.78));
+        }
+        if contains_any(&["jira", "ticket", "issue key", "backlog"]) {
+            return Some((SuggestionIntent::PrepareJiraTicket, 0.8));
+        }
+        if contains_any(&["action items", "tasks", "todo", "next steps"]) {
+            return Some((SuggestionIntent::ExtractTasks, 0.72));
+        }
+        if contains_any(&["slide", "deck", "presentation", "speaker notes"]) {
+            return Some((SuggestionIntent::BuildSlideOutline, 0.74));
+        }
+        if contains_any(&["summarize", "summary", "tl;dr"])
+            && context.context_type == ContextType::Email
+        {
+            return Some((SuggestionIntent::SummarizeEmail, 0.83));
+        }
+        if contains_any(&["reply", "respond", "response", "follow up"])
+            && context.context_type == ContextType::Email
+        {
+            return Some((SuggestionIntent::DraftReply, 0.82));
+        }
+
+        None
+    }
+
     fn parse_suggestions(&self, response: &str) -> Result<Vec<Suggestion>> {
         #[derive(Debug, Deserialize)]
         struct ResponseEnvelope {
@@ -183,9 +317,77 @@ Return JSON only with this schema:
                 variant_label: entry.label,
                 text: entry.text,
                 reasoning: entry.reasoning,
+                intent: None,
+                confidence: None,
+                action: None,
+                debug: None,
             })
             .collect::<Vec<_>>();
         Ok(suggestions)
+    }
+}
+
+fn action_title(intent: &SuggestionIntent) -> &'static str {
+    match intent {
+        SuggestionIntent::SummarizeEmail => "Summarize this email",
+        SuggestionIntent::DraftReply => "Draft a reply",
+        SuggestionIntent::ExtractTasks => "Extract tasks",
+        SuggestionIntent::PrepareJiraTicket => "Prepare Jira ticket",
+        SuggestionIntent::BuildSlideOutline => "Build slide outline",
+        SuggestionIntent::FillForm => "Fill form",
+    }
+}
+
+fn build_action_card(
+    intent: SuggestionIntent,
+    confidence: f32,
+    text: &str,
+    context: &WindowContext,
+) -> ActionCard {
+    let (risk_level, approval_required, required_inputs) = match intent {
+        SuggestionIntent::SummarizeEmail => (
+            "read_only".to_string(),
+            false,
+            vec!["source_text".to_string()],
+        ),
+        SuggestionIntent::DraftReply => (
+            "external_send".to_string(),
+            true,
+            vec!["recipient".to_string(), "tone".to_string()],
+        ),
+        SuggestionIntent::ExtractTasks => (
+            "read_only".to_string(),
+            false,
+            vec!["source_text".to_string()],
+        ),
+        SuggestionIntent::PrepareJiraTicket => (
+            "external_send".to_string(),
+            true,
+            vec!["project_key".to_string(), "assignee".to_string()],
+        ),
+        SuggestionIntent::BuildSlideOutline => (
+            "edit_local".to_string(),
+            false,
+            vec!["target_file".to_string()],
+        ),
+        SuggestionIntent::FillForm => (
+            "external_send".to_string(),
+            true,
+            vec!["form_url".to_string(), "field_values".to_string()],
+        ),
+    };
+
+    ActionCard {
+        intent,
+        confidence,
+        risk_level,
+        approval_required,
+        required_inputs,
+        payload: serde_json::json!({
+            "source_app": context.app_name,
+            "context_type": format!("{:?}", context.context_type),
+            "source_text": text,
+        }),
     }
 }
 
@@ -234,6 +436,79 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn high_confidence_intent_bypasses_provider() {
+        let provider = Arc::new(MockProvider {
+            calls: AtomicUsize::new(0),
+            payload: r#"{"suggestions":[{"label":"More Direct","text":"x","reasoning":null}]}"#
+                .to_string(),
+        });
+        let cfg = EngineConfig {
+            min_text_length: 1,
+            ..EngineConfig::default()
+        };
+        let engine = SuggestionEngine::new(provider.clone(), cfg);
+        let out = engine
+            .generate_suggestions(
+                "Please draft a reply to this customer email",
+                &sample_context(),
+            )
+            .await
+            .expect("intent generation should succeed");
+
+        assert_eq!(provider.calls.load(Ordering::SeqCst), 0);
+        assert_eq!(out.len(), 1);
+        assert!(out[0].intent.is_some());
+        assert!(out[0].action.is_some());
+        assert_eq!(
+            out[0].debug.as_ref().map(|meta| meta.fallback_to_rewrite),
+            Some(false)
+        );
+    }
+
+    #[tokio::test]
+    async fn low_confidence_intent_falls_back_with_debug_metadata() {
+        let payload = r#"{
+            "suggestions":[
+                {"label":"More Direct","text":"A","reasoning":"r1"}
+            ]
+        }"#;
+        let provider = Arc::new(MockProvider {
+            calls: AtomicUsize::new(0),
+            payload: payload.to_string(),
+        });
+        let cfg = EngineConfig {
+            min_text_length: 1,
+            intent_confidence_threshold: 0.9,
+            ..EngineConfig::default()
+        };
+        let engine = SuggestionEngine::new(provider.clone(), cfg);
+        let out = engine
+            .generate_suggestions(
+                "Please draft a reply to this customer email",
+                &sample_context(),
+            )
+            .await
+            .expect("rewrite fallback should succeed");
+
+        assert_eq!(provider.calls.load(Ordering::SeqCst), 1);
+        assert_eq!(out.len(), 1);
+        assert!(out[0].action.is_none());
+        let debug = out[0]
+            .debug
+            .as_ref()
+            .expect("low-confidence fallback should include debug metadata");
+        assert!(debug.fallback_to_rewrite);
+        assert_eq!(debug.intent_detected, Some(SuggestionIntent::DraftReply));
+        assert!(
+            debug
+                .fallback_reason
+                .as_deref()
+                .unwrap_or_default()
+                .contains("below threshold")
+        );
+    }
+
+    #[tokio::test]
     async fn caches_provider_responses() {
         let payload = r#"{
             "suggestions":[
@@ -266,4 +541,3 @@ mod tests {
         assert_eq!(provider.calls.load(Ordering::SeqCst), 1);
     }
 }
-

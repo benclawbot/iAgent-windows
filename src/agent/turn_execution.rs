@@ -603,6 +603,7 @@ impl Agent {
                     println!("Activating skill: {}", skill.name);
                     println!("{}\n", skill.description);
                     self.active_skill = Some(skill_name.to_string());
+                    self.sync_allowed_tools_from_active_skill();
                     continue;
                 } else {
                     println!("Unknown skill: /{}", skill_name);

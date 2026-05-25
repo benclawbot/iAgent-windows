@@ -351,7 +351,10 @@ impl Tool for GoalTool {
         .map_err(|err| {
             log_warn!((
                 "[tool:goal] action failed action={} goal_id={} session_id={} error={}",
-                action_label, goal_id_label, ctx.session_id, err
+                action_label,
+                goal_id_label,
+                ctx.session_id,
+                err
             ));
             err
         })

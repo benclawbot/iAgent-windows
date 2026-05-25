@@ -342,6 +342,7 @@ fn build_spawn_command(term: &str, command: &TerminalCommand, cwd: &Path) -> Opt
     Some(cmd)
 }
 
+#[cfg(unix)]
 fn command_parts(command: &TerminalCommand) -> Vec<String> {
     std::iter::once(command.program.to_string_lossy().into_owned())
         .chain(command.args.iter().cloned())
@@ -350,9 +351,12 @@ fn command_parts(command: &TerminalCommand) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
     use super::*;
+    #[cfg(unix)]
     use std::sync::Mutex;
 
+    #[cfg(unix)]
     static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
@@ -377,6 +381,7 @@ mod tests {
 
     #[test]
     fn shell_command_quotes_arguments() {
+        #[cfg(unix)]
         let shell = shell_command(&["jcode".to_string(), "it's ok".to_string()]);
         #[cfg(unix)]
         assert_eq!(shell, "'jcode' 'it'\"'\"'s ok'");

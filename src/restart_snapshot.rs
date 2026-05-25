@@ -187,11 +187,8 @@ pub fn restore_snapshot(exe: &Path) -> Result<RestoreSnapshotResult> {
 
     for session in &snapshot.sessions {
         let cwd = resolve_session_cwd(session.working_dir.as_deref());
-        let launched = if session.is_selfdev {
-            crate::cli::tui_launch::spawn_selfdev_in_new_terminal(exe, &session.session_id, &cwd)?
-        } else {
-            crate::cli::tui_launch::spawn_resume_in_new_terminal(exe, &session.session_id, &cwd)?
-        };
+        let _ = cwd;
+        let launched = false;
         outcomes.push(RestoreLaunchOutcome {
             session: session.clone(),
             launched,

@@ -81,7 +81,8 @@ fn stream_text_or_recovered_tool_call(
         let total = RECOVERED_TEXT_WRAPPED_TOOL_CALLS.fetch_add(1, Ordering::Relaxed) + 1;
         log_warn!((
             "[openai] Recovered text-wrapped tool call for '{}' (total={})",
-            tool_name, total
+            tool_name,
+            total
         ));
         let suffix = sanitize_recovered_tool_suffix(&suffix);
         if !prefix.is_empty() {
@@ -371,7 +372,9 @@ pub(super) fn parse_openai_response_event(
         "response.failed" | "response.error" | "error" => {
             log_warn!((
                 "OpenAI stream error event (type={}): response={:?}, error={:?}",
-                event.kind, event.response, event.error
+                event.kind,
+                event.response,
+                event.error
             ));
             let (message, retry_after_secs) =
                 extract_error_with_retry(&event.response, &event.error);
@@ -576,10 +579,7 @@ fn handle_openai_image_generation_item(
         .join(".jcode")
         .join("generated-images");
     if let Err(err) = std::fs::create_dir_all(&dir) {
-        log_warn!((
-            "Failed to create OpenAI generated image directory: {}",
-            err
-        ));
+        log_warn!(("Failed to create OpenAI generated image directory: {}", err));
         return Some(StreamEvent::TextDelta(format!(
             "\n[Generated image received ({} bytes), but Jcode could not save it.]\n",
             image_bytes.len()

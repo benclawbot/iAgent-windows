@@ -1,6 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use crate::notifications::NotificationDispatcher;
@@ -15,6 +16,34 @@ use crate::storage;
 pub enum ActionTier {
     AutoAllowed,
     RequiresPermission,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RiskLevel {
+    ReadOnly,
+    EditLocal,
+    ExternalSend,
+    FinancialLegal,
+    Destructive,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PolicyDisposition {
+    AutoAllow,
+    Confirm,
+    Deny,
+    Escalate,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DataSensitivity {
+    Public,
+    Internal,
+    Confidential,
+    Regulated,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -40,6 +69,30 @@ pub struct PermissionRequest {
     pub created_at: DateTime<Utc>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SafetyDecisionContext {
+    pub action: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub destination: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data_sensitivity: Option<DataSensitivity>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub confidence: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PolicyEvaluation {
+    pub risk_level: RiskLevel,
+    pub disposition: PolicyDisposition,
+    pub rationale: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub never_again_match: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -70,9 +123,50 @@ pub struct ActionLog {
     pub action_type: String,
     pub description: String,
     pub tier: ActionTier,
+    #[serde(default)]
+    pub risk_level: Option<RiskLevel>,
+    #[serde(default)]
+    pub disposition: Option<PolicyDisposition>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub undo_token: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub screenshot_before: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub screenshot_after: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub screenshot_diff: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<serde_json::Value>,
     pub timestamp: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuditEntry {
+    pub id: String,
+    pub action_type: String,
+    pub risk_level: RiskLevel,
+    pub disposition: PolicyDisposition,
+    pub rationale: String,
+    pub timestamp: DateTime<Utc>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub undo_token: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screenshot_before: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screenshot_after: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screenshot_diff: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NeverAgainRule {
+    pub id: String,
+    pub pattern: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -110,6 +204,7 @@ pub struct AmbientTranscript {
 const AUTO_ALLOWED: &[&str] = &[
     "read",
     "glob",
+    "file",
     "grep",
     "ls",
     "memory",
@@ -119,7 +214,33 @@ const AUTO_ALLOWED: &[&str] = &[
     "conversation_search",
     "session_search",
     "codesearch",
+    "compaction",
 ];
+
+const EDIT_LOCAL: &[&str] = &[
+    "write",
+    "edit",
+    "multiedit",
+    "patch",
+    "apply_patch",
+    "todo",
+    "todowrite",
+];
+
+const EXTERNAL_SEND: &[&str] = &[
+    "communicate",
+    "create_pull_request",
+    "push",
+    "webfetch",
+    "websearch",
+    "open",
+    "launch",
+    "oc_export_html",
+];
+
+const FINANCIAL_LEGAL: &[&str] = &["payment", "invoice", "contract", "wire_transfer", "tax"];
+
+const DESTRUCTIVE: &[&str] = &["delete", "remove", "reset", "drop", "rm", "format_disk"];
 
 // ---------------------------------------------------------------------------
 // SafetySystem
@@ -129,6 +250,8 @@ pub struct SafetySystem {
     queue: Mutex<Vec<PermissionRequest>>,
     history: Mutex<Vec<Decision>>,
     actions: Mutex<Vec<ActionLog>>,
+    audit: Mutex<Vec<AuditEntry>>,
+    never_again: Mutex<Vec<NeverAgainRule>>,
     notifier: NotificationDispatcher,
 }
 
@@ -145,21 +268,90 @@ impl SafetySystem {
             .and_then(|p| storage::read_json(&p).ok())
             .unwrap_or_default();
 
+        let audit: Vec<AuditEntry> = audit_path()
+            .ok()
+            .and_then(|p| storage::read_json(&p).ok())
+            .unwrap_or_default();
+
+        let never_again: Vec<NeverAgainRule> = never_again_path()
+            .ok()
+            .and_then(|p| storage::read_json(&p).ok())
+            .unwrap_or_default();
+
         SafetySystem {
             queue: Mutex::new(queue),
             history: Mutex::new(history),
             actions: Mutex::new(Vec::new()),
+            audit: Mutex::new(audit),
+            never_again: Mutex::new(never_again),
             notifier: NotificationDispatcher::new(),
         }
     }
 
-    /// Classify an action name into a tier.
-    pub fn classify(&self, action: &str) -> ActionTier {
+    /// Classify an action name into the risk model.
+    pub fn classify_risk(&self, action: &str) -> RiskLevel {
         let lower = action.to_lowercase();
         if AUTO_ALLOWED.iter().any(|&a| a == lower) {
-            ActionTier::AutoAllowed
+            RiskLevel::ReadOnly
+        } else if EDIT_LOCAL.iter().any(|&a| a == lower) {
+            RiskLevel::EditLocal
+        } else if EXTERNAL_SEND.iter().any(|&a| a == lower) {
+            RiskLevel::ExternalSend
+        } else if FINANCIAL_LEGAL.iter().any(|&a| a == lower) {
+            RiskLevel::FinancialLegal
+        } else if DESTRUCTIVE.iter().any(|&a| a == lower) {
+            RiskLevel::Destructive
         } else {
-            ActionTier::RequiresPermission
+            RiskLevel::EditLocal
+        }
+    }
+
+    /// Backward-compatible two-tier classification view.
+    pub fn classify(&self, action: &str) -> ActionTier {
+        match self.classify_risk(action) {
+            RiskLevel::ReadOnly => ActionTier::AutoAllowed,
+            _ => ActionTier::RequiresPermission,
+        }
+    }
+
+    pub fn evaluate_policy(&self, ctx: &SafetyDecisionContext) -> PolicyEvaluation {
+        let risk = self.classify_risk(&ctx.action);
+        let mut rationale = vec![format!("classified action '{}' as {:?}", ctx.action, risk)];
+
+        if let Some(sensitivity) = ctx.data_sensitivity {
+            rationale.push(format!("data_sensitivity={:?}", sensitivity));
+        }
+        if let Some(confidence) = ctx.confidence {
+            rationale.push(format!("confidence={:.2}", confidence));
+        }
+
+        let never_again_match = self.matches_never_again(&ctx.action);
+        if let Some(rule) = &never_again_match {
+            return PolicyEvaluation {
+                risk_level: risk,
+                disposition: PolicyDisposition::Deny,
+                rationale: format!(
+                    "{}; matched never-again rule {}",
+                    rationale.join(", "),
+                    rule
+                ),
+                never_again_match: Some(rule.clone()),
+            };
+        }
+
+        let disposition = match risk {
+            RiskLevel::ReadOnly => PolicyDisposition::AutoAllow,
+            RiskLevel::EditLocal => PolicyDisposition::Confirm,
+            RiskLevel::ExternalSend => PolicyDisposition::Confirm,
+            RiskLevel::FinancialLegal => PolicyDisposition::Escalate,
+            RiskLevel::Destructive => PolicyDisposition::Deny,
+        };
+
+        PolicyEvaluation {
+            risk_level: risk,
+            disposition,
+            rationale: rationale.join(", "),
+            never_again_match: None,
         }
     }
 
@@ -168,10 +360,32 @@ impl SafetySystem {
         let request_id = request.id.clone();
         let action = request.action.clone();
         let description = request.description.clone();
+        let evaluation = self.evaluate_policy(&SafetyDecisionContext {
+            action: action.clone(),
+            target: None,
+            destination: None,
+            data_sensitivity: None,
+            confidence: None,
+            metadata: request.context.clone(),
+        });
         if let Ok(mut q) = self.queue.lock() {
             q.push(request);
             let _ = persist_queue(&q);
         }
+
+        self.record_audit(AuditEntry {
+            id: crate::id::new_id("audit"),
+            action_type: action.clone(),
+            risk_level: evaluation.risk_level,
+            disposition: evaluation.disposition,
+            rationale: format!("permission queued: {}", evaluation.rationale),
+            timestamp: Utc::now(),
+            context: None,
+            undo_token: None,
+            screenshot_before: None,
+            screenshot_after: None,
+            screenshot_diff: None,
+        });
         // Send high-priority notification for permission request
         self.notifier
             .dispatch_permission_request(&action, &description, &request_id);
@@ -228,15 +442,24 @@ impl SafetySystem {
         message: Option<String>,
     ) -> Result<()> {
         // Remove from queue
+        let mut approval_latency_ms: Option<i64> = None;
+        let mut approval_action: Option<String> = None;
+        let now = Utc::now();
         if let Ok(mut q) = self.queue.lock() {
-            q.retain(|r| r.id != request_id);
+            if let Some(pos) = q.iter().position(|r| r.id == request_id) {
+                let request = q.remove(pos);
+                approval_action = Some(request.action.clone());
+                approval_latency_ms = Some((now - request.created_at).num_milliseconds().max(0));
+            } else {
+                q.retain(|r| r.id != request_id);
+            }
             let _ = persist_queue(&q);
         }
 
         let decision = Decision {
             request_id: request_id.to_string(),
             approved,
-            decided_at: Utc::now(),
+            decided_at: now,
             decided_via: via.to_string(),
             message,
         };
@@ -245,6 +468,31 @@ impl SafetySystem {
             h.push(decision);
             let _ = persist_history(&h);
         }
+
+        self.record_audit(AuditEntry {
+            id: crate::id::new_id("audit"),
+            action_type: format!("permission_decision:{request_id}"),
+            risk_level: RiskLevel::EditLocal,
+            disposition: if approved {
+                PolicyDisposition::Confirm
+            } else {
+                PolicyDisposition::Deny
+            },
+            rationale: format!("decision via {}", via),
+            timestamp: Utc::now(),
+            context: None,
+            undo_token: None,
+            screenshot_before: None,
+            screenshot_after: None,
+            screenshot_diff: None,
+        });
+
+        crate::core_loop_metrics::record_approval_decision(
+            approved,
+            approval_latency_ms,
+            Some(risk_level_slug(RiskLevel::EditLocal)),
+            approval_action.as_deref(),
+        );
 
         Ok(())
     }
@@ -256,9 +504,104 @@ impl SafetySystem {
 
     /// Append an action to the in-memory log.
     pub fn log_action(&self, log: ActionLog) {
+        let risk_level = log
+            .risk_level
+            .unwrap_or_else(|| self.classify_risk(&log.action_type));
+        let disposition = log.disposition.unwrap_or(match risk_level {
+            RiskLevel::ReadOnly => PolicyDisposition::AutoAllow,
+            RiskLevel::EditLocal | RiskLevel::ExternalSend => PolicyDisposition::Confirm,
+            RiskLevel::FinancialLegal => PolicyDisposition::Escalate,
+            RiskLevel::Destructive => PolicyDisposition::Deny,
+        });
+
+        self.record_audit(AuditEntry {
+            id: crate::id::new_id("audit"),
+            action_type: log.action_type.clone(),
+            risk_level,
+            disposition,
+            rationale: "action logged".to_string(),
+            timestamp: log.timestamp,
+            context: log.details.clone(),
+            undo_token: log.undo_token.clone(),
+            screenshot_before: log.screenshot_before.clone(),
+            screenshot_after: log.screenshot_after.clone(),
+            screenshot_diff: log.screenshot_diff.clone(),
+        });
+
+        let success = log
+            .details
+            .as_ref()
+            .and_then(|details| details.get("success"))
+            .and_then(|value| value.as_bool())
+            .unwrap_or(disposition != PolicyDisposition::Deny);
+        let undo_available = log.undo_token.is_some();
+        let action_type = log.action_type.clone();
+        crate::core_loop_metrics::record_action_execution(
+            &action_type,
+            success,
+            Some(risk_level_slug(risk_level)),
+            undo_available,
+        );
+        let undo_used = log
+            .details
+            .as_ref()
+            .and_then(|details| details.get("undo_used"))
+            .and_then(|value| value.as_bool())
+            .unwrap_or(false);
+        if undo_used {
+            crate::core_loop_metrics::record_undo_usage(&action_type);
+        }
+
         if let Ok(mut actions) = self.actions.lock() {
             actions.push(log);
         }
+    }
+
+    pub fn record_audit(&self, entry: AuditEntry) {
+        if let Ok(mut audit) = self.audit.lock() {
+            audit.push(entry);
+            let _ = persist_audit(&audit);
+        }
+    }
+
+    pub fn audit_entries(&self) -> Vec<AuditEntry> {
+        self.audit.lock().map(|a| a.clone()).unwrap_or_default()
+    }
+
+    pub fn add_never_again_rule(
+        &self,
+        pattern: impl Into<String>,
+        reason: Option<String>,
+    ) -> String {
+        let rule = NeverAgainRule {
+            id: crate::id::new_id("never"),
+            pattern: pattern.into().to_ascii_lowercase(),
+            reason,
+            created_at: Utc::now(),
+        };
+        let id = rule.id.clone();
+        if let Ok(mut rules) = self.never_again.lock() {
+            rules.push(rule);
+            let _ = persist_never_again(&rules);
+        }
+        id
+    }
+
+    pub fn list_never_again_rules(&self) -> Vec<NeverAgainRule> {
+        self.never_again
+            .lock()
+            .map(|r| r.clone())
+            .unwrap_or_default()
+    }
+
+    pub fn matches_never_again(&self, action: &str) -> Option<String> {
+        let action = action.to_ascii_lowercase();
+        self.never_again.lock().ok().and_then(|rules| {
+            rules
+                .iter()
+                .find(|rule| action.contains(&rule.pattern))
+                .map(|rule| rule.id.clone())
+        })
     }
 
     /// Generate a human-readable summary of logged actions.
@@ -272,27 +615,29 @@ impl SafetySystem {
             return "No actions recorded.".to_string();
         }
 
-        // Separate auto vs permission-required
-        let auto: Vec<&ActionLog> = actions
-            .iter()
-            .filter(|a| a.tier == ActionTier::AutoAllowed)
-            .collect();
-        let perm: Vec<&ActionLog> = actions
-            .iter()
-            .filter(|a| a.tier == ActionTier::RequiresPermission)
-            .collect();
-
-        if !auto.is_empty() {
-            lines.push("Done (auto-allowed):".to_string());
-            for a in &auto {
-                lines.push(format!("- {} — {}", a.action_type, a.description));
-            }
+        let mut by_risk: HashMap<RiskLevel, Vec<&ActionLog>> = HashMap::new();
+        for action in &actions {
+            let risk = action
+                .risk_level
+                .unwrap_or_else(|| self.classify_risk(&action.action_type));
+            by_risk.entry(risk).or_default().push(action);
         }
 
-        if !perm.is_empty() {
-            lines.push(String::new());
-            lines.push("Done (with permission):".to_string());
-            for a in &perm {
+        for risk in [
+            RiskLevel::ReadOnly,
+            RiskLevel::EditLocal,
+            RiskLevel::ExternalSend,
+            RiskLevel::FinancialLegal,
+            RiskLevel::Destructive,
+        ] {
+            let Some(entries) = by_risk.get(&risk) else {
+                continue;
+            };
+            if !lines.is_empty() {
+                lines.push(String::new());
+            }
+            lines.push(format!("Done ({:?}):", risk));
+            for a in entries {
                 lines.push(format!("- {} — {}", a.action_type, a.description));
             }
         }
@@ -340,6 +685,16 @@ fn history_path() -> Result<std::path::PathBuf> {
     Ok(storage::jcode_dir()?.join("safety").join("history.json"))
 }
 
+fn audit_path() -> Result<std::path::PathBuf> {
+    Ok(storage::jcode_dir()?.join("safety").join("audit.json"))
+}
+
+fn never_again_path() -> Result<std::path::PathBuf> {
+    Ok(storage::jcode_dir()?
+        .join("safety")
+        .join("never_again.json"))
+}
+
 fn persist_queue(queue: &[PermissionRequest]) -> Result<()> {
     let path = queue_path()?;
     storage::write_json(&path, queue)
@@ -348,6 +703,26 @@ fn persist_queue(queue: &[PermissionRequest]) -> Result<()> {
 fn persist_history(history: &[Decision]) -> Result<()> {
     let path = history_path()?;
     storage::write_json(&path, history)
+}
+
+fn persist_audit(audit: &[AuditEntry]) -> Result<()> {
+    let path = audit_path()?;
+    storage::write_json(&path, audit)
+}
+
+fn persist_never_again(rules: &[NeverAgainRule]) -> Result<()> {
+    let path = never_again_path()?;
+    storage::write_json(&path, rules)
+}
+
+fn risk_level_slug(level: RiskLevel) -> &'static str {
+    match level {
+        RiskLevel::ReadOnly => "read_only",
+        RiskLevel::EditLocal => "edit_local",
+        RiskLevel::ExternalSend => "external_send",
+        RiskLevel::FinancialLegal => "financial_legal",
+        RiskLevel::Destructive => "destructive",
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -572,6 +947,36 @@ mod tests {
     }
 
     #[test]
+    fn test_risk_classification_levels() {
+        with_temp_home(|| {
+            let sys = SafetySystem::new();
+            assert_eq!(sys.classify_risk("read"), RiskLevel::ReadOnly);
+            assert_eq!(sys.classify_risk("edit"), RiskLevel::EditLocal);
+            assert_eq!(sys.classify_risk("push"), RiskLevel::ExternalSend);
+            assert_eq!(sys.classify_risk("invoice"), RiskLevel::FinancialLegal);
+            assert_eq!(sys.classify_risk("delete"), RiskLevel::Destructive);
+        });
+    }
+
+    #[test]
+    fn test_policy_evaluation_honors_never_again_rules() {
+        with_temp_home(|| {
+            let sys = SafetySystem::new();
+            let rule_id = sys.add_never_again_rule("push", Some("blocked by user".to_string()));
+            let eval = sys.evaluate_policy(&SafetyDecisionContext {
+                action: "push".to_string(),
+                target: None,
+                destination: None,
+                data_sensitivity: Some(DataSensitivity::Confidential),
+                confidence: Some(0.9),
+                metadata: None,
+            });
+            assert_eq!(eval.disposition, PolicyDisposition::Deny);
+            assert_eq!(eval.never_again_match.as_deref(), Some(rule_id.as_str()));
+        });
+    }
+
+    #[test]
     fn test_request_permission_returns_queued() {
         with_temp_home(|| {
             let sys = SafetySystem::new();
@@ -632,6 +1037,12 @@ mod tests {
                 action_type: "memory_consolidation".to_string(),
                 description: "Merged 2 duplicate memories".to_string(),
                 tier: ActionTier::AutoAllowed,
+                risk_level: Some(RiskLevel::ReadOnly),
+                disposition: Some(PolicyDisposition::AutoAllow),
+                undo_token: None,
+                screenshot_before: None,
+                screenshot_after: None,
+                screenshot_diff: None,
                 details: None,
                 timestamp: Utc::now(),
             });
@@ -639,6 +1050,12 @@ mod tests {
                 action_type: "edit".to_string(),
                 description: "Fixed typo in README".to_string(),
                 tier: ActionTier::RequiresPermission,
+                risk_level: Some(RiskLevel::EditLocal),
+                disposition: Some(PolicyDisposition::Confirm),
+                undo_token: None,
+                screenshot_before: None,
+                screenshot_after: None,
+                screenshot_diff: None,
                 details: None,
                 timestamp: Utc::now(),
             });
@@ -646,8 +1063,8 @@ mod tests {
             let summary = sys.generate_summary();
             assert!(summary.contains("memory_consolidation"));
             assert!(summary.contains("edit"));
-            assert!(summary.contains("Done (auto-allowed)"));
-            assert!(summary.contains("Done (with permission)"));
+            assert!(summary.contains("Done (ReadOnly)"));
+            assert!(summary.contains("Done (EditLocal)"));
         });
     }
 

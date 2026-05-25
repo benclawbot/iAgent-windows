@@ -3,6 +3,7 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{Value, json};
+#[cfg(all(unix, not(target_os = "macos")))]
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -132,7 +133,10 @@ impl Tool for OpenTool {
             Err(err) => {
                 log_warn!((
                     "[tool:open] failed to resolve target action={} session_id={} target={} error={}",
-                    action_name, ctx.session_id, requested_target, err
+                    action_name,
+                    ctx.session_id,
+                    requested_target,
+                    err
                 ));
                 return Err(err);
             }
@@ -145,7 +149,10 @@ impl Tool for OpenTool {
         .map_err(|err| {
             log_warn!((
                 "[tool:open] action failed action={} session_id={} target={} error={}",
-                action_name, ctx.session_id, requested_target, err
+                action_name,
+                ctx.session_id,
+                requested_target,
+                err
             ));
             err
         })?;
@@ -401,7 +408,7 @@ async fn reveal_target(path: &Path, kind: LocalTargetKind) -> Result<(String, bo
             cmd.arg(format!("/select,{}", path.display()));
         }
         spawn_with_grace(cmd, "explorer").await?;
-        return Ok(("explorer".to_string(), true));
+        Ok(("explorer".to_string(), true))
     }
 }
 

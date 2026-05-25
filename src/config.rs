@@ -11,6 +11,8 @@ pub use jcode_config_types::{
     NamedProviderType, NativeScrollbarConfig, ProviderConfig, SafetyConfig,
     SessionPickerResumeAction, SwarmSpawnMode, UpdateChannel, WebSearchConfig, WebSearchEngine,
 };
+
+use crate::goal_judge;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -102,9 +104,11 @@ fn config_env_fingerprint() -> Vec<(String, String)> {
         .filter_map(|(key, value)| {
             let key = key.to_string_lossy().to_string();
             if key == "JCODE_HOME"
+                || key == "IAGENT_HOME"
                 || key == "HOME"
                 || key == "XDG_CONFIG_HOME"
                 || key.starts_with("JCODE_")
+                || key.starts_with("IAGENT_")
             {
                 Some((key, value.to_string_lossy().to_string()))
             } else {
@@ -184,6 +188,9 @@ pub struct Config {
 
     /// Auto-judge configuration
     pub autojudge: AutoJudgeConfig,
+
+    /// Goal judge routing configuration
+    pub goal_judge: goal_judge::GoalJudgeConfig,
 }
 
 /// External dictation / speech-to-text integration.

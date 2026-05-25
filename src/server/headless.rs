@@ -73,7 +73,8 @@ pub(super) async fn create_headless_session(
     {
         log_warn!((
             "Failed to set headless session model override '{}': {}",
-            model, e
+            model,
+            e
         ));
     }
 

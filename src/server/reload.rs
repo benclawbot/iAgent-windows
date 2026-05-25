@@ -65,7 +65,10 @@ pub(super) async fn await_reload_signal(
 
         log_info!((
             "Server: reload signal received via channel request={} hash={} triggering_session={:?} prefer_selfdev_binary={}",
-            signal.request_id, signal.hash, signal.triggering_session, signal.prefer_selfdev_binary
+            signal.request_id,
+            signal.hash,
+            signal.triggering_session,
+            signal.prefer_selfdev_binary
         ));
         let reload_started = std::time::Instant::now();
         crate::server::write_reload_state(
@@ -134,10 +137,7 @@ pub(super) async fn await_reload_signal(
                     crate::server::ReloadPhase::Failed,
                     Some(err.to_string()),
                 );
-                log_error!((
-                    "Failed to exec into {} {:?}: {}",
-                    label, binary, err
-                ));
+                log_error!(("Failed to exec into {} {:?}: {}", label, binary, err));
             } else {
                 crate::server::write_reload_state(
                     &signal.request_id,
@@ -223,7 +223,9 @@ async fn persist_reload_recovery_intents(
         {
             log_warn!((
                 "reload recovery store: failed to persist intent reload_id={} session={}: {}",
-                reload_id, session_id, err
+                reload_id,
+                session_id,
+                err
             ));
         }
     }

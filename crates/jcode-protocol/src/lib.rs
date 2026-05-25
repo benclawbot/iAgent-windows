@@ -7,6 +7,8 @@
 //! - Main socket: TUI/client communication with agent
 //! - Agent socket: Inter-agent communication (AI-to-AI)
 
+pub mod types;
+use crate::types::IagentConfig;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
@@ -568,6 +570,14 @@ pub enum Request {
         role: String,
     },
 
+    /// Get current iAgent settings (provider, model, etc.)
+    #[serde(rename = "get_settings")]
+    GetSettings { id: u64 },
+
+    /// Save iAgent settings (provider, model, etc.)
+    #[serde(rename = "save_settings")]
+    SaveSettings { id: u64, settings: IagentConfig },
+
     /// Get a summary of an agent's recent tool calls
     #[serde(rename = "comm_summary")]
     CommSummary {
@@ -890,6 +900,10 @@ pub enum ServerEvent {
     /// Memory activity state update for remote clients.
     #[serde(rename = "memory_activity")]
     MemoryActivity { activity: MemoryActivitySnapshot },
+
+    /// Compaction started in the background (shows "Compacting..." to remote clients)
+    #[serde(rename = "compaction_started")]
+    CompactionStarted { trigger: String },
 
     /// Context compaction occurred (background summary or emergency drop)
     #[serde(rename = "compaction")]
@@ -1320,6 +1334,23 @@ pub enum ServerEvent {
         /// Tool call ID this is associated with
         tool_call_id: String,
     },
+
+    /// Response to GetSettings request
+    #[serde(rename = "settings_response")]
+    SettingsResponse {
+        id: u64,
+        provider: String,
+        model: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        api_key: Option<String>,
+        auto_start: bool,
+        start_minimized: bool,
+        always_on_top: bool,
+    },
+
+    /// Response to SaveSettings request
+    #[serde(rename = "settings_saved")]
+    SettingsSaved { id: u64 },
 }
 
 /// Summary of a tool call for the comm_summary response
@@ -2038,6 +2069,8 @@ impl Request {
             Request::CommSpawn { id, .. } => *id,
             Request::CommStop { id, .. } => *id,
             Request::CommAssignRole { id, .. } => *id,
+            Request::GetSettings { id } => *id,
+            Request::SaveSettings { id, .. } => *id,
             Request::CommSummary { id, .. } => *id,
             Request::CommStatus { id, .. } => *id,
             Request::CommReport { id, .. } => *id,

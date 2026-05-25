@@ -507,7 +507,8 @@ impl Provider for GeminiProvider {
                     for fallback_model in gemini_fallback_models(&model) {
                         log_warn!((
                             "Gemini model '{}' was not found; retrying with fallback '{}'",
-                            model, fallback_model
+                            model,
+                            fallback_model
                         ));
                         match provider
                             .generate_content(

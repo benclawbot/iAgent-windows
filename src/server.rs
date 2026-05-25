@@ -603,7 +603,8 @@ impl Server {
                     stats.failed_to_load += 1;
                     log_warn!((
                         "Failed to load headless session {} during startup recovery: {}",
-                        session_id, error
+                        session_id,
+                        error
                     ));
                     update_member_status(
                         &session_id,
@@ -883,10 +884,7 @@ impl Server {
                         ));
                     }
                     Err(e) => {
-                        log_info!((
-                            "Embedding model preload failed (non-fatal): {}",
-                            e
-                        ));
+                        log_info!(("Embedding model preload failed (non-fatal): {}", e));
                     }
                 }
             });
@@ -1031,17 +1029,11 @@ impl Server {
             tokio::spawn(async move {
                 match crate::runtime_memory_log::prune_old_server_logs() {
                     Ok(removed) if removed > 0 => {
-                        log_info!((
-                            "Runtime memory logging pruned {} old log files",
-                            removed
-                        ));
+                        log_info!(("Runtime memory logging pruned {} old log files", removed));
                     }
                     Ok(_) => {}
                     Err(err) => {
-                        log_info!((
-                            "Runtime memory logging could not prune old logs: {}",
-                            err
-                        ));
+                        log_info!(("Runtime memory logging could not prune old logs: {}", err));
                     }
                 }
 
@@ -1086,10 +1078,7 @@ impl Server {
                 controller.record_process_sample(startup_now);
                 controller.finalize_attribution_sample(startup_now, &mut startup_sample);
                 if let Err(err) = crate::runtime_memory_log::append_server_sample(&startup_sample) {
-                    log_info!((
-                        "Runtime memory logging startup sample failed: {}",
-                        err
-                    ));
+                    log_info!(("Runtime memory logging startup sample failed: {}", err));
                 }
 
                 let mut process_interval =
@@ -1369,10 +1358,7 @@ impl Server {
                 .unwrap_or_default();
             registry.register(registry_info);
             let _ = registry.save().await;
-            log_info!((
-                "Registered as {} in server registry",
-                registry_identity,
-            ));
+            log_info!(("Registered as {} in server registry", registry_identity,));
 
             if let Ok(mut registry) = crate::registry::ServerRegistry::load().await {
                 let _ = registry.cleanup_stale().await;
@@ -1747,7 +1733,8 @@ impl Server {
         if let Some(policy) = temporary_server_policy.as_ref() {
             log_info!((
                 "Temporary server lifecycle enabled: owner_pid={:?}, idle_timeout_secs={}",
-                policy.owner_pid, policy.idle_timeout_secs
+                policy.owner_pid,
+                policy.idle_timeout_secs
             ));
             let _ = lifecycle::write_temporary_metadata(
                 &self.socket_path,
@@ -1790,9 +1777,24 @@ impl Server {
         let (client_tx, client_rx) =
             tokio::sync::mpsc::unbounded_channel::<crate::gateway::GatewayClient>();
 
+        // Get SafetySystem from ambient_runner, or create a new one
+        let safety_system = self
+            .ambient_runner
+            .as_ref()
+            .map(|r| r.safety().clone())
+            .unwrap_or_else(|| Arc::new(crate::safety::SafetySystem::new()));
+
+        let provider = self.provider.fork();
+
         // Spawn the TCP/WebSocket listener
         tokio::spawn(async move {
-            if let Err(e) = crate::gateway::run_gateway(config, client_tx).await {
+            // Create a Registry for the gateway's /status endpoint inside the
+            // async task; spawn_gateway itself is synchronous startup plumbing.
+            let registry = crate::tool::Registry::new(provider).await;
+            if let Err(e) =
+                crate::gateway::run_gateway(config, client_tx, safety_system, Arc::new(registry))
+                    .await
+            {
                 log_error!(("Gateway error: {}", e));
             }
         });

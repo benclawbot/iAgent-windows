@@ -113,11 +113,7 @@ pub fn selfdev_build_command_for_target(
         explicit => explicit,
     };
     let specs = match target {
-        SelfDevBuildTarget::Tui => vec![("jcode", "jcode")],
-        SelfDevBuildTarget::Desktop => vec![("jcode-desktop", "jcode-desktop")],
-        SelfDevBuildTarget::All | SelfDevBuildTarget::Auto => {
-            vec![("jcode", "jcode"), ("jcode-desktop", "jcode-desktop")]
-        }
+        SelfDevBuildTarget::Backend | SelfDevBuildTarget::Auto => vec![("jcode", "jcode")],
     };
     let wrapper = repo_dir.join("scripts").join("dev_cargo.sh");
     if wrapper.is_file() {
@@ -164,42 +160,8 @@ fn display_build_command(program: &str, specs: &[(&str, &str)]) -> String {
 }
 
 fn infer_selfdev_build_target(repo_dir: &Path) -> SelfDevBuildTarget {
-    let output = Command::new("git")
-        .args(["status", "--porcelain=v1", "--untracked-files=all"])
-        .current_dir(repo_dir)
-        .output();
-    let Ok(output) = output else {
-        return SelfDevBuildTarget::Tui;
-    };
-    if !output.status.success() {
-        return SelfDevBuildTarget::Tui;
-    }
-    let text = String::from_utf8_lossy(&output.stdout);
-    let mut desktop = false;
-    let mut other = false;
-    for line in text.lines() {
-        let path = line
-            .get(3..)
-            .unwrap_or(line)
-            .trim()
-            .rsplit_once(" -> ")
-            .map(|(_, new_path)| new_path)
-            .unwrap_or_else(|| line.get(3..).unwrap_or(line).trim());
-        if path == "Cargo.toml" || path == "Cargo.lock" || path.starts_with(".cargo/") {
-            desktop = true;
-            other = true;
-        } else if path.starts_with("crates/jcode-desktop/") {
-            desktop = true;
-        } else if !path.is_empty() {
-            other = true;
-        }
-    }
-    match (desktop, other) {
-        (true, false) => SelfDevBuildTarget::Desktop,
-        (false, true) => SelfDevBuildTarget::Tui,
-        (true, true) => SelfDevBuildTarget::All,
-        (false, false) => SelfDevBuildTarget::Tui,
-    }
+    let _ = repo_dir;
+    SelfDevBuildTarget::Backend
 }
 
 fn shell_escape(value: &str) -> String {

@@ -86,7 +86,10 @@ impl Tool for SkillTool {
         .map_err(|err| {
             log_warn!((
                 "[tool:skill_manage] action failed action={} skill={} session_id={} error={}",
-                action_label, name_label, ctx.session_id, err
+                action_label,
+                name_label,
+                ctx.session_id,
+                err
             ));
             err
         })
@@ -182,7 +185,8 @@ impl SkillTool {
             Err(e) => {
                 log_warn!((
                     "[tool:skill_manage] reload failed skill={} error={}",
-                    name, e
+                    name,
+                    e
                 ));
                 Ok(
                     ToolOutput::new(format!("Failed to reload skill '{}': {}", name, e))
@@ -207,10 +211,7 @@ impl SkillTool {
                 Ok(ToolOutput::new(output).with_title(format!("Skills: Reloaded {}", count)))
             }
             Err(e) => {
-                log_warn!((
-                    "[tool:skill_manage] reload_all failed error={}",
-                    e
-                ));
+                log_warn!(("[tool:skill_manage] reload_all failed error={}", e));
                 Ok(ToolOutput::new(format!("Failed to reload skills: {}", e))
                     .with_title("Skills: Reload failed"))
             }

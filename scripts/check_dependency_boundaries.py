@@ -30,7 +30,6 @@ FORBIDDEN_INTERNAL_DEPS = {
     "jcode-agent-runtime",
     "jcode-azure-auth",
     "jcode-core",
-    "jcode-desktop",
     "jcode-embedding",
     "jcode-notify-email",
     "jcode-pdf",
@@ -41,11 +40,6 @@ FORBIDDEN_INTERNAL_DEPS = {
     "jcode-provider-openrouter",
     "jcode-protocol",
     "jcode-terminal-launch",
-    "jcode-tui-core",
-    "jcode-tui-markdown",
-    "jcode-tui-mermaid",
-    "jcode-tui-render",
-    "jcode-tui-workspace",
 }
 
 

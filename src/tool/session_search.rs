@@ -593,7 +593,9 @@ fn search_sessions_blocking(
     if report.read_errors > 0 || report.parse_errors > 0 {
         log_warn!((
             "[tool:session_search] skipped unreadable or invalid session files in session {} (read_errors={} parse_errors={})",
-            log_session_id, report.read_errors, report.parse_errors
+            log_session_id,
+            report.read_errors,
+            report.parse_errors
         ));
     }
 

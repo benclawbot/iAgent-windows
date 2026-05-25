@@ -6,6 +6,9 @@ publish = false
 
 [dependencies]
 anyhow = "1"
+dirs = "5"
+libc = "0.2"
+regex = "1"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt", "sync", "time"] }
 tracing = "0.1"

@@ -1,10 +1,13 @@
 use super::{Tool, ToolContext, ToolOutput};
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result, anyhow};
 use async_trait::async_trait;
+#[cfg(windows)]
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+#[cfg(windows)]
 use std::process::Command;
+#[cfg(windows)]
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct WordTool;

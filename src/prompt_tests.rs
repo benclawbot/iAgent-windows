@@ -17,6 +17,10 @@ fn test_default_system_prompt_no_claude_code_identity() {
 }
 
 /// Verify skill prompts don't accidentally introduce "Claude Code" identity
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 #[test]
 fn test_skill_prompt_integration() {
     // Test that a skill prompt is properly appended and doesn't break anything

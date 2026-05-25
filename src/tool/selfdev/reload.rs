@@ -165,7 +165,10 @@ impl ReloadContext {
     pub fn log_recovery_outcome(flow: &str, session_id: &str, outcome: &str, detail: &str) {
         log_info!((
             "reload recovery flow={} session_id={} outcome={} detail={}",
-            flow, session_id, outcome, detail
+            flow,
+            session_id,
+            outcome,
+            detail
         ));
     }
 }
@@ -337,7 +340,10 @@ impl SelfDevTool {
             server::send_reload_signal(hash.clone(), Some(session_id.to_string()), true);
         log_info!((
             "selfdev reload: request={} session_id={} hash={} execution_mode={:?}",
-            request_id, session_id, hash, execution_mode
+            request_id,
+            session_id,
+            hash,
+            execution_mode
         ));
 
         let timeout = std::time::Duration::from_secs(SelfDevTool::reload_timeout_secs());

@@ -33,6 +33,7 @@ use account_failover::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
+use jcode_message_types::StreamEvent;
 #[cfg(test)]
 use jcode_provider_core::FailoverDecision;
 use std::sync::{Arc, RwLock};
@@ -41,12 +42,12 @@ pub use jcode_provider_core::{
     ALL_CLAUDE_MODELS, ALL_OPENAI_MODELS, CHEAPNESS_REFERENCE_INPUT_TOKENS,
     CHEAPNESS_REFERENCE_OUTPUT_TOKENS, DEFAULT_CONTEXT_LIMIT, EventStream, JCODE_USER_AGENT,
     ModelCapabilities, ModelCatalogRefreshSummary, ModelRoute, NativeCompactionResult,
-    NativeToolResult, NativeToolResultSender, PremiumMode, Provider, RouteBillingKind,
-    RouteCheapnessEstimate, RouteCostConfidence, RouteCostSource, dedupe_model_routes,
-    explicit_model_provider_prefix, model_name_for_provider, normalize_copilot_model_name,
-    provider_from_model_key, shared_http_client, summarize_model_catalog_refresh,
+    NativeToolResult, NativeToolResultSender, PremiumMode, Provider, ProviderFailoverPrompt,
+    RouteBillingKind, RouteCheapnessEstimate, RouteCostConfidence, RouteCostSource,
+    dedupe_model_routes, explicit_model_provider_prefix, model_name_for_provider,
+    normalize_copilot_model_name, parse_failover_prompt_message, provider_from_model_key,
+    shared_http_client, summarize_model_catalog_refresh,
 };
-pub(crate) use jcode_provider_core::{ProviderFailoverPrompt, parse_failover_prompt_message};
 pub use route_builders::{
     build_anthropic_oauth_route, build_copilot_route, build_openai_api_key_route,
     build_openai_oauth_route, build_openrouter_auto_route, build_openrouter_endpoint_route,
@@ -108,6 +109,39 @@ use self::state::ProviderState;
 pub(crate) use self::state::{
     ProviderModelSelectionSource, ProviderRuntimeState, ProviderStateEvent,
 };
+
+/// Inert provider used only for registries that must exist before a real
+/// provider-backed session is attached.
+pub struct DummyProvider;
+
+#[async_trait]
+impl Provider for DummyProvider {
+    async fn complete(
+        &self,
+        _messages: &[Message],
+        _tools: &[ToolDefinition],
+        _system: &str,
+        _resume_session_id: Option<&str>,
+    ) -> Result<EventStream> {
+        Ok(Box::pin(futures::stream::once(async {
+            Err::<StreamEvent, anyhow::Error>(anyhow::anyhow!(
+                "dummy provider cannot complete requests"
+            ))
+        })))
+    }
+
+    fn name(&self) -> &str {
+        "dummy"
+    }
+
+    fn model(&self) -> String {
+        "dummy".to_string()
+    }
+
+    fn fork(&self) -> Arc<dyn Provider> {
+        Arc::new(DummyProvider)
+    }
+}
 
 /// MultiProvider wraps multiple providers and allows seamless model switching
 pub struct MultiProvider {
@@ -608,10 +642,7 @@ impl MultiProvider {
                             .unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(provider);
                     }
                     Err(e) => {
-                        log_info!((
-                            "Failed to hot-initialize Copilot API after login: {}",
-                            e
-                        ));
+                        log_info!(("Failed to hot-initialize Copilot API after login: {}", e));
                     }
                 }
             }

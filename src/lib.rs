@@ -1,10 +1,13 @@
 #![allow(
+    dead_code,
+    non_camel_case_types,
     unknown_lints,
     clippy::collapsible_match,
     clippy::manual_checked_ops,
     clippy::unnecessary_sort_by,
     clippy::useless_conversion
 )]
+#![recursion_limit = "512"]
 
 #[macro_use]
 pub mod logging;
@@ -25,8 +28,9 @@ pub mod cli;
 pub mod compaction;
 pub mod config;
 pub mod copilot_usage;
-pub mod dictation;
+pub mod core_loop_metrics;
 pub mod desktop_ambient;
+pub mod dictation;
 #[cfg(feature = "embeddings")]
 pub mod embedding;
 #[cfg(not(feature = "embeddings"))]
@@ -37,6 +41,7 @@ pub mod env;
 pub mod gateway;
 pub mod gmail;
 pub mod goal;
+pub mod goal_judge;
 pub mod id;
 pub mod import;
 pub mod login_qr;
@@ -60,7 +65,6 @@ pub mod protocol;
 pub mod provider;
 pub mod provider_catalog;
 pub mod registry;
-pub mod replay;
 pub mod restart_snapshot;
 pub mod runtime_memory_log;
 pub mod safety;
@@ -83,13 +87,9 @@ pub mod think_filter;
 pub mod todo;
 pub mod tool;
 pub mod transport;
-#[cfg(feature = "terminal-ui")]
-pub mod tui;
 pub mod update;
 pub mod usage;
 pub mod util;
-#[cfg(feature = "terminal-ui")]
-pub mod video_export;
 
 use anyhow::Result;
 use std::sync::Mutex;

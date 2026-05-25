@@ -157,13 +157,10 @@ pub async fn run_self_dev(should_build: bool, resume_session: Option<String>) ->
         super::dispatch::spawn_server(&ProviderChoice::Auto, None, None).await?;
     }
 
-    if std::env::var("JCODE_RESUMING").is_err() && server_running {
-        output::stderr_info("Connecting to shared server...");
-    }
-
-    output::stderr_info("Starting self-dev TUI...");
-
-    super::tui_launch::run_tui_client(Some(session_id), None, !server_running, false).await
+    let _ = server_running;
+    anyhow::bail!(
+        "self-dev terminal UI has been retired; use backend commands or the Python frontend"
+    )
 }
 #[cfg(test)]
 #[path = "selfdev_tests.rs"]

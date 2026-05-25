@@ -17,7 +17,10 @@ import os
 import sys
 import glob
 
-RUNTIME_DIR = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+if hasattr(os, "getuid"):
+    RUNTIME_DIR = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+else:
+    RUNTIME_DIR = os.environ.get("XDG_RUNTIME_DIR") or os.environ.get("TEMP", ".")
 SOCKET_PATH = os.path.join(RUNTIME_DIR, "jcode-debug.sock")
 JCODE_DIR = os.path.expanduser("~/.jcode")
 

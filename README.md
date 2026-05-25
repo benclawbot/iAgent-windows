@@ -1,128 +1,614 @@
 # iAgent Windows
 
-iAgent is a Windows robot dock for local agent work.
+<div align="center">
 
-It gives you a desktop companion that stays available for follow-up while the
-backend runs locally and handles files, apps, shell commands, and web context.
+### Autonomous AI Agent Runtime for Windows
 
-## What It Can Do
+Persistent desktop AI orchestration with local execution, ambient workflows, provider routing, memory systems, and tool-driven automation.
+iAgent is a next generation autonomous AI agent platform fully integrated into Windows as an ambient agent providing suggestions and minimally intrusive chat dock to help you accomplish more in your tasks, think co-working and full agentic building/researching activities. It can also interact easily with office Tools (Word, Excel, Powerpoint), web Tools (search for you, fill forms,...). It learns you preferences, evolves thanks to its deep memory layer.
+It's always available, has computer use and full agentic capabilities (with swarm agents) but remains in the background for you to focus on what you need to achieve!
 
-- Open from a desktop robot icon into a dock/tray UI with no terminal window.
-- Accept typed or spoken tasks and queue them for local execution.
-- Operate on Windows desktop workflows, local files, and shell commands.
-- Run background jobs while keeping the dock available for follow-up.
-- Work with provider-backed model calls and persistent session context.
-- Start the optional worker integration when configured.
-- Keep the backend CLI available for terminal users who want direct access.
+![iAgent Infographic](img/1000006999.png)
 
-## Prerequisites
+</div>
 
-- Windows 10 or Windows 11
-- PowerShell 5.1 or newer
-- Internet access for installation and provider auth
-- An account or API access for at least one supported model provider
+---
 
-Optional:
+# Overview
 
-- Node.js/npm if you enable the worker integration with `worker_url`
+iAgent Windows is a local-first ambient AI runtime designed for persistent desktop workflows.
 
-## Install
+Unlike browser-only assistants or stateless chatbot wrappers, iAgent behaves like a continuously available execution environment capable of:
 
-Run this in PowerShell:
+- interacting with the local machine
+- orchestrating desktop workflows
+- executing shell commands
+- operating on files and projects
+- maintaining persistent sessions and memory
+- running background and ambient jobs
+- asking for explicit approval through floating proposal popups before mutating desktop actions
+- coordinating provider-backed reasoning
+- integrating directly into Windows UX
+
+The platform combines:
+
+- a modular Rust async runtime
+- Python desktop dock, task inbox, and system-wide proposal popups
+- backend overlay interfaces
+- provider abstraction layers
+- persistent memory and storage systems
+- execution planning pipelines
+- tooling orchestration
+- local-first execution
+- ambient automation
+
+---
+
+# Prerequisites
+
+Before installing or building iAgent, ensure you have:
+
+## Required Tools
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| **Rust** | 1.70+ | Compile the Rust runtime |
+| **Git** | any recent | Clone and manage repository |
+| **PowerShell** | 5.1+ | Windows launcher scripts |
+
+## Required API Keys
+
+iAgent requires at least one LLM provider API key:
+
+| Provider | Environment Variable | Signup |
+|----------|---------------------|--------|
+| OpenAI | `OPENAI_API_KEY` | https://platform.openai.com |
+| OpenRouter | `OPENROUTER_API_KEY` | https://openrouter.ai |
+| Gemini | `GEMINI_API_KEY` | https://aistudio.google.com |
+
+OpenAI OAuth uses `http://localhost:1455/auth/callback` as the default local callback URI.
+
+For GitHub operations (optional): Generate a PAT at https://github.com/settings/tokens
+
+---
+
+# Configuration
+
+## Environment Variables
+
+Create a `.env` file or set environment variables:
+
+```bash
+# Required: At least one provider API key
+OPENAI_API_KEY=sk-...
+# OR
+OPENROUTER_API_KEY=sk-or-...
+
+# Optional: Provider selection (default: openai)
+IAGENT_PROVIDER=openai
+
+# Optional: Model selection (default: gpt-4o)
+IAGENT_MODEL=gpt-4o
+
+# Optional: Residential proxy for GitHub operations (prevents bot detection)
+HTTPS_PROXY=http://user:pass@proxyhost:port
+HTTP_PROXY=http://user:pass@proxyhost:port
+
+# Optional: Log level (default: info)
+RUST_LOG=info
+```
+
+## Provider Selection
+
+```bash
+# Use OpenAI
+IAGENT_PROVIDER=openai
+
+# Use OpenRouter
+IAGENT_PROVIDER=openrouter
+
+# Use Gemini
+IAGENT_PROVIDER=gemini
+```
+
+## Proxy Setup (Stealth Mode)
+
+If using automated GitHub operations, configure a residential proxy to avoid bot detection:
+
+```bash
+# Set proxy environment variables
+export HTTPS_PROXY=http://user:pass@proxyhost:port
+export HTTP_PROXY=http://user:pass@proxyhost:port
+```
+
+**Recommended proxy providers**: Luminati, SmartProxy, Oxylabs (residential rotating proxies)
+
+---
+
+# Core Capabilities
+
+## Autonomous Execution
+
+The runtime is designed around execution-first agent behavior.
+
+Agents can:
+
+- plan actions
+- dispatch tools
+- operate on projects
+- execute commands
+- iterate on tasks
+- maintain contextual continuity
+
+---
+
+## Persistent Memory
+
+Dedicated memory and storage layers enable:
+
+- persistent sessions
+- contextual continuity
+- structured knowledge
+- long-running workflows
+- memory-aware orchestration
+
+---
+
+## Tool Ecosystem
+
+Integrated tooling includes:
+
+- filesystem access
+- shell execution
+- web context tooling
+- planning systems
+- integration layers
+- memory tooling
+- desktop automation
+- Validate/Refuse proposal popups for AI-suggested commands, typing, and delegated goals
+
+---
+
+## Desktop Integrations
+
+iAgent connects directly to the Windows desktop and key productivity applications through three integration layers.
+
+### Windows Desktop Automation
+
+The runtime can control Windows applications via Chrome DevTools Protocol (CDP), communicating directly with running Chrome or Edge browsers. This enables:
+
+- **Tab management** — list open tabs, open new tabs, navigate to URLs
+- **DOM inspection** — find clickable elements, forms, buttons, and text fields
+- **Browser actions** — click elements, type text, evaluate JavaScript, capture screenshots
+- **Form automation** — fill and submit web forms automatically from structured field data
+
+Launch Chrome or Edge with `--remote-debugging-port=9222` to enable the agent's browser control. All browser actions work against live browser sessions — no screenshot-based OCR or X11 forwarding needed.
+
+### Web & Form Automation
+
+The form-fill engine extracts interactive elements from any webpage and can populate them from structured input. Use it for:
+
+- Autofill data entry on web-based administrative tools
+- Batch-fill repetitive forms from CSV or structured input
+- Automated data submission to internal web portals
+
+### Office Documents (Word, Excel, PowerPoint)
+
+iAgent manipulates Office documents directly via [OfficeCLI](https://github.com/iOfficeAI/OfficeCLI) — a self-contained cross-platform binary that reads and writes `.docx`, `.xlsx`, and `.pptx` files without requiring Microsoft Office to be installed.
+
+**Word (.docx)**
+
+- Create new documents, open existing files
+- Read and extract plain text from any position in the document
+- Get document statistics: paragraph count, word count, page count
+- Insert paragraphs and text with optional style formatting
+- Find and replace text throughout a document (plain or regex)
+- Format matched text (bold, color, style)
+- Remove elements by path
+- Validate against OpenXML schema
+- Export to HTML
+
+**Excel (.xlsx)**
+
+- Get and set cell values by address (e.g. `Sheet1!A1`)
+- Insert formulas into cells
+- Read cell ranges as JSON
+- Get sheet statistics: rows, columns, sheets
+- Batch update multiple cells from structured data
+- Open in resident mode to prevent file lock conflicts
+
+**PowerPoint (.pptx)**
+
+- Add slides with configurable layouts
+- Add textboxes to any slide with position and content
+- Set shape properties (fill, outline, font)
+- Get all shapes on a slide with their properties
+- Read slide text and content
+
+**Batch operations** — run multi-step document workflows from a single JSON command batch (e.g. open 50 Excel files, update a header row, save and close).
+
+All Office operations return structured JSON output and work on Windows, macOS, and Linux.
+
+---
+
+## Multi-Provider Runtime
+
+Provider abstraction enables routing across:
+
+- OpenAI
+- OpenRouter
+- Gemini
+- AWS Bedrock-related infrastructure
+
+---
+
+# Architecture
+
+```mermaid
+flowchart TB
+
+    subgraph User["User Layer"]
+        USER[Desktop User]
+        VOICE[Voice / Typed Input]
+        HOTKEY[Alt+; Launcher]
+    end
+
+    subgraph Windows["Windows Integration"]
+        SHORTCUT[iAgent.lnk]
+        VBS[Hidden VBS Launcher]
+        PS[PowerShell Runtime Launcher]
+    end
+
+    subgraph Frontend["Desktop Dock Frontend"]
+        DOCK[Dock / Tray UI]
+        PROPOSAL[Proposal Popups]
+        OVERLAY[Overlay UI]
+        INBOX[Task Inbox]
+    end
+
+    subgraph Runtime["Rust Runtime Engine"]
+        SERVER[Runtime Server]
+        AGENT[Agent Executor]
+        MEMORY[Memory System]
+        SESSION[Session Manager]
+        PLAN[Planning Engine]
+        AMBIENT[Ambient Jobs]
+    end
+
+    subgraph Tooling["Tool Execution Layer"]
+        FS[Filesystem Tools]
+        SHELL[Shell Execution]
+        WEB[Web Context]
+        INT[Integrations]
+    end
+
+    subgraph Providers["Provider Layer"]
+        OPENAI[OpenAI]
+        OPENROUTER[OpenRouter]
+        GEMINI[Gemini]
+    end
+
+    USER --> HOTKEY
+    USER --> VOICE
+    HOTKEY --> SHORTCUT --> VBS --> PS
+    PS --> DOCK
+    DOCK --> PROPOSAL
+    DOCK --> SERVER
+    SERVER --> AGENT
+    AGENT --> MEMORY
+    AGENT --> SESSION
+    AGENT --> PLAN
+    AGENT --> AMBIENT
+    AGENT --> FS
+    AGENT --> SHELL
+    AGENT --> WEB
+    AGENT --> INT
+    AGENT --> OPENAI
+    AGENT --> OPENROUTER
+    AGENT --> GEMINI
+```
+
+---
+
+# Runtime Philosophy
+
+The runtime is designed around several architectural principles:
+
+## Local-first execution
+
+The backend executes locally on the user's machine.
+
+Benefits include:
+
+- direct filesystem access
+- shell execution
+- lower latency
+- desktop integration
+- local orchestration
+- privacy-preserving workflows
+
+## Ambient computing model
+
+Instead of isolated chat sessions, iAgent behaves more like:
+
+- an ambient assistant
+- a desktop copilot
+- a workflow runtime
+- an orchestration layer
+
+## Tool-centric design
+
+The LLM is not the system.
+
+The runtime itself is the system.
+
+The architecture prioritizes:
+
+- execution pipelines
+- orchestration
+- runtime coordination
+- planning systems
+- tools
+- memory
+- workflows
+
+---
+
+# Installation
+
+## Prerequisites Check
+
+Before installing, verify your system:
+
+```bash
+# Check Rust version
+rustc --version
+
+# Check Git version
+git --version
+
+# Check PowerShell version
+$PSVersionTable.PSVersion
+```
+
+## One-Command Install
 
 ```powershell
 irm "https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/install.ps1?v=dock" | iex
 ```
 
-The installer:
+---
 
-- downloads the current backend release
-- installs the desktop dock frontend
-- installs Python dependencies with `uv`
-- creates the `iAgent` desktop shortcut with the robot icon
-- configures `Alt+;` for quick launch
-- adds the backend CLI directory to your user `PATH`
+# Installed Layout
 
-Installed layout:
+```text
+%LOCALAPPDATA%\\iAgent
+├── bin/
+├── app/
+└── logs/
+```
 
-- `%LOCALAPPDATA%\iAgent\bin`: backend CLI and hidden dock launcher scripts
-- `%LOCALAPPDATA%\iAgent\app`: desktop dock frontend, tray runtime, and worker integration
-- `%LOCALAPPDATA%\iAgent\logs`: dock launcher diagnostics
+---
 
-## Screenshot
+# Development
 
-![iAgent full desktop screenshot](docs/assets/iagent-desktop-full.jpg)
+## Build
 
-## First Start
+```bash
+cargo build
+```
 
-1. Double-click the `iAgent` robot icon on your desktop.
-2. The dock opens without leaving a terminal window on screen.
-3. Type or speak a task, for example:
-   - "Open Notepad and draft a short follow-up."
-   - "Summarize what changed in this folder today."
-   - "Run the tests here and tell me what failed."
-   - "Create a release note from recent commits."
-4. Add provider credentials when prompted or through the app config.
+## Release Build
 
-If you prefer the terminal, the backend CLI is still available:
+```bash
+cargo build --profile release-lto
+```
 
+## Run
+
+```bash
+cargo run --bin iagent
+```
+
+## Run with Environment
+
+```bash
+export OPENAI_API_KEY=sk-...
+cargo run --bin iagent
+```
+
+---
+
+# Testing
+
+## Run All Tests
+
+```bash
+cargo test
+```
+
+## Run Integration Tests
+
+```bash
+cargo test --test integration
+```
+
+## Run with Coverage
+
+```bash
+cargo tarpaulin --out Xml --out Html
+```
+
+## Self-Check Validation
+
+Verify your setup is correct:
+
+```bash
+cargo run --bin iagent -- --self-check
+```
+
+Expected output:
+```
+[i] Checking configuration...
+[i] Provider: openai ✓
+[i] API Key: set ✓
+[i] Log directory: accessible ✓
+[i] Self-check passed ✓
+```
+
+---
+
+# Troubleshooting
+
+## Common Issues
+
+### API Key Not Found
+
+**Error**: `Configuration error: No API key found`
+
+**Solution**: Set your API key before running:
+```bash
+# Linux/Mac
+export OPENAI_API_KEY=sk-...
+
+# Windows PowerShell
+$env:OPENAI_API_KEY="sk-..."
+
+# Windows CMD
+set OPENAI_API_KEY=sk-...
+```
+
+### Provider Connection Failed
+
+**Error**: `Connection failed: timeout reaching provider`
+
+**Solution**: Check your internet connection and API key validity. For proxy users, verify proxy settings.
+
+### Browser Automation Not Working
+
+**Error**: `Browser not found on port 9222`
+
+**Solution**: Launch Chrome with debugging enabled:
 ```powershell
-iagent
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222
 ```
 
-After installation, `Alt+;` also opens the dock.
+### GitHub Bot Detection
 
-## Architecture
+**Error**: `API rate limit exceeded` or `Access blocked`
 
-The installed product is split into a frontend dock and a backend engine.
-
-```mermaid
-flowchart TB
-  subgraph Desktop["Windows desktop"]
-    LNK["iAgent.lnk"]
-    VBS["launch-iagent-dock.vbs"]
-    PS["Hidden PowerShell launcher"]
-  end
-
-  subgraph Frontend["Dock frontend (%LOCALAPPDATA%\\iAgent\\app)"]
-    UI["PySide dock / tray / inbox"]
-    UV["uv run python -m iagent"]
-    WORKER["Optional worker integration"]
-  end
-
-  subgraph Backend["Backend runtime (%LOCALAPPDATA%\\iAgent\\bin)"]
-    EXE["iagent.exe"]
-    CORE["Sessions, tools, providers, memory, ambient jobs"]
-  end
-
-  LNK --> VBS --> PS --> UV --> UI
-  UI --> EXE --> CORE
-  UI -. optional .-> WORKER
+**Solution**: Configure residential proxy to avoid bot detection:
+```bash
+export HTTPS_PROXY=http://user:pass@proxyhost:port
 ```
 
-How the flow works:
+### Rust Build Errors
 
-1. The desktop shortcut launches a hidden script, not a visible terminal.
-2. The hidden launcher points the dock at the installed backend executable.
-3. The frontend starts `uv run python -m iagent` from the dock app.
-4. The dock handles the UI surfaces and queues work into the backend.
-5. The backend executes the work and streams results back to the app.
+**Error**: `linker command not found` or compilation failures
 
-## Current Components
+**Solution**: Install Visual Studio Build Tools (Windows) or GCC (Linux/Mac):
+```powershell
+# Windows: Install via Visual Studio Installer
+# Linux
+sudo apt install build-essential
+```
 
-- `scripts/install.ps1`: one-command Windows installer and launcher setup
-- `scripts/check_powershell_syntax.ps1`: syntax check for installer scripts
-- `src/main.rs`: backend entry point
-- `src/cli/*`: backend CLI startup and provider/auth setup
-- `src/server/*`: local runtime server, sessions, diagnostics, background work
-- `src/agent/*`: turn execution, prompting, tool dispatch, response recovery
-- `src/tool/*`: filesystem, shell, browser/web, planning, memory, integration tools
-- `src/provider/*`: model/provider routing
-- `src/auth/*`: login and token refresh flows
-- `src/ambient/*`: ambient/background workflows
+## Diagnostic Mode
 
-## Notes
+Run with debug logging to diagnose issues:
 
-- The installer is meant to be the normal path for desktop use.
-- The backend CLI remains useful for direct terminal workflows.
-- The dock frontend is installed separately because it owns the Windows UI.
+```bash
+RUST_LOG=debug cargo run --bin iagent
+```
+
+## Log Files
+
+Find logs at:
+
+| Platform | Log Location |
+|----------|-------------|
+| Windows | `%LOCALAPPDATA%\iAgent\logs\` |
+| Linux | `~/.local/share/iAgent/logs/` |
+| macOS | `~/Library/Logs/iAgent/` |
+
+## Get Help
+
+If issues persist:
+1. Check existing issues: https://github.com/benclawbot/iAgent-windows/issues
+2. Create new issue with log output and system info
+
+---
+
+# Repository Structure
+
+## Runtime
+
+- `src/main.rs` → backend entry point
+- `src/agent/*` → execution orchestration
+- `src/server/*` → local runtime server
+- `src/tool/*` → tool execution layer
+- `src/provider/*` → provider routing
+- `src/auth/*` → auth and token handling
+- `src/ambient/*` → background workflows
+
+---
+
+# Workspace Crates
+
+| Crate | Purpose |
+|---|---|
+| `jcode-agent-runtime` | Runtime orchestration |
+| `jcode-memory-types` | Memory structures |
+| `jcode-storage` | Persistence layer |
+| `jcode-plan` | Planning engine |
+| `jcode-provider-openai` | OpenAI integration |
+| `jcode-provider-openrouter` | OpenRouter integration |
+| `jcode-provider-gemini` | Gemini integration |
+| `overlay-ui` | Overlay runtime |
+| `desktop-monitor` | Desktop monitoring |
+| `suggestion-engine` | Suggestion systems |
+
+---
+
+# Long-Term Direction
+
+The architecture is moving toward:
+
+- ambient AI systems
+- persistent orchestration
+- long-running workflows
+- memory-aware agents
+- execution-first runtimes
+- desktop-native AI environments
+- autonomous workflow coordination
+
+This repository is structured more like an operating layer for AI workflows than a traditional chatbot frontend.
+
+---
+
+# Contributing
+
+Areas especially valuable for contribution:
+
+- provider integrations
+- tool development
+- orchestration systems
+- memory systems
+- desktop automation
+- Windows UX
+- runtime reliability
+- ambient workflow systems
+
+---
+
+# License
+
+See repository license for details.
+
+---
+
+<div align="center">
+
+### Build agents that don't just chat — but observe, assist, execute, orchestrate, remember, and evolve along with you.
+
+</div>

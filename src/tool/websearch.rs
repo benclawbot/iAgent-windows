@@ -301,10 +301,7 @@ mod search_regex {
         match Regex::new(pattern) {
             Ok(regex) => Some(regex),
             Err(err) => {
-                log_warn!((
-                    "websearch: failed to compile static regex {label}: {}",
-                    err
-                ));
+                log_warn!(("websearch: failed to compile static regex {label}: {}", err));
                 None
             }
         }

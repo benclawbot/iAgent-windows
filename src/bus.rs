@@ -363,6 +363,10 @@ pub enum BusEvent {
         session_id: Option<String>,
         message: String,
     },
+    /// Background compaction task started
+    CompactionStarted {
+        trigger: String,
+    },
     /// Background compaction task finished (check_and_apply should be called)
     CompactionFinished,
     /// Provider's available models list may have changed

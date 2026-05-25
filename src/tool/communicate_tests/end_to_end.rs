@@ -1,3 +1,4 @@
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[tokio::test]
 async fn communicate_list_and_await_members_work_end_to_end() {
     let _env_lock = crate::storage::lock_test_env();
@@ -104,6 +105,7 @@ async fn communicate_list_and_await_members_work_end_to_end() {
     server_task.abort();
 }
 
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[tokio::test]
 async fn communicate_status_returns_busy_snapshot_for_running_member() {
     let _env_lock = crate::storage::lock_test_env();
@@ -186,6 +188,7 @@ async fn communicate_status_returns_busy_snapshot_for_running_member() {
     server_task.abort();
 }
 
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[tokio::test]
 async fn communicate_spawn_reports_completion_back_to_spawner() {
     let _env_lock = crate::storage::lock_test_env();
@@ -262,6 +265,7 @@ async fn communicate_spawn_reports_completion_back_to_spawner() {
     server_task.abort();
 }
 
+#[cfg_attr(coverage, ignore = "requires normal test runtime outside cargo-llvm-cov")]
 #[tokio::test]
 async fn communicate_spawn_with_prompt_and_summary_work_end_to_end() {
     let _env_lock = crate::storage::lock_test_env();

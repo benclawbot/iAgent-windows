@@ -375,71 +375,6 @@ pub fn import_session(session_id: &str) -> Result<Session> {
     import_session_from_file(&session_file, session_id)
 }
 
-#[cfg(feature = "terminal-ui")]
-pub fn imported_session_id_for_target(
-    target: &crate::tui::session_picker::ResumeTarget,
-) -> Option<String> {
-    match target {
-        crate::tui::session_picker::ResumeTarget::JcodeSession { session_id } => {
-            Some(session_id.clone())
-        }
-        crate::tui::session_picker::ResumeTarget::ClaudeCodeSession { session_id, .. } => {
-            Some(imported_claude_code_session_id(session_id))
-        }
-        crate::tui::session_picker::ResumeTarget::CodexSession { session_id, .. } => {
-            Some(imported_codex_session_id(session_id))
-        }
-        crate::tui::session_picker::ResumeTarget::PiSession { session_path } => {
-            Some(imported_pi_session_id(session_path))
-        }
-        crate::tui::session_picker::ResumeTarget::OpenCodeSession { session_id, .. } => {
-            Some(imported_opencode_session_id(session_id))
-        }
-    }
-}
-
-#[cfg(feature = "terminal-ui")]
-pub fn resolve_resume_target_to_jcode(
-    target: &crate::tui::session_picker::ResumeTarget,
-) -> Result<crate::tui::session_picker::ResumeTarget> {
-    use crate::tui::session_picker::ResumeTarget;
-
-    let session_id = match target {
-        ResumeTarget::JcodeSession { session_id } => {
-            return Ok(ResumeTarget::JcodeSession {
-                session_id: session_id.clone(),
-            });
-        }
-        ResumeTarget::ClaudeCodeSession {
-            session_id,
-            session_path,
-        } => {
-            import_session_from_file(Path::new(session_path), session_id)?;
-            imported_claude_code_session_id(session_id)
-        }
-        ResumeTarget::CodexSession {
-            session_id,
-            session_path,
-        } => {
-            import_codex_session_from_path(Path::new(session_path), Some(session_id))?;
-            imported_codex_session_id(session_id)
-        }
-        ResumeTarget::PiSession { session_path } => {
-            import_pi_session(session_path)?;
-            imported_pi_session_id(session_path)
-        }
-        ResumeTarget::OpenCodeSession {
-            session_id,
-            session_path,
-        } => {
-            import_opencode_session_from_path(Path::new(session_path), Some(session_id))?;
-            imported_opencode_session_id(session_id)
-        }
-    };
-
-    Ok(ResumeTarget::JcodeSession { session_id })
-}
-
 pub fn import_external_resume_id(resume_id: &str) -> Result<Option<String>> {
     if let Ok(path) = find_codex_session_file(resume_id) {
         let session = import_codex_session_from_path(&path, Some(resume_id))?;
@@ -983,7 +918,3 @@ pub fn import_opencode_session_from_path(
     session.model = model;
     finalize_imported_session(session, created_at, updated_at)
 }
-
-#[cfg(all(test, feature = "terminal-ui"))]
-#[path = "import_tests.rs"]
-mod tests;

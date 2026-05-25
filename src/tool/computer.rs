@@ -1,14 +1,22 @@
 use super::{Tool, ToolContext, ToolExecutionMode, ToolOutput};
 use crate::safety::{PermissionRequest, PermissionResult, SafetySystem, Urgency, new_request_id};
-use anyhow::{Context, Result, anyhow};
+#[cfg(windows)]
+use anyhow::Context;
+use anyhow::{Result, anyhow};
 use async_trait::async_trait;
+#[cfg(windows)]
 use base64::Engine;
+#[cfg(windows)]
 use base64::engine::general_purpose::STANDARD;
 use chrono::Utc;
 use serde::Deserialize;
 use serde_json::{Value, json};
-use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+#[cfg(windows)]
+use std::path::Path;
+use std::path::PathBuf;
+use std::time::Duration;
+#[cfg(windows)]
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct ComputerTool;
 

@@ -504,10 +504,7 @@ impl MemoryManager {
         let query_embedding = match crate::embedding::embed(text) {
             Ok(emb) => emb,
             Err(e) => {
-                log_info!((
-                    "Embedding failed, falling back to keyword search: {}",
-                    e
-                ));
+                log_info!(("Embedding failed, falling back to keyword search: {}", e));
                 return Ok(Vec::new());
             }
         };
@@ -525,10 +522,7 @@ impl MemoryManager {
         let query_embedding = match crate::embedding::embed(text) {
             Ok(emb) => emb,
             Err(e) => {
-                log_info!((
-                    "Embedding failed, falling back to keyword search: {}",
-                    e
-                ));
+                log_info!(("Embedding failed, falling back to keyword search: {}", e));
                 return Ok(Vec::new());
             }
         };
@@ -1527,10 +1521,7 @@ impl MemoryManager {
             }
             storage::write_json(&path, &graph)?;
 
-            log_info!((
-                "Migrated memory store to graph format: {}",
-                path.display()
-            ));
+            log_info!(("Migrated memory store to graph format: {}", path.display()));
             if !self.test_mode {
                 cache_graph(path, &graph);
             }

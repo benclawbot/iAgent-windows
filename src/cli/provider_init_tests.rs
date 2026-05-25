@@ -536,6 +536,10 @@ async fn init_provider_for_ollama_reapplies_local_compat_runtime_env_after_disab
     clippy::await_holding_lock,
     reason = "test env locks intentionally stay held across provider init to isolate process-global auth env"
 )]
+#[cfg_attr(
+    coverage,
+    ignore = "requires normal test runtime outside cargo-llvm-cov"
+)]
 async fn auto_provider_noninteractive_skips_untrusted_external_auth_instead_of_blocking() {
     let _guard = lock_env();
     let _env_guard = crate::storage::lock_test_env();
