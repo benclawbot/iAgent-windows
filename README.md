@@ -162,6 +162,7 @@ That loop is backed by runtime safety systems rather than prompt-only promises:
 - Windows App Intent Manifests through `iagent.intent.json`, letting local apps and scripts declare safe structured actions, parameters, examples, approval levels, and rollback hints for import into iAgent tools and recipe-ready plans
 - Remote Dispatch and Watch Mode for authenticated local/remote task submission, mobile-friendly status cards, scheduled jobs, approval-needed notifications, completion evidence, and failure packets
 - Attention Budget and Interruption Control for quiet hours, hourly/daily notification caps, snooze/resume, critical-approval bypass, preflight decisions, delivery history, and digest summaries
+- Processing Transparency Reports for recording where user data was processed, which processor handled it, what data categories were involved, retention/deletion state, and exportable user-facing audit summaries
 - explicit separation between observation actions and mutating actions such as click, type, hotkey, scroll, app launch, and delegated communication
 
 ---
@@ -224,6 +225,7 @@ Integrated tooling includes:
 - `connector` pack actions for inspecting built-in connector definitions, granting/revoking explicit read/write scopes, preflighting writes, and auditing recorded write evidence
 - `intent` manifest actions for discovering, validating, importing, listing, and planning local `iagent.intent.json` app/script capabilities without turning manifest import into arbitrary-code execution
 - `dispatch` watch-mode actions for creating authenticated dispatch clients, submitting local/remote tasks, approving work, checking mobile-friendly status, watching notifications, listing due scheduled tasks, completing with evidence, and attaching failure packets
+- `processing_report` actions for recording processing events, filtering/reporting local/private-cloud/external processing, exporting Markdown transparency reports, and marking retained records deleted without losing the audit trail
 - `recipe` catalog and command palette actions for searchable, hotkey-ready workflows with typed inputs, approval policies, required tools, and non-executing dispatch plans
 - `meeting` memory actions for start/append/finish meeting capture, local speaker/time transcript segments, source-linked decisions/questions/action items, and conversion into reminders, jobs, or delegation drafts
 - `flight_recorder` action timeline for user-readable run evidence, approval state, screenshots, undo metadata, and follow-up queues

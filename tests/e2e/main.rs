@@ -15,6 +15,7 @@ mod intent_manifests;
 mod meeting_memory;
 mod personal_layer;
 mod proactive_briefings;
+mod processing_report;
 mod provider_behavior;
 mod recipe_catalog;
 mod remote_dispatch;

@@ -23,8 +23,8 @@ mod glob;
 mod gmail;
 mod goal;
 mod grep;
-mod invalid;
 mod intent;
+mod invalid;
 mod ls;
 mod lsp;
 pub mod mcp;
@@ -34,6 +34,7 @@ mod multiedit;
 mod open;
 mod patch;
 mod personal;
+mod processing_report;
 mod read;
 mod recipe;
 pub mod selfdev;
@@ -178,7 +179,12 @@ impl Registry {
             Self::insert_tool_timed(&mut m, &mut timings, "ls", ls::LsTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "bash", bash::BashTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "browser", browser::BrowserTool::new);
-            Self::insert_tool_timed(&mut m, &mut timings, "dispatch", dispatch::DispatchTool::new);
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "dispatch",
+                dispatch::DispatchTool::new,
+            );
             Self::insert_tool_timed(
                 &mut m,
                 &mut timings,
@@ -216,7 +222,12 @@ impl Registry {
             Self::insert_tool_timed(&mut m, &mut timings, "meeting", meeting::MeetingTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "todo", todo::TodoTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "bg", bg::BgTool::new);
-            Self::insert_tool_timed(&mut m, &mut timings, "briefing", briefing::BriefingTool::new);
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "briefing",
+                briefing::BriefingTool::new,
+            );
             Self::insert_tool_timed(
                 &mut m,
                 &mut timings,
@@ -235,6 +246,12 @@ impl Registry {
                 &mut timings,
                 "personal",
                 personal::PersonalTool::new,
+            );
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "processing_report",
+                processing_report::ProcessingReportTool::new,
             );
             Self::insert_tool_timed(&mut m, &mut timings, "goal", goal::GoalTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "gmail", gmail::GmailTool::new);

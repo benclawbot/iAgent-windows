@@ -447,6 +447,46 @@ async fn registry_exposes_attention_budget_tool() {
     );
 }
 
+#[tokio::test]
+async fn registry_exposes_processing_report_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "processing_report")
+        .expect("processing_report tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("processing_report action enum");
+    for action in [
+        "record",
+        "report",
+        "export_markdown",
+        "mark_deleted",
+        "history",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "processing_report tool should expose {action}"
+        );
+    }
+    assert_eq!(
+        def.input_schema["properties"]["environment"]["type"],
+        "string"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["data_categories"]["type"],
+        "array"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["retention"]["type"],
+        "string"
+    );
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");
