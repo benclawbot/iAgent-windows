@@ -75,6 +75,10 @@ pub struct PersonalSettings {
     pub excluded_apps: Vec<String>,
     #[serde(default)]
     pub private_title_patterns: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub capture_paused_until: Option<DateTime<Utc>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub capture_pause_reason: Option<String>,
 }
 
 impl Default for PersonalSettings {
@@ -98,6 +102,8 @@ impl Default for PersonalSettings {
             require_approval_for_personal_actions: true,
             excluded_apps: Vec::new(),
             private_title_patterns: Vec::new(),
+            capture_paused_until: None,
+            capture_pause_reason: None,
         }
     }
 }
@@ -122,6 +128,8 @@ pub struct PersonalSettingsInput {
     pub require_approval_for_personal_actions: Option<bool>,
     pub excluded_apps: Option<Vec<String>>,
     pub private_title_patterns: Option<Vec<String>>,
+    pub capture_paused_until: Option<Option<DateTime<Utc>>>,
+    pub capture_pause_reason: Option<Option<String>>,
 }
 
 impl From<PersonalSettings> for PersonalSettingsInput {
@@ -147,6 +155,8 @@ impl From<PersonalSettings> for PersonalSettingsInput {
             ),
             excluded_apps: Some(settings.excluded_apps),
             private_title_patterns: Some(settings.private_title_patterns),
+            capture_paused_until: Some(settings.capture_paused_until),
+            capture_pause_reason: Some(settings.capture_pause_reason),
         }
     }
 }
@@ -330,6 +340,23 @@ pub struct ClearPersonalDataResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SensitiveFinding {
+    pub kind: String,
+    pub label: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SensitiveContextPreview {
+    pub redacted: bool,
+    pub redacted_text: String,
+    pub findings: Vec<SensitiveFinding>,
+    pub blocked_by_exclusion: bool,
+    pub capture_paused: bool,
+    pub will_store_text: bool,
+    pub will_store_screenshot: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TimelineEntry {
     pub id: String,
     pub observed_at: DateTime<Utc>,
@@ -430,8 +457,30 @@ pub struct PersonalPrivacySummary {
     pub ocr_enabled: bool,
     pub uia_text_enabled: bool,
     pub encrypted_sensitive_storage: bool,
+    pub capture_paused: bool,
+    pub capture_paused_until: Option<DateTime<Utc>>,
+    pub capture_pause_reason: Option<String>,
     pub excluded_apps: Vec<String>,
     pub private_title_patterns: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SensitiveContextStorageSummary {
+    pub clipboard_entries: usize,
+    pub timeline_entries: usize,
+    pub recent_app_windows: usize,
+    pub retained_days: u32,
+    pub max_clipboard_entries: usize,
+    pub redacted_clipboard_entries: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SensitiveContextFirewallStatus {
+    pub capture_paused: bool,
+    pub capture_paused_until: Option<DateTime<Utc>>,
+    pub pause_reason: Option<String>,
+    pub storage: SensitiveContextStorageSummary,
+    pub privacy: PersonalPrivacySummary,
 }
 
 impl PersonalStore {
@@ -521,6 +570,12 @@ impl PersonalStore {
         }
         if let Some(value) = input.private_title_patterns {
             settings.private_title_patterns = normalize_list(value);
+        }
+        if let Some(value) = input.capture_paused_until {
+            settings.capture_paused_until = value;
+        }
+        if let Some(value) = input.capture_pause_reason {
+            settings.capture_pause_reason = value.filter(|reason| !reason.trim().is_empty());
         }
 
         let settings = settings.clone();
@@ -721,7 +776,13 @@ impl PersonalStore {
         }
         let hash = stable_hash(&input.content);
         let mut state = self.state()?;
-        if !state.settings.clipboard_history_enabled {
+        if !state.settings.clipboard_history_enabled
+            || capture_paused(&state.settings)
+            || input
+                .source_app
+                .as_deref()
+                .is_some_and(|app| !should_observe_with_settings(&state.settings, app, ""))
+        {
             return Ok(None);
         }
         if state.clipboard.iter().any(|entry| {
@@ -730,15 +791,24 @@ impl PersonalStore {
             return Ok(None);
         }
 
-        let redacted = looks_secret(&input.content);
+        let preview = preview_sensitive_text(
+            &input.content,
+            &state.settings,
+            input.source_app.as_deref(),
+            None,
+        );
         let entry = ClipboardEntry {
             id: Uuid::new_v4().to_string(),
             captured_at: Utc::now(),
             content_hash: hash,
-            content_text: if redacted { None } else { Some(input.content) },
+            content_text: if preview.redacted {
+                None
+            } else {
+                Some(input.content)
+            },
             source_app: input.source_app,
             pinned: false,
-            redacted,
+            redacted: preview.redacted,
         };
         state.clipboard.insert(0, entry.clone());
         let max_entries = state
@@ -817,6 +887,15 @@ impl PersonalStore {
         if process_name.trim().is_empty() && window_title.trim().is_empty() {
             return Err(anyhow!("process_name or window_title is required"));
         }
+        let mut state = self.state()?;
+        if !state.settings.app_history_enabled
+            || capture_paused(&state.settings)
+            || !should_observe_with_settings(&state.settings, process_name, window_title)
+        {
+            return Err(anyhow!(
+                "app/window capture is blocked by Sensitive Context Firewall"
+            ));
+        }
         let record = AppWindowRecord {
             id: Uuid::new_v4().to_string(),
             observed_at: Utc::now(),
@@ -825,7 +904,6 @@ impl PersonalStore {
             window_title: window_title.to_string(),
             aliases: alias_terms(process_name, exe_path, window_title),
         };
-        let mut state = self.state()?;
         state.app_windows.insert(0, record.clone());
         state.app_windows.truncate(100);
         self.save_state(&state)?;
@@ -1159,10 +1237,30 @@ impl PersonalStore {
     ) -> Result<Option<TimelineEntry>> {
         let mut state = self.state()?;
         if !state.settings.timeline_enabled
+            || capture_paused(&state.settings)
             || !should_observe_with_settings(&state.settings, &input.app_name, &input.window_title)
         {
             return Ok(None);
         }
+        let preview = input
+            .text_excerpt
+            .as_deref()
+            .map(|text| {
+                preview_sensitive_text(
+                    text,
+                    &state.settings,
+                    Some(&input.app_name),
+                    Some(&input.window_title),
+                )
+            })
+            .unwrap_or_else(|| {
+                preview_sensitive_text(
+                    "",
+                    &state.settings,
+                    Some(&input.app_name),
+                    Some(&input.window_title),
+                )
+            });
 
         let mut capture_modes = Vec::new();
         if state.settings.uia_text_enabled && input.text_excerpt.is_some() {
@@ -1181,7 +1279,13 @@ impl PersonalStore {
             app_name: input.app_name,
             window_title: input.window_title,
             activity: input.activity,
-            text_excerpt: input.text_excerpt.map(|text| truncate_chars(&text, 500)),
+            text_excerpt: input.text_excerpt.map(|text| {
+                if preview.redacted {
+                    truncate_chars(&preview.redacted_text, 500)
+                } else {
+                    truncate_chars(&text, 500)
+                }
+            }),
             screenshot_path: if state.settings.screenshots_enabled {
                 input.screenshot_path
             } else {
@@ -1189,7 +1293,11 @@ impl PersonalStore {
             },
             source: input.source,
             capture_modes,
-            risk_flags: Vec::new(),
+            risk_flags: preview
+                .findings
+                .iter()
+                .map(|finding| finding.kind.clone())
+                .collect(),
         };
 
         state.timeline.insert(0, entry.clone());
@@ -1360,16 +1468,91 @@ impl PersonalStore {
             saved_layouts: state.layouts.len(),
             timeline_entries: state.timeline.len(),
             project_workspaces: state.workspaces.len(),
-            privacy: PersonalPrivacySummary {
-                timeline_enabled: state.settings.timeline_enabled,
-                screenshots_enabled: state.settings.screenshots_enabled,
-                ocr_enabled: state.settings.ocr_enabled,
-                uia_text_enabled: state.settings.uia_text_enabled,
-                encrypted_sensitive_storage: state.settings.encrypted_sensitive_storage,
-                excluded_apps: state.settings.excluded_apps,
-                private_title_patterns: state.settings.private_title_patterns,
-            },
+            privacy: privacy_summary(&state),
         })
+    }
+
+    pub fn sensitive_context_firewall_status(&self) -> Result<SensitiveContextFirewallStatus> {
+        let state = self.state()?;
+        let privacy = privacy_summary(&state);
+        Ok(SensitiveContextFirewallStatus {
+            capture_paused: privacy.capture_paused,
+            capture_paused_until: privacy.capture_paused_until,
+            pause_reason: privacy.capture_pause_reason.clone(),
+            storage: SensitiveContextStorageSummary {
+                clipboard_entries: state.clipboard.len(),
+                timeline_entries: state.timeline.len(),
+                recent_app_windows: state.app_windows.len(),
+                retained_days: state.settings.retention_days,
+                max_clipboard_entries: state.settings.max_clipboard_entries,
+                redacted_clipboard_entries: state
+                    .clipboard
+                    .iter()
+                    .filter(|entry| entry.redacted)
+                    .count(),
+            },
+            privacy,
+        })
+    }
+
+    pub fn preview_sensitive_context(
+        &self,
+        text: &str,
+        app_name: Option<&str>,
+        window_title: Option<&str>,
+    ) -> Result<SensitiveContextPreview> {
+        let settings = self.settings()?;
+        Ok(preview_sensitive_text(
+            text,
+            &settings,
+            app_name,
+            window_title,
+        ))
+    }
+
+    pub fn pause_sensitive_capture(
+        &self,
+        minutes: u32,
+        reason: Option<String>,
+    ) -> Result<SensitiveContextFirewallStatus> {
+        let mut state = self.state()?;
+        let minutes = minutes.clamp(1, 24 * 60);
+        state.settings.capture_paused_until =
+            Some(Utc::now() + chrono::Duration::minutes(minutes as i64));
+        state.settings.capture_pause_reason = reason.filter(|value| !value.trim().is_empty());
+        self.save_state(&state)?;
+        self.sensitive_context_firewall_status()
+    }
+
+    pub fn resume_sensitive_capture(&self) -> Result<SensitiveContextFirewallStatus> {
+        let mut state = self.state()?;
+        state.settings.capture_paused_until = None;
+        state.settings.capture_pause_reason = None;
+        self.save_state(&state)?;
+        self.sensitive_context_firewall_status()
+    }
+
+    pub fn forget_recent_context(&self, minutes: u32) -> Result<ClearPersonalDataResult> {
+        let mut state = self.state()?;
+        let cutoff = Utc::now() - chrono::Duration::minutes(minutes.clamp(1, 24 * 60) as i64);
+        let mut result = ClearPersonalDataResult::default();
+
+        let before = state.clipboard.len();
+        state
+            .clipboard
+            .retain(|entry| entry.pinned || entry.captured_at < cutoff);
+        result.clipboard = before - state.clipboard.len();
+
+        let before = state.timeline.len();
+        state.timeline.retain(|entry| entry.observed_at < cutoff);
+        result.timeline = before - state.timeline.len();
+
+        let before = state.app_windows.len();
+        state.app_windows.retain(|entry| entry.observed_at < cutoff);
+        result.app_windows = before - state.app_windows.len();
+
+        self.save_state(&state)?;
+        Ok(result)
     }
 
     pub fn clear_personal_data(&self, clear: ClearPersonalData) -> Result<ClearPersonalDataResult> {
@@ -1830,6 +2013,103 @@ fn should_observe_with_settings(
         .any(|pattern| title.contains(&pattern.to_lowercase()))
 }
 
+fn capture_paused(settings: &PersonalSettings) -> bool {
+    settings
+        .capture_paused_until
+        .is_some_and(|until| until > Utc::now())
+}
+
+fn privacy_summary(state: &PersonalState) -> PersonalPrivacySummary {
+    PersonalPrivacySummary {
+        timeline_enabled: state.settings.timeline_enabled,
+        screenshots_enabled: state.settings.screenshots_enabled,
+        ocr_enabled: state.settings.ocr_enabled,
+        uia_text_enabled: state.settings.uia_text_enabled,
+        encrypted_sensitive_storage: state.settings.encrypted_sensitive_storage,
+        capture_paused: capture_paused(&state.settings),
+        capture_paused_until: state.settings.capture_paused_until,
+        capture_pause_reason: state.settings.capture_pause_reason.clone(),
+        excluded_apps: state.settings.excluded_apps.clone(),
+        private_title_patterns: state.settings.private_title_patterns.clone(),
+    }
+}
+
+fn preview_sensitive_text(
+    text: &str,
+    settings: &PersonalSettings,
+    app_name: Option<&str>,
+    window_title: Option<&str>,
+) -> SensitiveContextPreview {
+    let blocked_by_exclusion = app_name.is_some_and(|app| {
+        !should_observe_with_settings(settings, app, window_title.unwrap_or_default())
+    });
+    let capture_paused = capture_paused(settings);
+    let (redacted_text, findings) = redact_sensitive_text(text);
+    let redacted = redacted_text != text;
+
+    SensitiveContextPreview {
+        redacted,
+        redacted_text,
+        findings,
+        blocked_by_exclusion,
+        capture_paused,
+        will_store_text: !blocked_by_exclusion && !capture_paused,
+        will_store_screenshot: !blocked_by_exclusion
+            && !capture_paused
+            && settings.screenshots_enabled,
+    }
+}
+
+fn redact_sensitive_text(value: &str) -> (String, Vec<SensitiveFinding>) {
+    let mut findings = Vec::new();
+    let mut redacted = Vec::new();
+
+    for token in value.split_whitespace() {
+        let (kind, label) = classify_sensitive_token(token);
+        if let Some(kind) = kind {
+            if !findings
+                .iter()
+                .any(|finding: &SensitiveFinding| finding.kind == kind)
+            {
+                findings.push(SensitiveFinding {
+                    kind: kind.to_string(),
+                    label: label.unwrap_or(kind).to_string(),
+                });
+            }
+            redacted.push(format!("[REDACTED:{kind}]"));
+        } else {
+            redacted.push(token.to_string());
+        }
+    }
+
+    (redacted.join(" "), findings)
+}
+
+fn classify_sensitive_token(token: &str) -> (Option<&'static str>, Option<&'static str>) {
+    let lower = token.to_lowercase();
+    if lower.contains("api_key") || lower.contains("apikey") || lower.starts_with("sk-") {
+        return (Some("api_key"), Some("API key"));
+    }
+    if lower.contains("password=") || lower.contains("passwd=") || lower.contains("pwd=") {
+        return (Some("password"), Some("password"));
+    }
+    if lower.contains("secret=") || lower.contains("client_secret") {
+        return (Some("secret"), Some("secret"));
+    }
+    if lower.contains("token=") || lower.contains("bearer ") {
+        return (Some("token"), Some("token"));
+    }
+    if lower.contains('@') && lower.contains('.') {
+        return (Some("email"), Some("email address"));
+    }
+    if lower.chars().filter(|ch| ch.is_ascii_digit()).count() >= 13
+        && lower.chars().filter(|ch| ch.is_ascii_digit()).count() <= 19
+    {
+        return (Some("payment_card"), Some("payment card"));
+    }
+    (None, None)
+}
+
 fn prune_timeline(state: &mut PersonalState) {
     let max_entries = (state.settings.retention_days as usize).clamp(1, 3650) * 24;
     state.timeline.truncate(max_entries);
@@ -1871,12 +2151,7 @@ fn stable_hash(value: &str) -> String {
 
 fn looks_secret(value: &str) -> bool {
     let lower = value.to_lowercase();
-    lower.contains("begin private key")
-        || lower.contains("api_key")
-        || lower.contains("apikey")
-        || lower.contains("password=")
-        || lower.contains("secret=")
-        || lower.contains("token=")
+    lower.contains("begin private key") || !redact_sensitive_text(value).1.is_empty()
 }
 
 fn alias_terms(process_name: &str, exe_path: &str, window_title: &str) -> Vec<String> {

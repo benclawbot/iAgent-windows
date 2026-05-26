@@ -132,6 +132,361 @@ async fn first_party_tool_definitions_include_optional_intent_explicitly() {
     }
 }
 
+#[tokio::test]
+async fn registry_exposes_action_flight_recorder_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "flight_recorder")
+        .expect("flight_recorder tool should be registered");
+
+    assert_eq!(def.input_schema["required"][0], "action");
+    assert!(
+        def.input_schema["properties"]["action"]["enum"]
+            .as_array()
+            .expect("flight_recorder action enum")
+            .iter()
+            .any(|value| value == "view")
+    );
+    assert_eq!(
+        def.input_schema["properties"]["action_query"]["type"],
+        "string"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["risk_level"]["type"],
+        "string"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["include_context"]["type"],
+        "boolean"
+    );
+}
+
+#[tokio::test]
+async fn personal_tool_schema_exposes_sensitive_context_firewall_actions() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "personal")
+        .expect("personal tool should be registered");
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("personal action enum");
+
+    for action in [
+        "sensitive_context_status",
+        "preview_redaction",
+        "pause_capture",
+        "resume_capture",
+        "forget_recent_context",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "personal tool should expose {action}"
+        );
+    }
+    assert_eq!(
+        def.input_schema["properties"]["duration_minutes"]["type"],
+        "integer"
+    );
+    assert_eq!(def.input_schema["properties"]["reason"]["type"], "string");
+}
+
+#[tokio::test]
+async fn registry_exposes_recipe_catalog_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "recipe")
+        .expect("recipe tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("recipe action enum");
+    for action in ["list", "search", "get", "plan"] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "recipe tool should expose {action}"
+        );
+    }
+    assert_eq!(def.input_schema["properties"]["query"]["type"], "string");
+    assert_eq!(
+        def.input_schema["properties"]["recipe_id"]["type"],
+        "string"
+    );
+    assert_eq!(def.input_schema["properties"]["inputs"]["type"], "array");
+}
+
+#[tokio::test]
+async fn registry_exposes_meeting_memory_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "meeting")
+        .expect("meeting tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("meeting action enum");
+    for action in [
+        "start",
+        "append_segment",
+        "finish",
+        "get",
+        "list",
+        "convert_action_items",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "meeting tool should expose {action}"
+        );
+    }
+    assert_eq!(
+        def.input_schema["properties"]["session_id"]["type"],
+        "string"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["participants"]["type"],
+        "array"
+    );
+    assert_eq!(def.input_schema["properties"]["speaker"]["type"], "string");
+}
+
+#[tokio::test]
+async fn registry_exposes_connector_pack_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "connector")
+        .expect("connector tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("connector action enum");
+    for action in [
+        "list",
+        "get",
+        "grant_scope",
+        "revoke_grant",
+        "list_grants",
+        "preflight_write",
+        "record_write",
+        "audit_writes",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "connector tool should expose {action}"
+        );
+    }
+    assert_eq!(
+        def.input_schema["properties"]["connector_id"]["type"],
+        "string"
+    );
+    assert_eq!(def.input_schema["properties"]["scopes"]["type"], "array");
+    assert_eq!(
+        def.input_schema["properties"]["evidence_refs"]["type"],
+        "array"
+    );
+}
+
+#[tokio::test]
+async fn registry_exposes_proactive_briefing_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "briefing")
+        .expect("briefing tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("briefing action enum");
+    for action in [
+        "morning",
+        "end_task_recap",
+        "meeting_prep",
+        "project_resume",
+        "recommend",
+        "never_suggest",
+        "list_recaps",
+        "list_feedback",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "briefing tool should expose {action}"
+        );
+    }
+    assert_eq!(def.input_schema["properties"]["calendar"]["type"], "array");
+    assert_eq!(def.input_schema["properties"]["projects"]["type"], "array");
+    assert_eq!(def.input_schema["properties"]["signals"]["type"], "array");
+}
+
+#[tokio::test]
+async fn registry_exposes_intent_manifest_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "intent")
+        .expect("intent tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("intent action enum");
+    for action in ["discover", "import", "list", "get", "plan"] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "intent tool should expose {action}"
+        );
+    }
+    assert_eq!(def.input_schema["properties"]["path"]["type"], "string");
+    assert_eq!(def.input_schema["properties"]["app_id"]["type"], "string");
+    assert_eq!(
+        def.input_schema["properties"]["parameters"]["type"],
+        "object"
+    );
+}
+
+#[tokio::test]
+async fn registry_exposes_remote_dispatch_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "dispatch")
+        .expect("dispatch tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("dispatch action enum");
+    for action in [
+        "create_client",
+        "submit",
+        "approve",
+        "complete",
+        "fail",
+        "status",
+        "list",
+        "watch",
+        "due",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "dispatch tool should expose {action}"
+        );
+    }
+    assert_eq!(
+        def.input_schema["properties"]["client_token"]["type"],
+        "string"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["evidence_refs"]["type"],
+        "array"
+    );
+    assert_eq!(def.input_schema["properties"]["context"]["type"], "object");
+}
+
+#[tokio::test]
+async fn registry_exposes_attention_budget_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "attention")
+        .expect("attention tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("attention action enum");
+    for action in [
+        "get_settings",
+        "update_settings",
+        "preflight",
+        "record",
+        "snooze",
+        "resume",
+        "digest",
+        "history",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "attention tool should expose {action}"
+        );
+    }
+    assert_eq!(def.input_schema["properties"]["priority"]["type"], "string");
+    assert_eq!(
+        def.input_schema["properties"]["max_interruptions_per_hour"]["type"],
+        "integer"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["quiet_hours_start"]["type"],
+        "string"
+    );
+}
+
+#[tokio::test]
+async fn registry_exposes_processing_report_tool() {
+    let provider: Arc<dyn Provider> = Arc::new(MockProvider);
+    let registry = Registry::new(provider).await;
+
+    let defs = registry.definitions(None).await;
+    let def = defs
+        .iter()
+        .find(|def| def.name == "processing_report")
+        .expect("processing_report tool should be registered");
+
+    let actions = def.input_schema["properties"]["action"]["enum"]
+        .as_array()
+        .expect("processing_report action enum");
+    for action in [
+        "record",
+        "report",
+        "export_markdown",
+        "mark_deleted",
+        "history",
+    ] {
+        assert!(
+            actions.iter().any(|value| value == action),
+            "processing_report tool should expose {action}"
+        );
+    }
+    assert_eq!(
+        def.input_schema["properties"]["environment"]["type"],
+        "string"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["data_categories"]["type"],
+        "array"
+    );
+    assert_eq!(
+        def.input_schema["properties"]["retention"]["type"],
+        "string"
+    );
+}
+
 #[test]
 fn test_resolve_tool_name_oauth_aliases() {
     assert_eq!(Registry::resolve_tool_name("file_grep"), "grep");

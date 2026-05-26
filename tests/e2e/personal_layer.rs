@@ -503,6 +503,140 @@ fn personal_store_covers_timeline_computer_use_privacy_panels_and_workspaces() {
     assert_eq!(cleared.layouts, 1);
 }
 
+#[test]
+fn sensitive_context_firewall_previews_redaction_and_blocks_capture() {
+    let _env = setup_test_env().expect("test env");
+    let store = PersonalStore::load().expect("load personal store");
+
+    store
+        .update_settings(PersonalSettingsInput {
+            timeline_enabled: Some(true),
+            clipboard_history_enabled: Some(true),
+            app_history_enabled: Some(true),
+            screenshots_enabled: Some(true),
+            excluded_apps: Some(vec!["Private Browser".into()]),
+            private_title_patterns: Some(vec!["password".into()]),
+            ..Default::default()
+        })
+        .expect("privacy settings");
+
+    let preview = store
+        .preview_sensitive_context(
+            "OPENAI_API_KEY=sk-test password=hunter2 email tom@example.com",
+            Some("Editor"),
+            Some("Config"),
+        )
+        .expect("redaction preview");
+
+    assert!(preview.redacted);
+    assert!(preview.redacted_text.contains("[REDACTED:api_key]"));
+    assert!(preview.redacted_text.contains("[REDACTED:password]"));
+    assert!(preview.redacted_text.contains("[REDACTED:email]"));
+    assert!(preview.findings.iter().any(|finding| finding.kind == "api_key"));
+    assert!(preview.will_store_text);
+
+    let blocked = store
+        .preview_sensitive_context("ordinary text", Some("Private Browser"), Some("home"))
+        .expect("blocked preview");
+    assert!(blocked.blocked_by_exclusion);
+    assert!(!blocked.will_store_text);
+
+    assert_eq!(
+        store
+            .record_timeline_entry(TimelineEntryInput {
+                app_name: "Private Browser".into(),
+                window_title: "home".into(),
+                activity: "opened a private tab".into(),
+                text_excerpt: Some("do not store".into()),
+                screenshot_path: Some("C:/Temp/private.png".into()),
+                source: "test".into(),
+            })
+            .expect("excluded timeline"),
+        None
+    );
+}
+
+#[test]
+fn sensitive_context_firewall_pause_resume_forget_and_reports_storage() {
+    let _env = setup_test_env().expect("test env");
+    let store = PersonalStore::load().expect("load personal store");
+
+    store
+        .update_settings(PersonalSettingsInput {
+            timeline_enabled: Some(true),
+            clipboard_history_enabled: Some(true),
+            app_history_enabled: Some(true),
+            ..Default::default()
+        })
+        .expect("privacy settings");
+
+    store
+        .record_clipboard(ClipboardInput {
+            content: "normal clipboard".into(),
+            source_app: Some("Editor".into()),
+        })
+        .expect("clipboard");
+    store
+        .record_timeline_entry(TimelineEntryInput {
+            app_name: "Editor".into(),
+            window_title: "Roadmap".into(),
+            activity: "writing roadmap".into(),
+            text_excerpt: Some("roadmap details".into()),
+            screenshot_path: None,
+            source: "test".into(),
+        })
+        .expect("timeline")
+        .expect("stored timeline");
+    store
+        .record_app_window("Code.exe", "C:/Code.exe", "Roadmap")
+        .expect("app window");
+
+    let status = store
+        .sensitive_context_firewall_status()
+        .expect("firewall status");
+    assert_eq!(status.storage.clipboard_entries, 1);
+    assert_eq!(status.storage.timeline_entries, 1);
+    assert_eq!(status.storage.recent_app_windows, 1);
+    assert!(!status.capture_paused);
+
+    let paused = store
+        .pause_sensitive_capture(30, Some("sharing screen".into()))
+        .expect("pause capture");
+    assert!(paused.capture_paused);
+    assert_eq!(paused.pause_reason.as_deref(), Some("sharing screen"));
+
+    assert_eq!(
+        store
+            .record_clipboard(ClipboardInput {
+                content: "while paused".into(),
+                source_app: Some("Editor".into()),
+            })
+            .expect("paused clipboard"),
+        None
+    );
+    assert_eq!(
+        store
+            .record_timeline_entry(TimelineEntryInput {
+                app_name: "Editor".into(),
+                window_title: "Paused".into(),
+                activity: "paused capture".into(),
+                text_excerpt: Some("do not store while paused".into()),
+                screenshot_path: None,
+                source: "test".into(),
+            })
+            .expect("paused timeline"),
+        None
+    );
+
+    let forgotten = store.forget_recent_context(60).expect("forget recent");
+    assert_eq!(forgotten.clipboard, 1);
+    assert_eq!(forgotten.timeline, 1);
+    assert_eq!(forgotten.app_windows, 1);
+
+    let resumed = store.resume_sensitive_capture().expect("resume capture");
+    assert!(!resumed.capture_paused);
+}
+
 fn folder() -> tempfile::TempDir {
     let folder = tempfile::tempdir().expect("temp folder");
     fs::write(folder.path().join("note.txt"), "hello").expect("write file");

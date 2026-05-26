@@ -197,6 +197,60 @@ pub struct AmbientTranscript {
     pub conversation: Option<String>,
 }
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct FlightRecorderQuery {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub limit: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub action_query: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub risk_level: Option<RiskLevel>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub disposition: Option<PolicyDisposition>,
+    #[serde(default)]
+    pub include_context: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FlightRecorderView {
+    pub entries: Vec<FlightRecorderEntry>,
+    pub totals: FlightRecorderTotals,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FlightRecorderEntry {
+    pub id: String,
+    pub kind: String,
+    pub action_type: String,
+    pub summary: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub risk_level: Option<RiskLevel>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub disposition: Option<PolicyDisposition>,
+    pub timestamp: DateTime<Utc>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub undo_token: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screenshot_before: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screenshot_after: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub screenshot_diff: Option<String>,
+    pub needs_follow_up: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct FlightRecorderTotals {
+    pub total_entries: usize,
+    pub pending_permissions: usize,
+    pub undo_available: usize,
+    pub screenshots_captured: usize,
+    pub by_risk: HashMap<String, usize>,
+    pub by_disposition: HashMap<String, usize>,
+}
+
 // ---------------------------------------------------------------------------
 // Tier-1 (auto-allowed) action names
 // ---------------------------------------------------------------------------
@@ -569,6 +623,137 @@ impl SafetySystem {
         self.audit.lock().map(|a| a.clone()).unwrap_or_default()
     }
 
+    pub fn flight_recorder(&self, query: FlightRecorderQuery) -> FlightRecorderView {
+        let include_context = query.include_context;
+        let action_query = query
+            .action_query
+            .as_ref()
+            .map(|value| value.to_ascii_lowercase());
+        let actions = self.actions.lock().map(|a| a.clone()).unwrap_or_default();
+        let audits = self.audit_entries();
+        let pending = self.pending_requests();
+
+        let mut entries: Vec<FlightRecorderEntry> = Vec::new();
+
+        for action in actions {
+            let risk_level = action
+                .risk_level
+                .unwrap_or_else(|| self.classify_risk(&action.action_type));
+            let disposition = action.disposition.unwrap_or(match risk_level {
+                RiskLevel::ReadOnly => PolicyDisposition::AutoAllow,
+                RiskLevel::EditLocal | RiskLevel::ExternalSend => PolicyDisposition::Confirm,
+                RiskLevel::FinancialLegal => PolicyDisposition::Escalate,
+                RiskLevel::Destructive => PolicyDisposition::Deny,
+            });
+
+            entries.push(FlightRecorderEntry {
+                id: format!(
+                    "action:{}:{}",
+                    action.timestamp.timestamp_millis(),
+                    action.action_type
+                ),
+                kind: "action".to_string(),
+                action_type: action.action_type,
+                summary: action.description,
+                risk_level: Some(risk_level),
+                disposition: Some(disposition),
+                timestamp: action.timestamp,
+                context: if include_context {
+                    action.details
+                } else {
+                    None
+                },
+                undo_token: action.undo_token,
+                screenshot_before: action.screenshot_before,
+                screenshot_after: action.screenshot_after,
+                screenshot_diff: action.screenshot_diff,
+                needs_follow_up: false,
+            });
+        }
+
+        for audit in audits {
+            if entries.iter().any(|entry| {
+                entry.kind == "action"
+                    && entry.action_type == audit.action_type
+                    && entry.timestamp == audit.timestamp
+            }) {
+                continue;
+            }
+
+            entries.push(FlightRecorderEntry {
+                id: audit.id,
+                kind: if audit.action_type.starts_with("permission_decision:") {
+                    "permission_decision".to_string()
+                } else {
+                    "audit".to_string()
+                },
+                action_type: audit.action_type,
+                summary: audit.rationale,
+                risk_level: Some(audit.risk_level),
+                disposition: Some(audit.disposition),
+                timestamp: audit.timestamp,
+                context: if include_context { audit.context } else { None },
+                undo_token: audit.undo_token,
+                screenshot_before: audit.screenshot_before,
+                screenshot_after: audit.screenshot_after,
+                screenshot_diff: audit.screenshot_diff,
+                needs_follow_up: false,
+            });
+        }
+
+        for request in pending {
+            entries.push(FlightRecorderEntry {
+                id: request.id,
+                kind: "pending_permission".to_string(),
+                action_type: request.action.clone(),
+                summary: request.description,
+                risk_level: Some(self.classify_risk(&request.action)),
+                disposition: Some(PolicyDisposition::Confirm),
+                timestamp: request.created_at,
+                context: if include_context {
+                    request.context
+                } else {
+                    None
+                },
+                undo_token: None,
+                screenshot_before: None,
+                screenshot_after: None,
+                screenshot_diff: None,
+                needs_follow_up: true,
+            });
+        }
+
+        entries.retain(|entry| {
+            if let Some(risk_level) = query.risk_level {
+                if entry.risk_level != Some(risk_level) {
+                    return false;
+                }
+            }
+            if let Some(disposition) = query.disposition {
+                if entry.disposition != Some(disposition) {
+                    return false;
+                }
+            }
+            if let Some(action_query) = &action_query {
+                let haystack = format!("{} {} {}", entry.kind, entry.action_type, entry.summary)
+                    .to_ascii_lowercase();
+                if !haystack.contains(action_query) {
+                    return false;
+                }
+            }
+            true
+        });
+
+        entries.sort_by(|a, b| b.timestamp.cmp(&a.timestamp).then_with(|| b.id.cmp(&a.id)));
+        if let Some(limit) = query.limit {
+            entries.truncate(limit);
+        }
+
+        let totals = FlightRecorderTotals::from_entries(&entries);
+
+        FlightRecorderView { entries, totals }
+    }
+
     pub fn add_never_again_rule(
         &self,
         pattern: impl Into<String>,
@@ -665,6 +850,44 @@ impl SafetySystem {
         let filename = transcript.started_at.format("%Y-%m-%d-%H%M%S").to_string();
         let path = dir.join(format!("{}.json", filename));
         storage::write_json(&path, transcript)
+    }
+}
+
+impl FlightRecorderTotals {
+    fn from_entries(entries: &[FlightRecorderEntry]) -> Self {
+        let mut totals = FlightRecorderTotals {
+            total_entries: entries.len(),
+            ..FlightRecorderTotals::default()
+        };
+
+        for entry in entries {
+            if entry.kind == "pending_permission" {
+                totals.pending_permissions += 1;
+            }
+            if entry.undo_token.is_some() {
+                totals.undo_available += 1;
+            }
+            if entry.screenshot_before.is_some()
+                || entry.screenshot_after.is_some()
+                || entry.screenshot_diff.is_some()
+            {
+                totals.screenshots_captured += 1;
+            }
+            if let Some(risk_level) = entry.risk_level {
+                *totals
+                    .by_risk
+                    .entry(format!("{:?}", risk_level))
+                    .or_insert(0) += 1;
+            }
+            if let Some(disposition) = entry.disposition {
+                *totals
+                    .by_disposition
+                    .entry(format!("{:?}", disposition))
+                    .or_insert(0) += 1;
+            }
+        }
+
+        totals
     }
 }
 

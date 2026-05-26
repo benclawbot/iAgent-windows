@@ -58,6 +58,10 @@ struct PersonalInput {
     #[serde(default)]
     query: Option<String>,
     #[serde(default)]
+    reason: Option<String>,
+    #[serde(default)]
+    duration_minutes: Option<u32>,
+    #[serde(default)]
     left_query: Option<String>,
     #[serde(default)]
     right_query: Option<String>,
@@ -160,6 +164,7 @@ impl Tool for PersonalTool {
                     "enum": [
                         "get_settings", "update_settings", "runtime_tick", "clear_personal_data",
                         "control_panel",
+                        "sensitive_context_status", "preview_redaction", "pause_capture", "resume_capture", "forget_recent_context",
                         "create_snippet", "list_snippets", "expand_snippet", "delete_snippet",
                         "expand_typed_snippet",
                         "create_reminder", "list_reminders", "due_reminders", "complete_reminder", "snooze_reminder",
@@ -192,6 +197,8 @@ impl Tool for PersonalTool {
                 "exe_path": {"type": "string"},
                 "window_title": {"type": "string"},
                 "query": {"type": "string"},
+                "reason": {"type": "string"},
+                "duration_minutes": {"type": "integer"},
                 "left_query": {"type": "string"},
                 "right_query": {"type": "string"},
                 "kind": {"type": "string"},
@@ -274,6 +281,8 @@ impl Tool for PersonalTool {
                         .require_approval_for_personal_actions,
                     excluded_apps: input.excluded_apps,
                     private_title_patterns: input.private_title_patterns,
+                    capture_paused_until: None,
+                    capture_pause_reason: None,
                 })?;
                 Ok(ToolOutput::new(format!(
                     "Personal settings updated: clipboard_history={} reminders={} jobs={} proactive={} snippets={} timeline={} computer_use={} max_clipboard_entries={} retention_days={}",
@@ -335,6 +344,37 @@ impl Tool for PersonalTool {
             "control_panel" => Ok(ToolOutput::new(serde_json::to_string_pretty(
                 &store.control_panel_summary()?,
             )?)),
+            "sensitive_context_status" => Ok(ToolOutput::new(serde_json::to_string_pretty(
+                &store.sensitive_context_firewall_status()?,
+            )?)),
+            "preview_redaction" => {
+                let preview = store.preview_sensitive_context(
+                    &required(input.content, "content")?,
+                    input.source_app.as_deref().or(input.active_app.as_deref()),
+                    input
+                        .source_title
+                        .as_deref()
+                        .or(input.active_window_title.as_deref()),
+                )?;
+                Ok(ToolOutput::new(serde_json::to_string_pretty(&preview)?))
+            }
+            "pause_capture" => {
+                let status = store.pause_sensitive_capture(
+                    input.duration_minutes.unwrap_or(30),
+                    input.reason.or(input.description),
+                )?;
+                Ok(ToolOutput::new(serde_json::to_string_pretty(&status)?))
+            }
+            "resume_capture" => Ok(ToolOutput::new(serde_json::to_string_pretty(
+                &store.resume_sensitive_capture()?,
+            )?)),
+            "forget_recent_context" => {
+                let cleared = store.forget_recent_context(input.duration_minutes.unwrap_or(30))?;
+                Ok(ToolOutput::new(format!(
+                    "Forgot recent sensitive context: clipboard={} timeline={} app_windows={}",
+                    cleared.clipboard, cleared.timeline, cleared.app_windows
+                )))
+            }
             "create_snippet" => {
                 let snippet = store.create_snippet(SnippetInput {
                     trigger: required(input.trigger, "trigger")?,

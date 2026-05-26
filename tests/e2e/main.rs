@@ -7,10 +7,18 @@ mod mock_provider;
 mod test_support;
 
 mod ambient;
+mod attention_budget;
 mod binary_integration;
 mod burst_spawn;
+mod connector_packs;
+mod intent_manifests;
+mod meeting_memory;
 mod personal_layer;
+mod proactive_briefings;
+mod processing_report;
 mod provider_behavior;
+mod recipe_catalog;
+mod remote_dispatch;
 mod safety;
 mod session_flow;
 mod smoke;

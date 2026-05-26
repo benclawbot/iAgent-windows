@@ -2,32 +2,41 @@ mod agentgrep;
 pub mod ambient;
 mod app;
 mod apply_patch;
+mod attention;
 mod bash;
 mod batch;
 mod bg;
+mod briefing;
 mod browser;
 mod codesearch;
 mod communicate;
 mod compaction;
 mod computer;
+mod connector;
 mod conversation_search;
 mod debug_socket;
+mod dispatch;
 mod edit;
 mod file_ops;
+mod flight_recorder;
 mod glob;
 mod gmail;
 mod goal;
 mod grep;
+mod intent;
 mod invalid;
 mod ls;
 mod lsp;
 pub mod mcp;
+mod meeting;
 mod memory;
 mod multiedit;
 mod open;
 mod patch;
 mod personal;
+mod processing_report;
 mod read;
+mod recipe;
 pub mod selfdev;
 mod session_search;
 mod side_panel;
@@ -129,6 +138,12 @@ impl Registry {
             Self::insert_tool_timed(
                 &mut m,
                 &mut timings,
+                "attention",
+                attention::AttentionTool::new,
+            );
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
                 "agentgrep",
                 agentgrep::AgentGrepTool::new,
             );
@@ -154,6 +169,12 @@ impl Registry {
             );
             Self::insert_tool_timed(&mut m, &mut timings, "glob", glob::GlobTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "file", file_ops::FileOpsTool::new);
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "flight_recorder",
+                flight_recorder::FlightRecorderTool::new,
+            );
             Self::insert_tool_timed(&mut m, &mut timings, "grep", grep::GrepTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "ls", ls::LsTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "bash", bash::BashTool::new);
@@ -161,8 +182,20 @@ impl Registry {
             Self::insert_tool_timed(
                 &mut m,
                 &mut timings,
+                "dispatch",
+                dispatch::DispatchTool::new,
+            );
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
                 "computer",
                 computer::ComputerTool::new,
+            );
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "connector",
+                connector::ConnectorTool::new,
             );
             Self::insert_tool_timed(&mut m, &mut timings, "open", open::OpenTool::new);
             Self::insert_tool_timed(
@@ -184,9 +217,17 @@ impl Registry {
                 codesearch::CodeSearchTool::new,
             );
             Self::insert_tool_timed(&mut m, &mut timings, "invalid", invalid::InvalidTool::new);
+            Self::insert_tool_timed(&mut m, &mut timings, "intent", intent::IntentTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "lsp", lsp::LspTool::new);
+            Self::insert_tool_timed(&mut m, &mut timings, "meeting", meeting::MeetingTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "todo", todo::TodoTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "bg", bg::BgTool::new);
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "briefing",
+                briefing::BriefingTool::new,
+            );
             Self::insert_tool_timed(
                 &mut m,
                 &mut timings,
@@ -206,8 +247,15 @@ impl Registry {
                 "personal",
                 personal::PersonalTool::new,
             );
+            Self::insert_tool_timed(
+                &mut m,
+                &mut timings,
+                "processing_report",
+                processing_report::ProcessingReportTool::new,
+            );
             Self::insert_tool_timed(&mut m, &mut timings, "goal", goal::GoalTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "gmail", gmail::GmailTool::new);
+            Self::insert_tool_timed(&mut m, &mut timings, "recipe", recipe::RecipeTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "word", word::WordTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "schedule", ambient::ScheduleTool::new);
             Self::insert_tool_timed(&mut m, &mut timings, "selfdev", selfdev::SelfDevTool::new);

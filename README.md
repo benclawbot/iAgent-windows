@@ -4,8 +4,8 @@
 
 ### Autonomous AI Agent Runtime for Windows
 
-Persistent desktop AI orchestration with local execution, ambient workflows, provider routing, memory systems, and tool-driven automation.
-iAgent is a next generation autonomous AI agent platform fully integrated into Windows as an ambient agent providing suggestions and minimally intrusive chat dock to help you accomplish more in your tasks, think co-working and full agentic building/researching activities. It can also interact easily with office Tools (Word, Excel, Powerpoint), web Tools (search for you, fill forms,...). It learns you preferences, evolves thanks to its deep memory layer.
+Persistent desktop AI orchestration with local execution, ambient workflows, provider routing, memory systems, safety audit trails, privacy transparency, and tool-driven automation.
+iAgent is a next generation autonomous AI agent platform fully integrated into Windows as an ambient agent providing suggestions and a minimally intrusive chat dock to help you accomplish more in your tasks, think co-working and full agentic building/researching activities. It can also interact easily with office tools (Word, Excel, PowerPoint), web tools (search for you, fill forms, and inspect pages), local apps, connector packs, and reusable command recipes. It learns your preferences and evolves through its deep memory layer while preserving user approval, action evidence, interruption controls, and processing transparency.
 It's always available, has computer use and full agentic capabilities (with swarm agents) but remains in the background for you to focus on what you need to achieve!
 
 ![iAgent Infographic](img/1000006999.png)
@@ -27,6 +27,10 @@ Unlike browser-only assistants or stateless chatbot wrappers, iAgent behaves lik
 - maintaining persistent sessions and memory
 - running background and ambient jobs
 - asking for explicit approval through floating proposal popups before mutating desktop actions
+- recording action evidence, approvals, undo metadata, and processing transparency reports
+- enforcing sensitive-context, connector-scope, and attention-budget controls
+- importing app intent manifests and turning safe local capabilities into planned actions
+- preparing proactive briefings, meeting memory, reminders, recipes, and remote dispatch status packets
 - coordinating provider-backed reasoning
 - integrating directly into Windows UX
 
@@ -127,6 +131,31 @@ Agents can:
 
 ---
 
+## Safety, Approval, and Audit Trail
+
+iAgent's default product loop is:
+
+`watch context -> suggest action -> user approves -> execute safely -> remember pattern`
+
+That loop is backed by runtime safety systems rather than prompt-only promises:
+
+- risk classification for proposed actions
+- queued permission requests for actions that mutate the desktop, shell, files, or external systems
+- Validate/Refuse proposal popups in the Python dock for commands, typing, and delegated goals
+- action history, audit entries, transcripts, summaries, and "never again" rules
+- Action Flight Recorder read model and `flight_recorder` tool for inspecting actions, approvals, audit entries, evidence, undo tokens, screenshots, risk/disposition totals, and pending follow-ups
+- filters for recorder entries by action text, risk level, disposition, result limit, and optional structured context payloads
+- Connector Packs With Permission Scopes for Outlook/Gmail/Calendar, Slack/Teams, GitHub/Linear/Jira, Notion/Obsidian, and file-share style integrations
+- connector write preflight decisions that require active write scopes before any external-system mutation, plus a write-evidence ledger that records run ids, tool-call ids, targets, grant ids, required scopes, summaries, and evidence references for every approved connector write
+- Proactive Briefings and Next-Best Actions for morning briefings, end-of-task recaps, meeting prep cards, project resume cards, contextual recommendations, and durable "never suggest this again" feedback
+- Windows App Intent Manifests through `iagent.intent.json`, letting local apps and scripts declare safe structured actions, parameters, examples, approval levels, and rollback hints for import into iAgent tools and recipe-ready plans
+- Remote Dispatch and Watch Mode for authenticated local/remote task submission, mobile-friendly status cards, scheduled jobs, approval-needed notifications, completion evidence, and failure packets
+- Attention Budget and Interruption Control for quiet hours, hourly/daily notification caps, snooze/resume, critical-approval bypass, preflight decisions, delivery history, and digest summaries
+- Processing Transparency Reports for recording where user data was processed, which processor handled it, what data categories were involved, retention/deletion state, and exportable user-facing audit summaries
+- explicit separation between observation actions and mutating actions such as click, type, hotkey, scroll, app launch, and delegated communication
+
+---
+
 ## Persistent Memory
 
 Dedicated memory and storage layers enable:
@@ -158,6 +187,7 @@ iAgent includes a local-first personal desktop layer for user-approved recall an
 - computer-use action planning with observe/act/verify steps, retry-ready verification, permission tiers, and prompt-injection risk flags
 - window layout plans, saved named layouts, project workspaces, Windows active-window snapping, and two-window tiling by app/window description
 - privacy/settings controls for clipboard history, reminder notifications, background jobs, proactive suggestions, snippet expansion, timeline capture modes, retention, app exclusions, and personal-data clearing
+- Sensitive Context Firewall controls for redaction previews, secret/email/payment detection, capture pause/resume, recent-context forgetting, private app/title exclusions, storage counts, retention limits, and screenshot/text capture decisions
 - a Settings > Personal panel for daemon status, one-tick runs, daemon start, and opening the local personal-data folder
 - UI-ready control-panel summaries for snippets, reminders, clipboard, jobs, privacy, layouts, timeline, and project workspaces
 
@@ -171,13 +201,26 @@ Run `iagent personal-daemon --headless` to keep the personal layer active in the
 
 Integrated tooling includes:
 
-- filesystem access
-- shell execution
-- web context tooling
-- planning systems
-- integration layers
-- memory tooling
-- desktop automation
+- filesystem read/write/edit/search tools with protected-path handling
+- shell and task execution with approval-aware routing
+- browser automation through Firefox bridge routing plus Chrome/Edge CDP backends
+- form-fill workflows over extracted web form fields
+- Office workflows through OfficeCLI-backed Word, Excel, and PowerPoint builders
+- `computer` actions for screenshots, active-window context, app listing/opening, clicks, typing, hotkeys, waits, and scrolling
+- `personal` actions for snippets, reminders, clipboard recovery, app/window recall, jobs, layouts, and project workspaces
+- `personal` Sensitive Context Firewall actions for privacy status, redaction preview, capture pause/resume, and recent-context deletion
+- `attention` budget actions for managing quiet hours, interruption caps, snooze/resume, preflighting notifications or suggestions, recording delivery outcomes, and producing attention digests
+- `briefing` proactive actions for morning briefings, end-task recaps, meeting prep, project resume, low-noise next-best recommendations, saved recaps, and never-suggest feedback rules
+- `connector` pack actions for inspecting built-in connector definitions, granting/revoking explicit read/write scopes, preflighting writes, and auditing recorded write evidence
+- `intent` manifest actions for discovering, validating, importing, listing, and planning local `iagent.intent.json` app/script capabilities without turning manifest import into arbitrary-code execution
+- `dispatch` watch-mode actions for creating authenticated dispatch clients, submitting local/remote tasks, approving work, checking mobile-friendly status, watching notifications, listing due scheduled tasks, completing with evidence, and attaching failure packets
+- `processing_report` actions for recording processing events, filtering/reporting local/private-cloud/external processing, exporting Markdown transparency reports, and marking retained records deleted without losing the audit trail
+- `recipe` catalog and command palette actions for searchable, hotkey-ready workflows with typed inputs, approval policies, required tools, and non-executing dispatch plans
+- `meeting` memory actions for start/append/finish meeting capture, local speaker/time transcript segments, source-linked decisions/questions/action items, and conversion into reminders, jobs, or delegation drafts
+- `flight_recorder` action timeline for user-readable run evidence, approval state, screenshots, undo metadata, and follow-up queues
+- `communicate` / swarm delegation tools for assignment-style multi-agent work
+- dictation and voice-adjacent runtime support used by the desktop companion
+- planning, compaction, memory, MCP registration, self-development, and ambient tool registration layers
 - Validate/Refuse proposal popups for AI-suggested commands, typing, and delegated goals
 
 ---
@@ -185,6 +228,17 @@ Integrated tooling includes:
 ## Desktop Integrations
 
 iAgent connects directly to the Windows desktop and key productivity applications through three integration layers.
+
+### Desktop Dock, Companion, and Proposal UX
+
+The tracked Python desktop runtime under `app/iagent-py` provides the Windows-facing user experience:
+
+- tray and dock launcher via `app/launch-iagent.ps1`
+- compact companion responses and context capture
+- task inbox with running, completed, and feedback-aware task records
+- system-wide proposal popups for mutating action tags such as command execution, typing, and delegated backend goals
+- Office-goal queuing that routes "make a document/spreadsheet/deck" requests through deterministic builders before opening the result
+- settings UI for provider/runtime configuration and personal desktop controls
 
 ### Windows Desktop Automation
 
@@ -556,6 +610,12 @@ If issues persist:
 - `src/provider/*` → provider routing
 - `src/auth/*` → auth and token handling
 - `src/ambient/*` → background workflows
+- `src/safety.rs` → permission queue, audit trail, action history, transcripts, and never-again rules
+- `src/personal_layer.rs` and `src/personal_daemon.rs` → snippets, reminders, clipboard recovery, window recall, jobs, layouts, and project workspaces
+- `src/dictation.rs` → desktop dictation support
+- `src/tool/communicate*` → delegated/swarm communication tooling
+- `app/iagent-py/*` → Python dock, task inbox, proposal popups, companion manager, settings UI, and Office goal queue
+- `scripts/office/*` → deterministic Office document builders mirrored into the installed runtime
 
 ---
 
@@ -563,15 +623,25 @@ If issues persist:
 
 | Crate | Purpose |
 |---|---|
+| `app-integrations` | Browser, form-fill, OfficeCLI, and Office workflow integrations |
+| `desktop-monitor` | Active desktop context, window state, and safe file operations |
+| `iagent-settings` | Shared desktop/runtime settings |
 | `jcode-agent-runtime` | Runtime orchestration |
+| `jcode-ambient-types` | Ambient workflow data contracts |
+| `jcode-auth-types` | Authentication data contracts |
+| `jcode-compaction-core` | Conversation/context compaction support |
 | `jcode-memory-types` | Memory structures |
-| `jcode-storage` | Persistence layer |
 | `jcode-plan` | Planning engine |
+| `jcode-protocol` | Runtime protocol and transport types |
+| `jcode-provider-core` | Provider abstraction layer |
 | `jcode-provider-openai` | OpenAI integration |
 | `jcode-provider-openrouter` | OpenRouter integration |
 | `jcode-provider-gemini` | Gemini integration |
+| `jcode-session-types` | Session state contracts |
+| `jcode-storage` | Persistence layer |
+| `jcode-tool-core` | Shared tool traits and execution contracts |
+| `jcode-tool-types` | Shared tool input/output types |
 | `overlay-ui` | Overlay runtime |
-| `desktop-monitor` | Desktop monitoring |
 | `suggestion-engine` | Suggestion systems |
 
 ---
@@ -589,6 +659,24 @@ The architecture is moving toward:
 - autonomous workflow coordination
 
 This repository is structured more like an operating layer for AI workflows than a traditional chatbot frontend.
+
+---
+
+# Product Roadmap
+
+The current roadmap pass has landed as implemented runtime behavior rather than future-only planning:
+
+- Personal Desktop Layer: clipboard recall, reminders, active-window capture, window tiling, personal runtime controls, and the personal daemon product layer
+- Action Flight Recorder: action timelines with approvals, audit entries, evidence references, undo metadata, screenshot references, risk/disposition totals, and follow-up queues
+- Sensitive Context Firewall: redaction previews, secret/email/payment detection, capture pause/resume, recent-context forgetting, private app/title exclusions, and privacy status summaries
+- Recipe Command Palette: reusable multi-step workflows with typed inputs, approval policies, required tools, rendering, listing, and non-executing dispatch plans
+- Meeting Memory Mode: local speaker/time transcript segments, source-linked decisions/questions/action items, and conversion into reminders, jobs, or delegation drafts
+- Connector Permission Packs: built-in Outlook/Gmail/Calendar, Slack/Teams, GitHub/Linear/Jira, Notion/Obsidian, and file-share style connector definitions with explicit scoped grants, write preflight checks, and write evidence auditing
+- Proactive Briefings and Next-Best Actions: morning briefings, end-task recaps, meeting prep, project resume cards, saved recaps, low-noise recommendations, and never-suggest feedback rules
+- Windows App Intent Manifests: `iagent.intent.json` discovery, validation, import, listing, and safe planning for local app/script capabilities without arbitrary-code execution
+- Remote Dispatch and Watch Mode: authenticated local/remote task submission, scheduled jobs, approval-needed notifications, mobile-friendly status, completion evidence, and failure packets
+- Attention Budget and Interruption Control: quiet hours, hourly/daily notification caps, snooze/resume, critical-approval bypass, preflight decisions, delivery history, and digest summaries
+- Processing Transparency Reports: local/private-cloud/external processing records with processor, purpose, data categories, retention/deletion state, Markdown export, and deletion marking without losing the audit trail
 
 ---
 
