@@ -4,8 +4,8 @@
 
 ### Autonomous AI Agent Runtime for Windows
 
-Persistent desktop AI orchestration with local execution, ambient workflows, provider routing, memory systems, and tool-driven automation.
-iAgent is a next generation autonomous AI agent platform fully integrated into Windows as an ambient agent providing suggestions and minimally intrusive chat dock to help you accomplish more in your tasks, think co-working and full agentic building/researching activities. It can also interact easily with office Tools (Word, Excel, Powerpoint), web Tools (search for you, fill forms,...). It learns you preferences, evolves thanks to its deep memory layer.
+Persistent desktop AI orchestration with local execution, ambient workflows, provider routing, memory systems, safety audit trails, privacy transparency, and tool-driven automation.
+iAgent is a next generation autonomous AI agent platform fully integrated into Windows as an ambient agent providing suggestions and a minimally intrusive chat dock to help you accomplish more in your tasks, think co-working and full agentic building/researching activities. It can also interact easily with office tools (Word, Excel, PowerPoint), web tools (search for you, fill forms, and inspect pages), local apps, connector packs, and reusable command recipes. It learns your preferences and evolves through its deep memory layer while preserving user approval, action evidence, interruption controls, and processing transparency.
 It's always available, has computer use and full agentic capabilities (with swarm agents) but remains in the background for you to focus on what you need to achieve!
 
 ![iAgent Infographic](img/1000006999.png)
@@ -27,6 +27,10 @@ Unlike browser-only assistants or stateless chatbot wrappers, iAgent behaves lik
 - maintaining persistent sessions and memory
 - running background and ambient jobs
 - asking for explicit approval through floating proposal popups before mutating desktop actions
+- recording action evidence, approvals, undo metadata, and processing transparency reports
+- enforcing sensitive-context, connector-scope, and attention-budget controls
+- importing app intent manifests and turning safe local capabilities into planned actions
+- preparing proactive briefings, meeting memory, reminders, recipes, and remote dispatch status packets
 - coordinating provider-backed reasoning
 - integrating directly into Windows UX
 
@@ -675,7 +679,19 @@ This repository is structured more like an operating layer for AI workflows than
 
 # Product Roadmap
 
-All final roadmap deliveries identified for this pass are now integrated above as current behavior. Follow-on comparison work also integrated the Attention Budget and Interruption Control layer as current behavior.
+The current roadmap pass has landed as implemented runtime behavior rather than future-only planning:
+
+- Personal Desktop Layer: clipboard recall, reminders, active-window capture, window tiling, personal runtime controls, and the personal daemon product layer
+- Action Flight Recorder: action timelines with approvals, audit entries, evidence references, undo metadata, screenshot references, risk/disposition totals, and follow-up queues
+- Sensitive Context Firewall: redaction previews, secret/email/payment detection, capture pause/resume, recent-context forgetting, private app/title exclusions, and privacy status summaries
+- Recipe Command Palette: reusable multi-step workflows with typed inputs, approval policies, required tools, rendering, listing, and non-executing dispatch plans
+- Meeting Memory Mode: local speaker/time transcript segments, source-linked decisions/questions/action items, and conversion into reminders, jobs, or delegation drafts
+- Connector Permission Packs: built-in Outlook/Gmail/Calendar, Slack/Teams, GitHub/Linear/Jira, Notion/Obsidian, and file-share style connector definitions with explicit scoped grants, write preflight checks, and write evidence auditing
+- Proactive Briefings and Next-Best Actions: morning briefings, end-task recaps, meeting prep, project resume cards, saved recaps, low-noise recommendations, and never-suggest feedback rules
+- Windows App Intent Manifests: `iagent.intent.json` discovery, validation, import, listing, and safe planning for local app/script capabilities without arbitrary-code execution
+- Remote Dispatch and Watch Mode: authenticated local/remote task submission, scheduled jobs, approval-needed notifications, mobile-friendly status, completion evidence, and failure packets
+- Attention Budget and Interruption Control: quiet hours, hourly/daily notification caps, snooze/resume, critical-approval bypass, preflight decisions, delivery history, and digest summaries
+- Processing Transparency Reports: local/private-cloud/external processing records with processor, purpose, data categories, retention/deletion state, Markdown export, and deletion marking without losing the audit trail
 
 ---
 
