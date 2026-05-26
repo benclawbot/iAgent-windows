@@ -85,7 +85,7 @@ pub async fn has_live_listener(path: &std::path::Path) -> bool {
 
 #[cfg(unix)]
 pub(super) fn daemon_lock_path() -> PathBuf {
-    crate::storage::runtime_dir().join("jcode-daemon.lock")
+    crate::storage::runtime_dir().join("iAgent-daemon.lock")
 }
 
 #[cfg(unix)]
@@ -103,27 +103,23 @@ impl Drop for DaemonLockGuard {
 
 #[cfg(unix)]
 pub(super) fn try_acquire_daemon_lock(path: &std::path::Path) -> Result<Option<DaemonLockGuard>> {
-    use std::fs::OpenOptions;
-    use std::os::fd::AsRawFd;
+    use jcode_storage::file_lock::FileLock;
 
     if let Some(parent) = path.parent() {
         let _ = std::fs::create_dir_all(parent);
     }
 
-    let file = OpenOptions::new()
+    let file = std::fs::OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(false)
         .open(path)?;
-    let fd = file.as_raw_fd();
-    let ret = unsafe { libc::flock(fd, libc::LOCK_EX | libc::LOCK_NB) };
-    if ret == 0 {
-        Ok(Some(DaemonLockGuard {
-            _file: file,
+    match FileLock::acquire_exclusive(file) {
+        Ok(_lock) => Ok(Some(DaemonLockGuard {
+            _file: _lock.release(),
             path: path.to_path_buf(),
-        }))
-    } else {
-        Ok(None)
+        })),
+        Err(_) => Ok(None),
     }
 }
 

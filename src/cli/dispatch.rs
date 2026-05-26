@@ -561,23 +561,19 @@ impl Drop for SpawnLockGuard {
 
 #[cfg(unix)]
 fn try_acquire_spawn_lock(path: &std::path::Path) -> Result<Option<SpawnLockGuard>> {
-    use std::fs::OpenOptions;
-    use std::os::fd::AsRawFd;
+    use jcode_storage::file_lock::FileLock;
 
-    let file = OpenOptions::new()
+    let file = std::fs::OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(false)
         .open(path)?;
-    let fd = file.as_raw_fd();
-    let ret = unsafe { libc::flock(fd, libc::LOCK_EX | libc::LOCK_NB) };
-    if ret == 0 {
-        Ok(Some(SpawnLockGuard {
-            _file: file,
+    match FileLock::acquire_exclusive(file) {
+        Ok(_lock) => Ok(Some(SpawnLockGuard {
+            _file: _lock.release(),
             path: path.to_path_buf(),
-        }))
-    } else {
-        Ok(None)
+        })),
+        Err(_) => Ok(None),
     }
 }
 

@@ -99,7 +99,9 @@ fn main() {
     //   Release: v0.2.17 (abc1234)
     //   Dev:     v0.2.17-dev (abc1234)
     //   Dirty:   v0.2.17-dev (abc1234, dirty)
-    let is_release = std::env::var("JCODE_RELEASE_BUILD").is_ok();
+    let is_release = std::env::var("IAGENT_RELEASE_BUILD")
+        .or_else(|_| std::env::var("JCODE_RELEASE_BUILD"))
+        .is_ok();
     let version = if is_release {
         format!("v{}.{}.{} ({})", major, minor, patch, git_hash)
     } else if dirty {
@@ -108,7 +110,17 @@ fn main() {
         format!("v{}.{}.{}-dev ({})", major, minor, patch, git_hash)
     };
 
-    // Set environment variables for compilation
+    // Emit IAGENT_* vars (canonical going forward)
+    println!("cargo:rustc-env=IAGENT_GIT_HASH={}", git_hash);
+    println!("cargo:rustc-env=IAGENT_GIT_DATE={}", git_date);
+    println!("cargo:rustc-env=IAGENT_VERSION={}", version);
+    println!("cargo:rustc-env=IAGENT_SEMVER={}", build_semver);
+    println!("cargo:rustc-env=IAGENT_BASE_SEMVER={}", base_semver);
+    println!("cargo:rustc-env=IAGENT_UPDATE_SEMVER={}", update_semver);
+    println!("cargo:rustc-env=IAGENT_GIT_TAG={}", git_tag);
+    println!("cargo:rustc-env=IAGENT_CHANGELOG={}", changelog);
+
+    // Backward-compat JCODE_* aliases — remove after call sites migrated
     println!("cargo:rustc-env=JCODE_GIT_HASH={}", git_hash);
     println!("cargo:rustc-env=JCODE_GIT_DATE={}", git_date);
     println!("cargo:rustc-env=JCODE_VERSION={}", version);
@@ -118,8 +130,8 @@ fn main() {
     println!("cargo:rustc-env=JCODE_GIT_TAG={}", git_tag);
     println!("cargo:rustc-env=JCODE_CHANGELOG={}", changelog);
 
-    // Forward JCODE_RELEASE_BUILD env var if set (CI sets this for release binaries)
-    if std::env::var("JCODE_RELEASE_BUILD").is_ok() {
+    if is_release {
+        println!("cargo:rustc-env=IAGENT_RELEASE_BUILD=1");
         println!("cargo:rustc-env=JCODE_RELEASE_BUILD=1");
     }
 
@@ -127,6 +139,8 @@ fn main() {
     println!("cargo:rerun-if-changed=.git/HEAD");
     println!("cargo:rerun-if-changed=.git/index");
     println!("cargo:rerun-if-changed=Cargo.toml");
+    println!("cargo:rerun-if-env-changed=IAGENT_RELEASE_BUILD");
+    println!("cargo:rerun-if-env-changed=IAGENT_BUILD_SEMVER");
     println!("cargo:rerun-if-env-changed=JCODE_RELEASE_BUILD");
     println!("cargo:rerun-if-env-changed=JCODE_BUILD_SEMVER");
 }

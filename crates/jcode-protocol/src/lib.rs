@@ -7,6 +7,13 @@
 //! - Main socket: TUI/client communication with agent
 //! - Agent socket: Inter-agent communication (AI-to-AI)
 
+pub mod ipc;
+pub use ipc::{
+    CancelRequest, ClientMessage, DoneEvent, ErrorCode, ErrorEvent,
+    ServerEvent, StatusEvent, StatusRequest, TaskRequest, TextEvent,
+    ThinkingEvent, ToolResultEvent, ToolUseEvent,
+};
+
 pub mod types;
 use crate::types::IagentConfig;
 use serde::{Deserialize, Serialize};

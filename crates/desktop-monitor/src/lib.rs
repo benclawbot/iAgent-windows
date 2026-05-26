@@ -9,6 +9,9 @@ use anyhow::Result as AnyhowResult;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
+
+pub mod hotkey;
+pub use hotkey::{HotkeyEvent, HotkeyManager};
 pub type DesktopMonitorResult<T> = AnyhowResult<T>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

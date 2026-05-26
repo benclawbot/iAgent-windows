@@ -26,6 +26,7 @@ pub static malloc_conf: Option<&'static [u8; 78]> =
     Some(b"dirty_decay_ms:1000,muzzy_decay_ms:1000,narenas:4,prof:true,prof_active:false\0");
 
 use anyhow::Result;
+use iagent::config::paths::migrate_legacy_paths;
 
 #[cfg(all(target_os = "linux", not(feature = "jemalloc")))]
 fn configure_system_allocator() {
@@ -47,6 +48,11 @@ fn configure_system_allocator() {
 fn configure_system_allocator() {}
 
 fn main() -> Result<()> {
+    // Migrate legacy jcode paths before any file I/O.
+    if let Err(e) = migrate_legacy_paths() {
+        eprintln!("warning: path migration failed: {}", e);
+    }
+
     configure_system_allocator();
     let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
 

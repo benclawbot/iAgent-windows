@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+pub mod paths;
+pub use paths::{config_dir, data_dir, log_dir, migrate_legacy_paths, sessions_dir};
+
 /// Compaction mode
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "lowercase")]

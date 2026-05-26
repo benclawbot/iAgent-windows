@@ -544,32 +544,39 @@ impl SelfDevTool {
 
     #[cfg(unix)]
     fn try_acquire_build_lock(worktree_scope: &str) -> Result<Option<BuildLockGuard>> {
-        use std::fs::OpenOptions;
-        use std::os::fd::AsRawFd;
+        use jcode_storage::file_lock::FileLock;
 
         let path = Self::build_lock_path(worktree_scope)?;
-        let file = OpenOptions::new()
+        let file = std::fs::OpenOptions::new()
             .create(true)
             .write(true)
             .truncate(false)
             .open(&path)?;
-        let ret = unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
-        if ret == 0 {
-            Ok(Some(BuildLockGuard { _file: file, path }))
-        } else {
-            Ok(None)
+        match FileLock::acquire_exclusive(file) {
+            Ok(_lock) => Ok(Some(BuildLockGuard {
+                _file: _lock.release(),
+                path,
+            })),
+            Err(_) => Ok(None),
         }
     }
 
     #[cfg(not(unix))]
     fn try_acquire_build_lock(worktree_scope: &str) -> Result<Option<BuildLockGuard>> {
-        use std::fs::OpenOptions;
+        use jcode_storage::file_lock::FileLock;
 
         let path = Self::build_lock_path(worktree_scope)?;
-        match OpenOptions::new().create_new(true).write(true).open(&path) {
-            Ok(file) => Ok(Some(BuildLockGuard { _file: file, path })),
-            Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => Ok(None),
-            Err(err) => Err(err.into()),
+        let file = std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(false)
+            .open(&path)?;
+        match FileLock::acquire_exclusive(file) {
+            Ok(_lock) => Ok(Some(BuildLockGuard {
+                _file: _lock.release(),
+                path,
+            })),
+            Err(_) => Ok(None),
         }
     }
 

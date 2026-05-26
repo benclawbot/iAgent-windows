@@ -103,6 +103,33 @@ jobs:
       - name: Run focused unit canary
         run: cargo test -p iagent --lib tool::tests::first_party_tool_definitions_include_optional_intent_explicitly -- --exact
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: fmt
+        run: cargo fmt --check
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+
   test-self-check:
     name: Self-check validation
     runs-on: windows-latest
@@ -156,6 +183,8 @@ jobs:
       - check-headless-explicit
       - check-terminal-ui
       - test-unit
+      - lint
+      - format
 
     steps:
       - uses: actions/checkout@v6.0.2
