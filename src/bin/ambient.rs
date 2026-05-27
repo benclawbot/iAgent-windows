@@ -4,9 +4,8 @@
 //! interface for external clients (e.g. the iAgent desktop app).
 
 use iagent::protocol::ipc::{
-    CancelRequest, ClientMessage, DoneEvent, ErrorCode, ErrorEvent, ServerEvent,
-    StatusEvent, StatusRequest, TaskRequest, TextEvent, ThinkingEvent, ToolResultEvent,
-    ToolUseEvent,
+    CancelRequest, ClientMessage, DoneEvent, ErrorCode, ErrorEvent, ServerEvent, StatusEvent,
+    StatusRequest, TaskRequest, TextEvent, ThinkingEvent, ToolResultEvent, ToolUseEvent,
 };
 use std::io::{BufRead, BufReader, Write};
 use std::sync::Arc;
@@ -19,12 +18,17 @@ fn dispatch_message(msg: ClientMessage) -> Vec<ServerEvent> {
         ClientMessage::Task(TaskRequest { id, prompt, .. }) => {
             // Stub: return a thinking event followed by a done event.
             vec![
-                ServerEvent::Thinking(ThinkingEvent { task_id: id.clone() }),
+                ServerEvent::Thinking(ThinkingEvent {
+                    task_id: id.clone(),
+                }),
                 ServerEvent::Text(TextEvent {
                     task_id: id.clone(),
                     chunk: format!("Received task: {}", prompt),
                 }),
-                ServerEvent::Done(DoneEvent { task_id: id, tokens_used: None }),
+                ServerEvent::Done(DoneEvent {
+                    task_id: id,
+                    tokens_used: None,
+                }),
             ]
         }
         ClientMessage::Cancel(CancelRequest { task_id }) => {
@@ -90,16 +94,18 @@ async fn run_windows_pipe_server() -> anyhow::Result<()> {
 
     loop {
         // Create and listen on the named pipe.
-        let pipe = unsafe { CreateNamedPipeW::raw(
-            PIPE_NAME,
-            PIPE_ACCESS_DUPLEX,
-            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-            1,
-            65536,
-            65536,
-            0,
-            None,
-        )? };
+        let pipe = unsafe {
+            CreateNamedPipeW::raw(
+                PIPE_NAME,
+                PIPE_ACCESS_DUPLEX,
+                PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+                1,
+                65536,
+                65536,
+                0,
+                None,
+            )?
+        };
 
         // Wait for a client to connect.
         if let Err(e) = pipe.connect() {
@@ -203,7 +209,9 @@ mod windows_pipe {
                 return Err(std::io::Error::last_os_error());
             }
 
-            Ok(Self { handle: Arc::from(handle) })
+            Ok(Self {
+                handle: Arc::from(handle),
+            })
         }
     }
 

@@ -47,16 +47,16 @@ pub fn collect_file_entries(scope: &SearchScope<'_>) -> Vec<FileEntry> {
         if !path.is_file() {
             continue;
         }
-        if let Some(expected_ext) = file_type.as_deref()
-            && path.extension().and_then(|s| s.to_str()) != Some(expected_ext)
-        {
-            continue;
+        if let Some(expected_ext) = file_type.as_deref() {
+            if path.extension().and_then(|s| s.to_str()) != Some(expected_ext) {
+                continue;
+            }
         }
         let relative_path = normalize_display_path(scope.root, path);
-        if let Some(glob) = &glob
-            && !glob.is_match(&relative_path)
-        {
-            continue;
+        if let Some(glob) = &glob {
+            if !glob.is_match(&relative_path) {
+                continue;
+            }
         }
 
         files.push(FileEntry {

@@ -23,8 +23,8 @@ use std::time::Instant;
 
 #[path = "memory/activity.rs"]
 mod activity;
-pub mod identity;
 mod cache;
+pub mod identity;
 #[path = "memory/pending.rs"]
 mod pending;
 #[path = "memory_prompt.rs"]

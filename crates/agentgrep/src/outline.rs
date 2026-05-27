@@ -1,6 +1,6 @@
 use crate::cli::OutlineArgs;
 use crate::context::HarnessContext;
-use crate::structure::{StructureItem, extract_file_structure};
+use crate::structure::{extract_file_structure, StructureItem};
 use crate::workspace::{normalize_display_path, read_text_file};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
@@ -47,7 +47,10 @@ pub fn run_outline(root: &Path, args: &OutlineArgs) -> Result<OutlineResult, Str
             && familiarity.current_version_confidence >= 0.6
             && familiarity.prune_confidence >= 0.7
         {
-            (8, Some("compressed repeated outline from harness context".to_string()))
+            (
+                8,
+                Some("compressed repeated outline from harness context".to_string()),
+            )
         } else {
             (usize::MAX, None)
         }
@@ -114,7 +117,11 @@ mod tests {
         assert_eq!(result.path, "src/app.rs");
         assert_eq!(result.language, "rust");
         assert_eq!(result.role, "implementation");
-        assert!(result.structure.items.iter().any(|item| item.label == "App"));
+        assert!(result
+            .structure
+            .items
+            .iter()
+            .any(|item| item.label == "App"));
         assert!(result
             .structure
             .items

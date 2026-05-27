@@ -1,8 +1,8 @@
 use crate::cli::{FullRegionMode, SmartArgs};
 use crate::context::{Familiarity, HarnessContext};
 use crate::smart_dsl::{Relation, SmartQuery};
-use crate::structure::{StructureItem, extract_file_structure, infer_role};
-use crate::workspace::{SearchScope, TextFile, collect_file_entries, read_text_file};
+use crate::structure::{extract_file_structure, infer_role, StructureItem};
+use crate::workspace::{collect_file_entries, read_text_file, SearchScope, TextFile};
 use serde::Serialize;
 use std::path::Path;
 
@@ -78,10 +78,10 @@ pub fn run_smart(root: &Path, query: &SmartQuery, args: &SmartArgs) -> Result<Sm
     let mut files = Vec::new();
     for entry in collect_file_entries(&scope) {
         let relative_lower = entry.relative_path.to_ascii_lowercase();
-        if let Some(path_hint) = &path_hint
-            && !relative_lower.contains(path_hint)
-        {
-            continue;
+        if let Some(path_hint) = &path_hint {
+            if !relative_lower.contains(path_hint) {
+                continue;
+            }
         }
 
         let inferred_role = infer_role(&entry.relative_path);
@@ -558,12 +558,14 @@ fn select_structure_items(
             item.label == region.label
                 && item.start_line == region.start_line
                 && item.end_line == region.end_line
-        }) && !selected.iter().any(|existing: &StructureItem| {
-            existing.label == item.label
-                && existing.start_line == item.start_line
-                && existing.end_line == item.end_line
         }) {
-            selected.push(item.clone());
+            if !selected.iter().any(|existing: &StructureItem| {
+                existing.label == item.label
+                    && existing.start_line == item.start_line
+                    && existing.end_line == item.end_line
+            }) {
+                selected.push(item.clone());
+            }
         }
     }
 
@@ -732,12 +734,10 @@ mod tests {
         assert_eq!(result.files[0].path, "src/tui/app.rs");
         assert!(!result.files[0].regions.is_empty());
         assert_eq!(result.files[0].regions[0].kind, "render-site");
-        assert!(
-            result
-                .files
-                .iter()
-                .all(|file| file.path != "docs/notes.md" || file.score < result.files[0].score)
-        );
+        assert!(result
+            .files
+            .iter()
+            .all(|file| file.path != "docs/notes.md" || file.score < result.files[0].score));
     }
 
     #[test]
@@ -977,11 +977,9 @@ mod tests {
 
         let result = run_smart(dir.path(), &query, &args).unwrap();
         assert!(result.files[0].context_applied.is_some());
-        assert!(
-            result.files[0]
-                .regions
-                .iter()
-                .any(|region| region.context_applied.is_some())
-        );
+        assert!(result.files[0]
+            .regions
+            .iter()
+            .any(|region| region.context_applied.is_some()));
     }
 }

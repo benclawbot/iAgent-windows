@@ -1,6 +1,6 @@
 use crate::cli::GrepArgs;
-use crate::structure::{StructureItem, extract_file_structure};
-use crate::workspace::{SearchScope, collect_file_entries, read_text_file};
+use crate::structure::{extract_file_structure, StructureItem};
+use crate::workspace::{collect_file_entries, read_text_file, SearchScope};
 use regex::Regex;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -774,32 +774,32 @@ fn group_matches_with_options(
             item_idx += 1;
         }
 
-        if let Some(item) = items.get(item_idx)
-            && item.start_line <= line_match.line_number
-            && line_match.line_number <= item.end_line
-        {
-            if matched_indices.last().copied() != Some(item_idx) {
-                matched_indices.push(item_idx);
-                if symbol_groups.len() < options.max_groups {
-                    symbol_groups.push(MatchGroup {
-                        kind: item.kind.clone(),
-                        label: item.label.clone(),
-                        start_line: Some(item.start_line),
-                        end_line: Some(item.end_line),
-                        match_indices: vec![match_idx],
-                    });
-                    last_grouped_item_idx = Some(item_idx);
+        if let Some(item) = items.get(item_idx) {
+            if item.start_line <= line_match.line_number && line_match.line_number <= item.end_line
+            {
+                if matched_indices.last().copied() != Some(item_idx) {
+                    matched_indices.push(item_idx);
+                    if symbol_groups.len() < options.max_groups {
+                        symbol_groups.push(MatchGroup {
+                            kind: item.kind.clone(),
+                            label: item.label.clone(),
+                            start_line: Some(item.start_line),
+                            end_line: Some(item.end_line),
+                            match_indices: vec![match_idx],
+                        });
+                        last_grouped_item_idx = Some(item_idx);
+                    } else {
+                        file_scope_matches.push(match_idx);
+                        last_grouped_item_idx = None;
+                    }
+                } else if last_grouped_item_idx == Some(item_idx) {
+                    let group = symbol_groups
+                        .last_mut()
+                        .expect("group exists for grouped symbol");
+                    group.match_indices.push(match_idx);
                 } else {
                     file_scope_matches.push(match_idx);
-                    last_grouped_item_idx = None;
                 }
-            } else if last_grouped_item_idx == Some(item_idx) {
-                let group = symbol_groups
-                    .last_mut()
-                    .expect("group exists for grouped symbol");
-                group.match_indices.push(match_idx);
-            } else {
-                file_scope_matches.push(match_idx);
             }
         } else {
             file_scope_matches.push(match_idx);

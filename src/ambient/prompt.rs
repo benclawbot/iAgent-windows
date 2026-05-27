@@ -127,7 +127,11 @@ pub fn gather_feedback_memories(memory_manager: &crate::memory::MemoryManager) -
 
         for entry in files {
             if let Ok(content) = std::fs::read_to_string(entry.path()) {
-                let Ok(transcript) = serde_json::from_str::<crate::safety::AmbientTranscript>(&content) else { continue; };
+                let Ok(transcript) =
+                    serde_json::from_str::<crate::safety::AmbientTranscript>(&content)
+                else {
+                    continue;
+                };
                 let status = format!("{:?}", transcript.status);
                 let summary = transcript.summary.as_deref().unwrap_or("no summary");
                 let age = format_duration_rough(Utc::now() - transcript.started_at);
@@ -182,8 +186,12 @@ pub fn gather_recent_sessions(since: Option<DateTime<Utc>>) -> Vec<RecentSession
         for entry in entries.flatten() {
             let path = entry.path();
             if path.extension().map(|e| e == "json").unwrap_or(false) {
-                let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else { continue };
-                let Ok(session) = crate::session::Session::load(stem) else { continue };
+                let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
+                    continue;
+                };
+                let Ok(session) = crate::session::Session::load(stem) else {
+                    continue;
+                };
                 // Skip debug sessions
                 if session.is_debug {
                     continue;
@@ -414,13 +422,12 @@ pub fn build_ambient_system_prompt(
                 dir.in_reply_to_cycle, ago, dir.text,
             ));
         }
-prompt.push('\n');
+        prompt.push('\n');
     }
 
     // --- User Identity (Feature #2) ---
-    let identity = crate::memory::identity::build_identity_profile(
-        &crate::memory::MemoryManager::new(),
-    );
+    let identity =
+        crate::memory::identity::build_identity_profile(&crate::memory::MemoryManager::new());
     let identity_section = crate::memory::identity::build_identity_prompt_section(&identity);
     if !identity_section.is_empty() {
         prompt.push_str(&identity_section);

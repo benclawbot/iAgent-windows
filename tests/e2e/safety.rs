@@ -204,7 +204,10 @@ fn test_action_flight_recorder_includes_pending_permission_followups() {
     use iagent::safety::{FlightRecorderQuery, PermissionRequest, SafetySystem, Urgency};
 
     let safety = SafetySystem::new();
-    let request_id = format!("flight_perm_{}", chrono::Utc::now().timestamp_nanos_opt().unwrap());
+    let request_id = format!(
+        "flight_perm_{}",
+        chrono::Utc::now().timestamp_nanos_opt().unwrap()
+    );
 
     let _ = safety.request_permission(PermissionRequest {
         id: request_id.clone(),

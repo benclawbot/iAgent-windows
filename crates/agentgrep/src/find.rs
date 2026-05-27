@@ -1,6 +1,6 @@
 use crate::cli::FindArgs;
-use crate::structure::{FileStructure, StructureItem, extract_file_structure};
-use crate::workspace::{SearchScope, collect_file_entries, read_text_file};
+use crate::structure::{extract_file_structure, FileStructure, StructureItem};
+use crate::workspace::{collect_file_entries, read_text_file, SearchScope};
 use serde::Serialize;
 use std::path::Path;
 

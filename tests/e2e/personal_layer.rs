@@ -532,7 +532,12 @@ fn sensitive_context_firewall_previews_redaction_and_blocks_capture() {
     assert!(preview.redacted_text.contains("[REDACTED:api_key]"));
     assert!(preview.redacted_text.contains("[REDACTED:password]"));
     assert!(preview.redacted_text.contains("[REDACTED:email]"));
-    assert!(preview.findings.iter().any(|finding| finding.kind == "api_key"));
+    assert!(
+        preview
+            .findings
+            .iter()
+            .any(|finding| finding.kind == "api_key")
+    );
     assert!(preview.will_store_text);
 
     let blocked = store

@@ -100,7 +100,10 @@ impl SceneGraph {
 
     /// Get all nodes of a specific type.
     pub fn nodes_of_type(&self, node_type: NodeType) -> Vec<&SceneNode> {
-        self.nodes.iter().filter(|n| n.node_type == node_type).collect()
+        self.nodes
+            .iter()
+            .filter(|n| n.node_type == node_type)
+            .collect()
     }
 }
 
@@ -264,7 +267,11 @@ impl TemporalTracker {
     /// Get changes in the last `minutes` window.
     pub fn recent_changes(&self, minutes: i64) -> Option<SceneDiff> {
         let cutoff = Utc::now() - Duration::minutes(minutes);
-        let recent: Vec<_> = self.history.iter().filter(|s| s.recorded_at >= cutoff).collect();
+        let recent: Vec<_> = self
+            .history
+            .iter()
+            .filter(|s| s.recorded_at >= cutoff)
+            .collect();
 
         if recent.len() < 2 {
             return None;
@@ -294,7 +301,12 @@ impl TemporalTracker {
 
         let active_windows: Vec<String> = recent_frames
             .iter()
-            .filter_map(|s| s.graph.nodes.iter().find(|n| n.node_type == NodeType::Window))
+            .filter_map(|s| {
+                s.graph
+                    .nodes
+                    .iter()
+                    .find(|n| n.node_type == NodeType::Window)
+            })
             .map(|n| n.label.clone())
             .collect::<std::collections::HashSet<_>>()
             .into_iter()

@@ -42,8 +42,7 @@ mod platform {
     use std::os::windows::io::AsRawHandle;
     use windows_sys::Win32::Foundation::HANDLE;
     use windows_sys::Win32::Storage::FileSystem::{
-        LockFileEx, UnlockFileEx,
-        LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
+        LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY, LockFileEx, UnlockFileEx,
     };
     use windows_sys::Win32::System::IO::OVERLAPPED;
 
@@ -70,9 +69,7 @@ mod platform {
     pub fn unlock(file: &File) -> io::Result<()> {
         let handle = file.as_raw_handle() as HANDLE;
         let mut overlapped: OVERLAPPED = unsafe { std::mem::zeroed() };
-        let ok = unsafe {
-            UnlockFileEx(handle, 0, u32::MAX, u32::MAX, &mut overlapped)
-        };
+        let ok = unsafe { UnlockFileEx(handle, 0, u32::MAX, u32::MAX, &mut overlapped) };
         if ok == 0 {
             Err(io::Error::last_os_error())
         } else {

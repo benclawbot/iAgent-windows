@@ -299,7 +299,11 @@ fn take_identifier_like(input: &str) -> Option<&str> {
         end = input.len();
     }
     let token = input[..end].trim_end_matches(':').trim_end_matches(',');
-    if token.is_empty() { None } else { Some(token) }
+    if token.is_empty() {
+        None
+    } else {
+        Some(token)
+    }
 }
 
 fn skip_balanced(input: &str, open: char, close: char) -> Option<&str> {
@@ -380,24 +384,18 @@ mod tests {
             extract_file_structure(Path::new("src/auth/mod.rs"), "src/auth/mod.rs", text);
         assert_eq!(structure.language, "rust");
         assert_eq!(structure.role, "auth");
-        assert!(
-            structure
-                .items
-                .iter()
-                .any(|item| item.label == "AuthStatus")
-        );
-        assert!(
-            structure
-                .items
-                .iter()
-                .any(|item| item.label == "auth_status")
-        );
-        assert!(
-            structure
-                .items
-                .iter()
-                .any(|item| item.label == "render_status_bar")
-        );
+        assert!(structure
+            .items
+            .iter()
+            .any(|item| item.label == "AuthStatus"));
+        assert!(structure
+            .items
+            .iter()
+            .any(|item| item.label == "auth_status"));
+        assert!(structure
+            .items
+            .iter()
+            .any(|item| item.label == "render_status_bar"));
     }
 
     #[test]
@@ -408,24 +406,18 @@ mod tests {
             "pub trait Renderable {}\n",
         );
         let structure = extract_file_structure(Path::new("src/ui/view.rs"), "src/ui/view.rs", text);
-        assert!(
-            structure
-                .items
-                .iter()
-                .any(|item| item.label == "render_status_bar")
-        );
-        assert!(
-            structure
-                .items
-                .iter()
-                .any(|item| item.label == "StatusView<T>")
-        );
-        assert!(
-            structure
-                .items
-                .iter()
-                .any(|item| item.label == "Renderable")
-        );
+        assert!(structure
+            .items
+            .iter()
+            .any(|item| item.label == "render_status_bar"));
+        assert!(structure
+            .items
+            .iter()
+            .any(|item| item.label == "StatusView<T>"));
+        assert!(structure
+            .items
+            .iter()
+            .any(|item| item.label == "Renderable"));
     }
 
     #[test]

@@ -2,23 +2,21 @@
 //!
 //! All components must use these functions rather than hardcoding paths.
 
-use std::path::PathBuf;
 use anyhow::{Context, Result};
+use std::path::PathBuf;
 
 const APP_NAME: &str = "iAgent";
 const LEGACY_APP_NAME: &str = "jcode";
 
 /// Returns %LOCALAPPDATA%\iAgent on Windows, $HOME/.local/share/iAgent elsewhere.
 pub fn data_dir() -> Result<PathBuf> {
-    let base = dirs::data_local_dir()
-        .context("cannot determine local data directory")?;
+    let base = dirs::data_local_dir().context("cannot determine local data directory")?;
     Ok(base.join(APP_NAME))
 }
 
 /// Returns %APPDATA%\iAgent on Windows, $HOME/.config/iAgent elsewhere.
 pub fn config_dir() -> Result<PathBuf> {
-    let base = dirs::config_dir()
-        .context("cannot determine config directory")?;
+    let base = dirs::config_dir().context("cannot determine config directory")?;
     Ok(base.join(APP_NAME))
 }
 
@@ -38,8 +36,7 @@ pub fn sessions_dir() -> Result<PathBuf> {
 /// does not yet exist. Leaves a `MIGRATED_TO_IAGENT` marker file in the
 /// source directory so this runs only once.
 pub fn migrate_legacy_paths() -> Result<()> {
-    let base = dirs::data_local_dir()
-        .context("cannot determine local data directory")?;
+    let base = dirs::data_local_dir().context("cannot determine local data directory")?;
     let legacy = base.join(LEGACY_APP_NAME);
     let current = base.join(APP_NAME);
     let marker = legacy.join("MIGRATED_TO_IAGENT");
@@ -56,16 +53,17 @@ pub fn migrate_legacy_paths() -> Result<()> {
     );
 
     copy_dir_all(&legacy, &current)
-        .with_context(|| format!(
-            "migrate {} → {}", legacy.display(), current.display()
-        ))?;
+        .with_context(|| format!("migrate {} → {}", legacy.display(), current.display()))?;
 
     // Write marker so we don't migrate again.
-    std::fs::write(&marker, format!(
-        "Migrated to {} on {}\n",
-        current.display(),
-        chrono::Utc::now().to_rfc3339()
-    ))?;
+    std::fs::write(
+        &marker,
+        format!(
+            "Migrated to {} on {}\n",
+            current.display(),
+            chrono::Utc::now().to_rfc3339()
+        ),
+    )?;
 
     tracing::info!("Migration complete.");
     Ok(())
