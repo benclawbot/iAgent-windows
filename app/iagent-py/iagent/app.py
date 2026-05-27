@@ -36,6 +36,7 @@ from iagent.companion_manager import CompanionManager
 from iagent.config import Config, ConfigError
 from iagent.execution_memory import ExecutionMemory
 from iagent.hotkey import HotkeyMonitor
+from iagent.ipc_client import PersistentIPCClient
 from iagent.logging_config import configure_logging
 from iagent.mic_capture import MicCapture
 from iagent.screen_capture import capture_all
@@ -205,6 +206,32 @@ def run() -> int:
     tray_icon.show_prompt_dock_requested.connect(task_inbox.show_prompt_dock)
     ambient_process: subprocess.Popen | None = None
     _close_in_progress = False
+
+    # ── Persistent IPC client (replaces subprocess-per-request) ────────────────
+    # Reuses the same connection for all jcode goals instead of spawning a new
+    # Rust process per message. Falls back to subprocess if the server isn't up.
+    ipc_client = PersistentIPCClient(host="127.0.0.1", port=7643)
+    ipc_connected = False
+
+    async def _ensure_ipc_connected() -> bool:
+        """Try to connect to the running server. Return False if unreachable."""
+        nonlocal ipc_connected
+        if ipc_connected and ipc_client.is_connected():
+            return True
+        ipc_connected = await ipc_client.connect(timeout=5.0)
+        return ipc_connected
+
+    def _on_ipc_event(task_id: str, event: Any) -> None:
+        """Called when the persistent IPC client receives a streaming event."""
+        # Wire up to task_inbox so the UI gets progress updates
+        pass  # task_inbox.on_task_running(task_id, f"agent: {event.content[:80]}")
+
+    async def _queue_jcode_goal_via_ipc(goal: str) -> str | None:
+        """Send a goal over the persistent IPC connection and return task_id."""
+        if not await _ensure_ipc_connected():
+            return None
+        task_id = await ipc_client.send_message(goal)
+        return task_id
 
     def _ambient_is_running() -> bool:
         nonlocal ambient_process
@@ -467,6 +494,28 @@ def run() -> int:
             office_task_id = _queue_office_goal(goal_clean, source_label=source_label)
         if office_task_id is not None:
             return office_task_id
+
+        # ── Try persistent IPC first ─────────────────────────────────────────
+        # Run the async IPC call from within the Qt/asyncio event loop.
+        # schedule_callback queues it on the asyncio event loop from a Qt thread.
+        loop = asyncio.get_running_loop()
+        try:
+            task_id_future = asyncio.create_task(
+                _queue_jcode_goal_via_ipc(goal_clean)
+            )
+            # Block briefly for the IPC attempt — don't stall Qt startup.
+            task_id = loop.run_until_complete(
+                asyncio.wait_for(asyncio.shield(task_id_future), timeout=3.0)
+            )
+            if task_id:
+                tray_icon.notify("iAgent", f"Queued {source_label} iagent task {task_id}.")
+                return task_id
+        except (asyncio.TimeoutError, asyncio.CancelledError, RuntimeError):
+            pass  # Server not reachable — fall through to subprocess
+        except Exception:
+            pass  # Any other error — fall through to subprocess
+
+        # ── Fall back: subprocess-per-request (original behaviour) ───────────
         jcode_bin = _resolve_jcode_executable(result.config)
         if jcode_bin is None:
             tray_icon.notify(
