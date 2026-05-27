@@ -6,7 +6,9 @@
 //!   // rx is a tokio broadcast receiver; await events on it.
 //!   manager.run(); // spawns the message-pump thread
 
-use anyhow::{Result, bail};
+use anyhow::Result;
+#[cfg(target_os = "windows")]
+use anyhow::bail;
 use std::thread;
 use tokio::sync::broadcast;
 
