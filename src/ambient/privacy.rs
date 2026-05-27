@@ -1,3 +1,5 @@
+#![allow(clippy::collapsible_if, clippy::derivable_impls)]
+
 // ---------------------------------------------------------------------------
 // Privacy & Data Portability (Feature #4)
 // ---------------------------------------------------------------------------
@@ -295,7 +297,7 @@ impl PrivacyManager {
     /// Returns count of memories imported.
     pub fn import_memories(
         &self,
-        memory_manager: &MemoryManager,
+        _memory_manager: &MemoryManager,
         export: &DataExport,
     ) -> Result<usize, ImportError> {
         let mut count = 0;
@@ -303,7 +305,7 @@ impl PrivacyManager {
             if !self.prefs.is_exportable(category) {
                 continue;
             }
-            for pmem in memories {
+            for _pmem in memories {
                 // Re-create memory entries via MemoryManager
                 // This is a simplified version — real implementation would
                 // need to map back to MemoryEntry format

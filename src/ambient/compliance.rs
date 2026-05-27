@@ -1,3 +1,9 @@
+#![allow(
+    clippy::collapsible_if,
+    clippy::unnecessary_cast,
+    clippy::useless_format
+)]
+
 // ---------------------------------------------------------------------------
 // Ontological Compliance Layer (Feature #5)
 // ---------------------------------------------------------------------------

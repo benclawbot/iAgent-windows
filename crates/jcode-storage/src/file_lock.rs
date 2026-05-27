@@ -21,9 +21,9 @@ impl FileLock {
 
     /// Release the lock and return the underlying file.
     pub fn release(self) -> File {
-        let file = self.file;
-        drop(self);
-        file
+        let this = std::mem::ManuallyDrop::new(self);
+        let _ = unlock(&this.file);
+        unsafe { std::ptr::read(&this.file) }
     }
 }
 

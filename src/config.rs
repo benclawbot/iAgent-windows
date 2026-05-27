@@ -10,6 +10,7 @@ pub use jcode_config_types::{
     MarkdownSpacingMode, NamedProviderAuth, NamedProviderConfig, NamedProviderModelConfig,
     NamedProviderType, NativeScrollbarConfig, ProviderConfig, SafetyConfig,
     SessionPickerResumeAction, SwarmSpawnMode, UpdateChannel, WebSearchConfig, WebSearchEngine,
+    migrate_legacy_paths,
 };
 
 use crate::goal_judge;

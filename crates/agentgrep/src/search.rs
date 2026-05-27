@@ -349,7 +349,7 @@ fn run_rg_match_map(
         let Some(output) = run_rg_json_search(root, args)? else {
             return Ok(BTreeMap::new());
         };
-        return parse_rg_json(&output.stdout, &matcher);
+        parse_rg_json(&output.stdout, &matcher)
     }
 
     #[cfg(not(windows))]
@@ -369,6 +369,7 @@ fn run_rg_match_map(
     }
 }
 
+#[cfg(not(windows))]
 fn run_rg_plain_search(
     root: &Path,
     args: &GrepArgs,
@@ -442,6 +443,7 @@ fn build_rg_command(root: &Path, args: &GrepArgs) -> Command {
     command
 }
 
+#[cfg(any(not(windows), test))]
 fn parse_rg_plain(
     stdout: &[u8],
     matcher: &Matcher,

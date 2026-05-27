@@ -109,6 +109,7 @@ similar = "2"            # diffing for edits
 # Utilities
 dirs = "5"               # home directory
 anyhow = "1"
+libc = "0.2"
 thiserror = "1"
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1"
@@ -239,9 +240,6 @@ opt-level     = 2
 debug         = 0
 codegen-units = 16
 incremental   = false
-
-[target.'cfg(unix)'.dependencies]
-libc = "0.2"             # Unix system calls (flock)
 
 [profile.selfdev]
 inherits = "release"

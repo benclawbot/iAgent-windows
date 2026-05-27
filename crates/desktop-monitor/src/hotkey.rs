@@ -11,8 +11,6 @@ use std::thread;
 use tokio::sync::broadcast;
 
 #[cfg(target_os = "windows")]
-use windows_sys::Win32::System::Threading::GetCurrentThreadId;
-#[cfg(target_os = "windows")]
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
     MOD_ALT, MOD_CONTROL, MOD_NOREPEAT, MOD_SHIFT, MOD_WIN, RegisterHotKey, UnregisterHotKey,
     VK_F1, VK_F2, VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8, VK_F9, VK_F10, VK_F11, VK_F12,
@@ -20,7 +18,7 @@ use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
 };
 #[cfg(target_os = "windows")]
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    DispatchMessageW, GetMessageW, MSG, TranslateMessage, WM_HOTKEY, WM_QUIT,
+    DispatchMessageW, GetMessageW, MSG, TranslateMessage, WM_HOTKEY,
 };
 
 /// A fired hotkey event.
@@ -82,8 +80,14 @@ impl HotkeyManager {
         for (id, combo) in &registrations {
             match parse_combo(combo) {
                 Ok((mods, vk)) => {
-                    let ok =
-                        unsafe { RegisterHotKey(0, *id as i32, mods | MOD_NOREPEAT, vk as u32) };
+                    let ok = unsafe {
+                        RegisterHotKey(
+                            std::ptr::null_mut(),
+                            *id as i32,
+                            mods | MOD_NOREPEAT,
+                            vk as u32,
+                        )
+                    };
                     if ok == 0 {
                         tracing::error!(
                             "RegisterHotKey failed for '{}': {:?}",
@@ -102,7 +106,7 @@ impl HotkeyManager {
         // Message pump.
         let mut msg: MSG = unsafe { std::mem::zeroed() };
         loop {
-            let ret = unsafe { GetMessageW(&mut msg, 0, 0, 0) };
+            let ret = unsafe { GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) };
             if ret == 0 || ret == -1 {
                 break;
             }
@@ -123,7 +127,7 @@ impl HotkeyManager {
 
         // Unregister on exit.
         for (id, _) in &registered {
-            unsafe { UnregisterHotKey(0, *id as i32) };
+            unsafe { UnregisterHotKey(std::ptr::null_mut(), *id as i32) };
         }
     }
 }

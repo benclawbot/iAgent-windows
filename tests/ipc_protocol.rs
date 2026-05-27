@@ -9,7 +9,6 @@
 #[test]
 fn ipc_skipped_on_unix() {
     // Named pipe IPC is Windows-only; test is a no-op on Unix.
-    assert!(true);
 }
 
 #[cfg(target_os = "windows")]
@@ -17,5 +16,4 @@ fn ipc_skipped_on_unix() {
 fn ipc_test_windows_only() {
     // Placeholder for Windows-specific IPC tests.
     // Real implementation would connect to the named pipe and exchange messages.
-    assert!(true);
 }

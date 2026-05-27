@@ -1,3 +1,5 @@
+#![allow(clippy::derivable_impls)]
+
 // ---------------------------------------------------------------------------
 // MCP Server / Tool Bus for Ambient (Feature #9)
 // ---------------------------------------------------------------------------
@@ -715,6 +717,7 @@ impl ToolHandler for MemorySearchHandler {
             .memory_manager
             .search(query)
             .map_err(|e| ToolError::ExecutionFailed(e.to_string()))?;
+        let results: Vec<_> = results.into_iter().take(limit).collect();
 
         Ok(serde_json::json!({ "results": results }))
     }

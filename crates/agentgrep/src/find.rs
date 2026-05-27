@@ -156,11 +156,9 @@ fn score_file(
     }
 
     match structure.role.as_str() {
-        "implementation" | "auth" | "provider" | "ui" | "handler" => {
-            if evidence_hits > 0 {
-                score += 20;
-                why.push(format!("code role boost: {}", structure.role));
-            }
+        "implementation" | "auth" | "provider" | "ui" | "handler" if evidence_hits > 0 => {
+            score += 20;
+            why.push(format!("code role boost: {}", structure.role));
         }
         "docs" => {
             score -= 25;

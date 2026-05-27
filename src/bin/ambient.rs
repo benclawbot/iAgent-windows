@@ -5,10 +5,9 @@
 
 use iagent::protocol::ipc::{
     CancelRequest, ClientMessage, DoneEvent, ErrorCode, ErrorEvent, ServerEvent, StatusEvent,
-    StatusRequest, TaskRequest, TextEvent, ThinkingEvent, ToolResultEvent, ToolUseEvent,
+    StatusRequest, TaskRequest, TextEvent, ThinkingEvent,
 };
 use std::io::{BufRead, BufReader, Write};
-use std::sync::Arc;
 
 const PIPE_NAME: &str = r"\\.\pipe\iagent";
 
@@ -90,31 +89,13 @@ where
 /// Run the IPC server using Windows named pipes.
 #[cfg(target_os = "windows")]
 async fn run_windows_pipe_server() -> anyhow::Result<()> {
-    use std::os::windows::io::{FromRawHandle, IntoRawHandle};
-
     loop {
         // Create and listen on the named pipe.
-        let pipe = unsafe {
-            CreateNamedPipeW::raw(
-                PIPE_NAME,
-                PIPE_ACCESS_DUPLEX,
-                PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-                1,
-                65536,
-                65536,
-                0,
-                None,
-            )?
-        };
+        let mut pipe = windows_pipe::Pipe::create_server(PIPE_NAME)?;
 
-        // Wait for a client to connect.
-        if let Err(e) = pipe.connect() {
-            eprintln!("Pipe connection failed: {}", e);
-            continue;
-        }
-
-        let (reader, mut writer) = (BufReader::new(&pipe), &pipe as &dyn Write);
-        let _ = handle_connection(reader, writer);
+        let reader_pipe = pipe.try_clone()?;
+        let reader = BufReader::new(reader_pipe);
+        let _ = handle_connection(reader, &mut pipe);
     }
 }
 
@@ -143,7 +124,10 @@ async fn run_unix_socket_server() -> anyhow::Result<()> {
 #[cfg(target_os = "windows")]
 mod windows_pipe {
     use std::ffi::OsStr;
+    use std::fs::File;
+    use std::io::{Read, Write};
     use std::os::windows::ffi::OsStrExt;
+    use std::os::windows::io::{FromRawHandle, RawHandle};
     use std::ptr;
 
     const PIPE_ACCESS_DUPLEX: u32 = 0x00000003;
@@ -151,9 +135,10 @@ mod windows_pipe {
     const PIPE_READMODE_BYTE: u32 = 0x00000000;
     const PIPE_WAIT: u32 = 0x00000000;
     const PIPE_UNLIMITED_INSTANCES: u32 = 0x000000FF;
+    const INVALID_HANDLE_VALUE: *mut std::ffi::c_void = -1isize as *mut std::ffi::c_void;
 
     #[link(name = "kernel32")]
-    extern "system" {
+    unsafe extern "system" {
         fn CreateNamedPipeW(
             name: *const u16,
             open_mode: u32,
@@ -163,32 +148,30 @@ mod windows_pipe {
             in_buffer_size: u32,
             default_timeout: u32,
             security_attributes: *mut std::ffi::c_void,
-        ) -> std::mem::MaybeUninit<std::ffi::c_void>;
+        ) -> *mut std::ffi::c_void;
 
         fn ConnectNamedPipe(
             hNamedPipe: *mut std::ffi::c_void,
             lpOverlapped: *mut std::ffi::c_void,
         ) -> i32;
+        fn CloseHandle(hObject: *mut std::ffi::c_void) -> i32;
     }
 
     /// Represents a Windows named pipe handle.
     #[derive(Debug)]
     pub struct Pipe {
-        handle: Arc<std::ffi::c_void>,
+        file: File,
     }
 
     impl Pipe {
-        /// Connect to an existing pipe (client-side).
-        #[allow(dead_code)]
-        pub fn connect(pipe_name: &str) -> std::io::Result<Self> {
+        pub fn create_server(pipe_name: &str) -> std::io::Result<Self> {
             let wide: Vec<u16> = OsStr::new(pipe_name)
                 .encode_wide()
                 .chain(std::iter::once(0))
                 .collect();
 
-            // SAFETY: CreateNamedPipeW returns a handle; we treat MaybeUninit as init.
             let handle = unsafe {
-                let h = CreateNamedPipeW(
+                CreateNamedPipeW(
                     wide.as_ptr(),
                     PIPE_ACCESS_DUPLEX,
                     PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
@@ -197,49 +180,51 @@ mod windows_pipe {
                     65536,
                     0,
                     ptr::null_mut(),
-                );
-                if h.is_zeroized() {
-                    return Err(std::io::Error::last_os_error());
-                }
-                h.assume_init()
+                )
             };
-
-            let connected = unsafe { ConnectNamedPipe(handle as *mut _, ptr::null_mut()) };
-            if connected == 0 {
+            if handle == INVALID_HANDLE_VALUE {
                 return Err(std::io::Error::last_os_error());
             }
 
+            let connected = unsafe { ConnectNamedPipe(handle as *mut _, ptr::null_mut()) };
+            if connected == 0 {
+                let err = std::io::Error::last_os_error();
+                unsafe {
+                    CloseHandle(handle);
+                }
+                return Err(err);
+            }
+
+            let file = unsafe { File::from_raw_handle(handle as RawHandle) };
+            Ok(Self { file })
+        }
+
+        pub fn try_clone(&self) -> std::io::Result<Self> {
             Ok(Self {
-                handle: Arc::from(handle),
+                file: self.file.try_clone()?,
             })
         }
-    }
 
-    impl std::os::windows::io::AsRawHandle for Pipe {
-        fn as_raw_handle(&self) -> std::os::windows::raw::HANDLE {
-            self.handle as std::os::windows::raw::HANDLE
+        /// Connect to an existing pipe (client-side).
+        #[allow(dead_code)]
+        pub fn connect(pipe_name: &str) -> std::io::Result<Self> {
+            Self::create_server(pipe_name)
         }
     }
 
-    impl std::os::windows::io::Read for Pipe {
+    impl Read for Pipe {
         fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-            use std::os::windows::io::AsRawHandle;
-            let mut handle = std::fs::File::from_raw_handle(self.as_raw_handle());
-            handle.read(buf)
+            self.file.read(buf)
         }
     }
 
-    impl std::os::windows::io::Write for Pipe {
+    impl Write for Pipe {
         fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            use std::os::windows::io::AsRawHandle;
-            let mut handle = std::fs::File::from_raw_handle(self.as_raw_handle());
-            handle.write(buf)
+            self.file.write(buf)
         }
 
         fn flush(&mut self) -> std::io::Result<()> {
-            use std::os::windows::io::AsRawHandle;
-            let mut handle = std::fs::File::from_raw_handle(self.as_raw_handle());
-            handle.flush()
+            self.file.flush()
         }
     }
 
@@ -251,7 +236,7 @@ mod windows_pipe {
 
     impl Drop for PipeConnection {
         fn drop(&mut self) {
-            // DisconnectNamedPipe would be called here if we had the FFI.
+            let _ = self.pipe.flush();
         }
     }
 }

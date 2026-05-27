@@ -253,6 +253,7 @@ pub fn run_smart(root: &Path, query: &SmartQuery, args: &SmartArgs) -> Result<Sm
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn build_regions(
     file: &TextFile,
     items: &[StructureItem],
@@ -294,7 +295,7 @@ fn build_regions(
             continue;
         }
 
-        let mut score = 80 + (subject_line_hit_count as i32 * 10);
+        let mut score = 80 + (subject_line_hit_count * 10);
         let mut why = Vec::new();
         if subject_line_hit_count > 0 {
             why.push("exact subject match".to_string());

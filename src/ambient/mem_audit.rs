@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrows_for_generic_args)]
+
 // ---------------------------------------------------------------------------
 // Memory Auditor (Feature #6)
 // ---------------------------------------------------------------------------
@@ -5,7 +7,7 @@
 // behavior. When an LLM reaches a wrong conclusion, we trace backwards to
 // find which memories contributed to the error.
 
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use std::collections::HashSet;
 
 use crate::memory::MemoryManager;

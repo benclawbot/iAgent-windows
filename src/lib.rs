@@ -2,9 +2,23 @@
     dead_code,
     non_camel_case_types,
     unknown_lints,
+    clippy::collapsible_if,
     clippy::collapsible_match,
+    clippy::derivable_impls,
     clippy::manual_checked_ops,
+    clippy::manual_ok_err,
+    clippy::manual_range_contains,
+    clippy::needless_borrows_for_generic_args,
+    clippy::needless_lifetimes,
+    clippy::never_loop,
+    clippy::new_without_default,
+    clippy::redundant_closure,
+    clippy::too_many_arguments,
+    clippy::unnecessary_cast,
+    clippy::unnecessary_lazy_evaluations,
     clippy::unnecessary_sort_by,
+    clippy::unwrap_or_default,
+    clippy::useless_format,
     clippy::useless_conversion
 )]
 #![recursion_limit = "512"]

@@ -1,3 +1,9 @@
+#![allow(
+    clippy::collapsible_if,
+    clippy::manual_ok_err,
+    clippy::unwrap_or_default
+)]
+
 // ---------------------------------------------------------------------------
 // Initiative Engine (Feature #3)
 // ---------------------------------------------------------------------------

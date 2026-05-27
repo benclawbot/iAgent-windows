@@ -1404,6 +1404,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dirs",
+ "libc",
  "regex",
  "serde",
  "tokio",
@@ -2740,7 +2741,11 @@ dependencies = [
 name = "jcode-config-types"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "chrono",
+ "dirs",
  "serde",
+ "tracing",
 ]
 
 [[package]]
@@ -2942,6 +2947,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]

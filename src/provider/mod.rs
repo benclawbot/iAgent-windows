@@ -5,6 +5,61 @@ pub mod anthropic;
 pub mod antigravity;
 #[cfg(feature = "bedrock")]
 pub mod bedrock;
+#[cfg(not(feature = "bedrock"))]
+pub mod bedrock {
+    pub const ENV_FILE: &str = "bedrock.env";
+    pub const API_KEY_ENV: &str = "AWS_BEARER_TOKEN_BEDROCK";
+    pub const REGION_ENV: &str = "JCODE_BEDROCK_REGION";
+
+    pub struct BedrockProvider;
+
+    impl BedrockProvider {
+        pub fn new() -> Self {
+            Self
+        }
+
+        pub fn has_credentials() -> bool {
+            false
+        }
+
+        pub fn configured_bearer_token() -> Option<String> {
+            crate::provider_catalog::load_api_key_from_env_or_config(API_KEY_ENV, ENV_FILE)
+        }
+
+        pub fn is_bedrock_model_id(_model: &str) -> bool {
+            false
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl jcode_provider_core::Provider for BedrockProvider {
+        async fn complete(
+            &self,
+            _messages: &[jcode_message_types::Message],
+            _tools: &[jcode_message_types::ToolDefinition],
+            _system: &str,
+            _resume_session_id: Option<&str>,
+        ) -> anyhow::Result<jcode_provider_core::EventStream> {
+            anyhow::bail!("AWS Bedrock provider is disabled in this build")
+        }
+
+        fn name(&self) -> &str {
+            "bedrock"
+        }
+
+        fn model(&self) -> String {
+            "bedrock-disabled".to_string()
+        }
+
+        fn set_model(&self, _model: &str) -> anyhow::Result<()> {
+            anyhow::bail!("AWS Bedrock provider is disabled in this build")
+        }
+
+        fn fork(&self) -> std::sync::Arc<dyn jcode_provider_core::Provider> {
+            std::sync::Arc::new(Self::new())
+        }
+    }
+}
 pub mod claude;
 pub mod copilot;
 pub mod cursor;

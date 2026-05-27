@@ -26,7 +26,7 @@ pub static malloc_conf: Option<&'static [u8; 78]> =
     Some(b"dirty_decay_ms:1000,muzzy_decay_ms:1000,narenas:4,prof:true,prof_active:false\0");
 
 use anyhow::Result;
-use iagent::config::paths::migrate_legacy_paths;
+use iagent::config::migrate_legacy_paths;
 
 #[cfg(all(target_os = "linux", not(feature = "jemalloc")))]
 fn configure_system_allocator() {

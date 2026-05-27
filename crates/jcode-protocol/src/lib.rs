@@ -9,8 +9,8 @@
 
 pub mod ipc;
 pub use ipc::{
-    CancelRequest, ClientMessage, DoneEvent, ErrorCode, ErrorEvent, ServerEvent, StatusEvent,
-    StatusRequest, TaskRequest, TextEvent, ThinkingEvent, ToolResultEvent, ToolUseEvent,
+    CancelRequest, ClientMessage, DoneEvent, ErrorCode, ErrorEvent, StatusEvent, StatusRequest,
+    TaskRequest, TextEvent, ThinkingEvent, ToolResultEvent, ToolUseEvent,
 };
 
 pub mod types;
