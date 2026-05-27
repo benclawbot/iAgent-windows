@@ -1,9 +1,9 @@
 """System tray integration for iAgent desktop dock."""
 import os
 import sys
-from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QAction
-from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor
-from PyQt5.QtCore import Qt
+
+from PyQt5.QtGui import QColor, QIcon, QPixmap
+from PyQt5.QtWidgets import QAction, QMenu, QSystemTrayIcon
 
 
 def get_icon_path():

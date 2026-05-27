@@ -30,15 +30,9 @@ def compute_position(
     flipped_x = (screen_right - cursor_x) < edge_margin
     flipped_y = (screen_bottom - cursor_y) < edge_margin
 
-    if flipped_x:
-        x = cursor_x - offset - comp_w
-    else:
-        x = cursor_x + offset
+    x = cursor_x - offset - comp_w if flipped_x else cursor_x + offset
 
-    if flipped_y:
-        y = cursor_y - offset - comp_h
-    else:
-        y = cursor_y + offset
+    y = cursor_y - offset - comp_h if flipped_y else cursor_y + offset
 
     return CompanionPlacement(x=x, y=y, flipped_x=flipped_x, flipped_y=flipped_y)
 

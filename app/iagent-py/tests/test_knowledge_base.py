@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
 from iagent.knowledge_base import KBApp, match_app, select_content
-
 
 # --- match_app tests ---
 

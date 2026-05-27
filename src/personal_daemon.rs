@@ -209,11 +209,11 @@ pub fn capture_snapshot(config: &PersonalDaemonConfig) -> PersonalDaemonSnapshot
         snapshot.clipboard_content = read_clipboard_text();
     }
 
-    if config.capture_active_window {
-        if let Some(context) = desktop_monitor::capture_window_context() {
-            snapshot.active_app = Some(context.app_name);
-            snapshot.active_window_title = Some(context.window_title);
-        }
+    if config.capture_active_window
+        && let Some(context) = desktop_monitor::capture_window_context()
+    {
+        snapshot.active_app = Some(context.app_name);
+        snapshot.active_window_title = Some(context.window_title);
     }
 
     snapshot
@@ -317,10 +317,10 @@ mod windows_snippet_hook {
     unsafe extern "system" fn keyboard_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         if code >= 0 && (wparam as u32 == WM_KEYDOWN || wparam as u32 == WM_SYSKEYDOWN) {
             let event = unsafe { *(lparam as *const KBDLLHOOKSTRUCT) };
-            if event.flags & LLKHF_INJECTED == 0 {
-                if let Some(expansion) = process_key_event(event.vkCode) {
-                    send_snippet_expansion(&expansion);
-                }
+            if event.flags & LLKHF_INJECTED == 0
+                && let Some(expansion) = process_key_event(event.vkCode)
+            {
+                send_snippet_expansion(&expansion);
             }
         }
 

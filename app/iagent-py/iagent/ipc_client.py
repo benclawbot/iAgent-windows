@@ -15,14 +15,16 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import AsyncIterator, Any
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +140,11 @@ def parse_server_event(json_str: str) -> (
     elif msg_type == "text_delta":
         return AgentStreamEvent(content=str(msg.get("content", "")), is_system=False)
     else:
-        return StreamEvent(event_type=EventType.ERROR, content=f"unknown message type: {msg_type!r}", metadata=msg)
+        return StreamEvent(
+            event_type=EventType.ERROR,
+            content=f"unknown message type: {msg_type!r}",
+            metadata=msg,
+        )
 
 
 # ── Persistent IPC client ─────────────────────────────────────────────────────
@@ -193,7 +199,7 @@ class PersistentIPCClient:
             self._read_task = asyncio.create_task(self._read_loop())
             return True
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("PersistentIPCClient connect timeout")
             return False
         except Exception as exc:
@@ -206,10 +212,8 @@ class PersistentIPCClient:
 
         if self._read_task:
             self._read_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._read_task
-            except asyncio.CancelledError:
-                pass
             self._read_task = None
 
         if self._writer:
@@ -351,7 +355,7 @@ class PersistentIPCClient:
                         self._reader.read(4096),
                         timeout=30.0,
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
 
                 if not data:
@@ -463,10 +467,8 @@ class PersistentIPCClient:
 
     def _push_to_all(self, event: StreamEvent) -> None:
         for q in self._event_queues.values():
-            try:
+            with contextlib.suppress(asyncio.QueueFull):
                 q.put_nowait(event)
-            except asyncio.QueueFull:
-                pass
 
     def _cleanup_task(self, task_id: str) -> None:
         self._event_queues.pop(task_id, None)
@@ -519,7 +521,10 @@ def _stream_to_legacy(event: StreamEvent | Any) -> Any:
             name = event.metadata.get("name", "")
             return AgentStreamEvent(content=f"[tool_done] {name}", is_system=True)
         elif event.event_type == EventType.DONE:
-            return AgentCompletedEvent(run_id=event.metadata.get("run_id", ""), agent_output=event.content)
+            return AgentCompletedEvent(
+                run_id=event.metadata.get("run_id", ""),
+                agent_output=event.content,
+            )
         elif event.event_type == EventType.ERROR:
             return ErrorEvent(error=event.content)
         elif event.event_type == EventType.CONNECTED:

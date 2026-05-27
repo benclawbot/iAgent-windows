@@ -91,15 +91,9 @@ impl InitiativeEngine {
     pub fn analyze(&self, memory_manager: &MemoryManager) -> Vec<InitiativeCandidate> {
         let mut candidates = Vec::new();
 
-        let project_graph = match memory_manager.load_project_graph() {
-            Ok(g) => Some(g),
-            Err(_) => None,
-        };
+        let project_graph = memory_manager.load_project_graph().ok();
 
-        let global_graph = match memory_manager.load_global_graph() {
-            Ok(g) => Some(g),
-            Err(_) => None,
-        };
+        let global_graph = memory_manager.load_global_graph().ok();
 
         if let Some(ref graph) = project_graph {
             let graph_candidates = self.analyze_graph(graph);
@@ -218,14 +212,15 @@ impl InitiativeEngine {
             }
         }
         for (mem_id, count) in correction_counts {
-            if count >= 2 {
-                if let Some(mem) = graph.memories.get(&mem_id) {
-                    let snippet = if mem.content.len() > 50 {
-                        format!("{}...", &mem.content[..50])
-                    } else {
-                        mem.content.clone()
-                    };
-                    candidates.push(InitiativeCandidate::new(
+            if count >= 2
+                && let Some(mem) = graph.memories.get(&mem_id)
+            {
+                let snippet = if mem.content.len() > 50 {
+                    format!("{}...", &mem.content[..50])
+                } else {
+                    mem.content.clone()
+                };
+                candidates.push(InitiativeCandidate::new(
                         InitiativeTrigger::RepeatedCorrection {
                             memory_id: mem_id.clone(),
                             content_snippet: snippet.clone(),
@@ -242,7 +237,6 @@ impl InitiativeEngine {
                         ],
                         0.8,
                     ));
-                }
             }
         }
 
@@ -339,10 +333,7 @@ impl InitiativeEngine {
                 } else {
                     mem.content.clone()
                 };
-                goal_memories
-                    .entry(key)
-                    .or_insert_with(Vec::new)
-                    .push(mem.id.clone());
+                goal_memories.entry(key).or_default().push(mem.id.clone());
             }
         }
         for (goal_text, memory_ids) in goal_memories {

@@ -24,10 +24,11 @@ one-shot reconnect strategy this client mirrors.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import AsyncIterator
 
 import httpx
 import websockets
@@ -235,7 +236,7 @@ class TranscriptionClient(QObject):
         if drain_event is not None:
             try:
                 await asyncio.wait_for(drain_event.wait(), timeout=_DRAIN_TIMEOUT_SECONDS)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(
                     "drain timeout after %.1fs — cancelling recv loop",
                     _DRAIN_TIMEOUT_SECONDS,
@@ -247,10 +248,8 @@ class TranscriptionClient(QObject):
         for task in (self._recv_task, self._send_task):
             if task is not None and not task.done():
                 task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError, Exception):
                     await task
-                except (asyncio.CancelledError, Exception):  # noqa: BLE001
-                    pass
 
         if ws is not None:
             try:
@@ -344,10 +343,8 @@ class TranscriptionClient(QObject):
                 )
                 # Cancel the remaining task before retrying.
                 await self._drain_pending(pending)
-                try:
+                with contextlib.suppress(Exception):
                     await ws.close()
-                except Exception:  # noqa: BLE001
-                    pass
                 self._ws = None
                 await self._run_session(pcm_chunk_iterator, reconnect_allowed=False)
                 return
@@ -356,10 +353,8 @@ class TranscriptionClient(QObject):
             # re-raising so they don't leak as dangling tasks with
             # "Task exception was never retrieved" warnings.
             await self._drain_pending(pending)
-            try:
+            with contextlib.suppress(Exception):
                 await ws.close()
-            except Exception:  # noqa: BLE001
-                pass
             self._ws = None
             raise exc
 
@@ -374,10 +369,8 @@ class TranscriptionClient(QObject):
             if p.done():
                 continue
             p.cancel()
-            try:
+            with contextlib.suppress(BaseException):
                 await p
-            except BaseException:  # noqa: BLE001 — teardown must not raise
-                pass
 
     async def _fetch_token(self) -> str:
         """Fetch a short-lived AssemblyAI token via worker proxy or direct API."""

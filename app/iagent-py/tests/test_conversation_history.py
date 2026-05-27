@@ -1,4 +1,4 @@
-﻿from iagent.conversation_history import ConversationHistory, MAX_TURNS
+﻿from iagent.conversation_history import MAX_TURNS, ConversationHistory
 
 
 def test_append_and_count() -> None:

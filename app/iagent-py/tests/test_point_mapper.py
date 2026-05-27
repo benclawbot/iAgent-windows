@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-
-from iagent.point_parser import PointTag
 from iagent.point_mapper import map_point_to_screen
+from iagent.point_parser import PointTag
 from iagent.screen_capture import ScreenshotImage
 
 

@@ -222,11 +222,11 @@ The UUID is randomly generated on first run and stored at `~/.jcode/telemetry_id
 8. Requests are fire-and-forget HTTP POSTs that don't block normal usage (install/session shutdown have short bounded blocking timeouts)
 9. If a request fails (offline, firewall, etc.), jcode silently continues - no retries, no queuing
 
-The telemetry endpoint is a Cloudflare Worker that stores events in a D1 database. The source code for the worker is in [`telemetry-worker/`](./telemetry-worker/).
+The telemetry endpoint is a Cloudflare Worker that stores events in a D1 database. The worker source is deployed separately from this repository; keep its D1 migrations in sync with the schema described here.
 
 ### Schema v5 deployment note
 
-Agent-time, autonomy, and pain-attribution fields require the D1 migration in `telemetry-worker/migrations/0008_agent_time_and_churn.sql`. Until that migration is applied, schema v5 clients can still send the new JSON payloads, but the worker will drop unknown columns through dynamic column filtering and dashboard agent-time panels will remain empty or show optional-panel errors. After migration, run/redeploy the telemetry worker and query the dashboard's **Agent time / autonomy** panel.
+Agent-time, autonomy, and pain-attribution fields require the corresponding D1 migration in the telemetry worker project. Until that migration is applied, schema v5 clients can still send the new JSON payloads, but the worker will drop unknown columns through dynamic column filtering and dashboard agent-time panels will remain empty or show optional-panel errors. After migration, redeploy the telemetry worker and query the dashboard's **Agent time / autonomy** panel.
 
 ## How to Opt Out
 

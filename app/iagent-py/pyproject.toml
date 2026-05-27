@@ -34,12 +34,22 @@ iagent = "iagent.__main__:main"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = [
+    "check_ws.py",
+    "test_ipc.py",
+    "test_ipc_full.py",
+    "test_ws.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
 "iagent/prompts.py" = ["E501"]  # prompt strings are naturally long
+"iagent/create_document_from_goal.py" = ["E501"]  # document templates are prose-heavy
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [build-system]
 requires = ["hatchling"]

@@ -16,21 +16,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from iagent.ipc_client import (
-    PersistentIPCClient,
-    IAgentIPCClient,
-    IagentClient,
-    EventType,
-    StreamEvent,
-    CompletionResult,
-    AgentStreamEvent,
     AgentCompletedEvent,
-    ErrorEvent,
+    AgentStreamEvent,
     ConnectedEvent,
+    ErrorEvent,
+    EventType,
+    IagentClient,
+    IAgentIPCClient,
     MessageRequest,
-    parse_server_event,
+    PersistentIPCClient,
+    StreamEvent,
     _stream_to_legacy,
+    parse_server_event,
 )
-
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -108,7 +106,7 @@ def test_initial_state():
     assert c.is_connected() is False
     assert c._connected is False
     assert c._pending == {}
-    
+
     c2 = PersistentIPCClient(host="192.168.1.1", port=9000)
     assert c2.host == "192.168.1.1"
     assert c2.port == 9000
@@ -125,7 +123,7 @@ def test_send_message_disconnected():
         c = PersistentIPCClient()
         try:
             await c.send_message("hello")
-            assert False, "Should have raised ConnectionError"
+            raise AssertionError("Should have raised ConnectionError")
         except ConnectionError:
             pass
     asyncio.run(_test())
@@ -260,7 +258,7 @@ def test_dispatch_error_sets_pending_exception():
         assert future.done()
         try:
             future.result()
-            assert False, "Should have raised"
+            raise AssertionError("Should have raised")
         except RuntimeError as exc:
             assert "failed" in str(exc)
         assert "task-3" not in c._pending
@@ -379,7 +377,7 @@ def test_connect_then_disconnect():
             "asyncio.open_connection",
             new_callable=AsyncMock,
             return_value=(mock_reader, mock_writer),
-        ) as mock_conn:
+        ):
             ok = await c.connect(timeout=2.0)
             assert ok is True
             assert c.is_connected() is True

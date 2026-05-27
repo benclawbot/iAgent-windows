@@ -1,6 +1,4 @@
-﻿import pytest
-from iagent.ui.companion_position import CompanionPlacement, compute_position, should_update
-
+﻿from iagent.ui.companion_position import CompanionPlacement, compute_position, should_update
 
 SCREEN_1080P = (0, 0, 1920, 1080)
 COMPANION = (80, 40)

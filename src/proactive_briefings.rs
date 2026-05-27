@@ -215,11 +215,7 @@ impl ProactiveBriefingStore {
         if !request.projects.is_empty() {
             sections.push(section(
                 "Projects",
-                request
-                    .projects
-                    .iter()
-                    .map(|project| summarize_project(project))
-                    .collect(),
+                request.projects.iter().map(summarize_project).collect(),
             ));
         }
 

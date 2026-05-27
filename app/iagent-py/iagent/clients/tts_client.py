@@ -11,7 +11,6 @@ import asyncio
 import logging
 import os
 import shutil
-import subprocess
 import tempfile
 from pathlib import Path
 
@@ -187,7 +186,7 @@ class TTSClient(QObject):
     async def _play_audio(self, audio_bytes: bytes) -> None:
         """Play raw audio bytes (WAV or MP3 depending on source) via QMediaPlayer."""
         try:
-            from PySide6.QtCore import QByteArray, QBuffer, QIODevice
+            from PySide6.QtCore import QBuffer, QByteArray, QIODevice
 
             byte_array = QByteArray(audio_bytes)
             buffer = QBuffer(byte_array, parent=self)

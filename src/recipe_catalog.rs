@@ -365,6 +365,7 @@ impl RecipeCatalog {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn recipe(
     id: &str,
     title: &str,

@@ -6,11 +6,11 @@ Stores the token in config.toml so the IPC client can use it.
 """
 
 import hashlib
+import json
 import os
 import secrets
 import sys
 import urllib.request
-import json
 
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".jcode", "config.toml")
 DEVICES_PATH = os.path.join(os.path.expanduser("~"), ".jcode", "devices.json")
@@ -18,9 +18,9 @@ DEVICES_PATH = os.path.join(os.path.expanduser("~"), ".jcode", "devices.json")
 
 def get_config_value(key: str) -> str:
     """Read the gateway section from config.toml."""
-    with open(CONFIG_PATH, "r") as f:
+    with open(CONFIG_PATH) as f:
         content = f.read()
-    
+
     in_gateway = False
     for line in content.split("\n"):
         if line.strip().startswith("["):
@@ -46,13 +46,13 @@ def register_device():
     """Register a new local device in the devices.json registry."""
     token = generate_token()
     token_hash = compute_token_hash(token)
-    
+
     import datetime
     now = datetime.datetime.utcnow().isoformat() + "Z"
-    
+
     device_id = "python-dock-local"
     device_name = "Python Dock (Local)"
-    
+
     device_entry = {
         "id": device_id,
         "name": device_name,
@@ -61,31 +61,33 @@ def register_device():
         "paired_at": now,
         "last_seen": now,
     }
-    
+
     # Load existing devices or create new list
     if os.path.exists(DEVICES_PATH):
-        with open(DEVICES_PATH, "r") as f:
+        with open(DEVICES_PATH) as f:
             devices_data = json.load(f)
     else:
         devices_data = {"devices": [], "pending_codes": []}
-    
+
     # Remove existing device with same ID (re-register)
-    devices_data["devices"] = [d for d in devices_data.get("devices", []) if d.get("id") != device_id]
+    devices_data["devices"] = [
+        d for d in devices_data.get("devices", []) if d.get("id") != device_id
+    ]
     devices_data["devices"].append(device_entry)
-    
+
     # Save
     os.makedirs(os.path.dirname(DEVICES_PATH), exist_ok=True)
     with open(DEVICES_PATH, "w") as f:
         json.dump(devices_data, f, indent=2)
-    
+
     return token
 
 
 def update_config_token(token: str):
     """Add or update the local_auth_token in config.toml."""
-    with open(CONFIG_PATH, "r") as f:
+    with open(CONFIG_PATH) as f:
         content = f.read()
-    
+
     # Check if token already exists
     if "local_auth_token" in content:
         # Replace existing
@@ -97,7 +99,6 @@ def update_config_token(token: str):
         )
     else:
         # Add after [gateway] section
-        in_gateway = False
         lines = content.split("\n")
         new_lines = []
         for line in lines:
@@ -105,7 +106,7 @@ def update_config_token(token: str):
             if line.strip().startswith("[gateway]"):
                 new_lines.append(f'local_auth_token = "{token}"')
         content = "\n".join(new_lines)
-    
+
     with open(CONFIG_PATH, "w") as f:
         f.write(content)
 
@@ -125,21 +126,21 @@ def main():
     print("=" * 50)
     print(" iAgent Device Pairing")
     print("=" * 50)
-    
+
     # Check gateway
     if not check_gateway_status():
         print("ERROR: Gateway not running at 127.0.0.1:7643")
         print("Start with: iagent serve")
         sys.exit(1)
-    
+
     print("\n1. Registering local device...")
     token = register_device()
     print(f"   Token: {token[:16]}...{token[-4:]}")
-    
+
     print("\n2. Updating config.toml...")
     update_config_token(token)
     print("   Token saved to config")
-    
+
     print("\n3. Testing connection...")
     import urllib.request
     try:
@@ -161,7 +162,7 @@ def main():
             print("   Token accepted (WebSocket upgrade = auth works)")
         else:
             print(f"   Unexpected: {e}")
-    
+
     print("\n" + "=" * 50)
     print(" Pairing complete!")
     print(f" Token stored in: {CONFIG_PATH}")

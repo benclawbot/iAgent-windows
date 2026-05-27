@@ -1,7 +1,8 @@
 ﻿"""Tests for diamond waveform bar height calculator."""
 
 import pytest
-from iagent.ui.waveform_bars import compute_bar_heights, DIAMOND_WEIGHTS, BAR_COUNT
+
+from iagent.ui.waveform_bars import BAR_COUNT, DIAMOND_WEIGHTS, compute_bar_heights
 
 
 def test_full_volume():

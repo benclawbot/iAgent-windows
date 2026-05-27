@@ -109,7 +109,6 @@ similar = "2"            # diffing for edits
 # Utilities
 dirs = "5"               # home directory
 anyhow = "1"
-libc = "0.2"
 thiserror = "1"
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1"
@@ -127,6 +126,7 @@ base64 = "0.22"
 sha2 = "0.10"
 rand = "0.9.3"
 hex = "0.4"
+libc = "0.2"
 url = "2"
 open = "5"               # Open URLs in browser
 jcode-auth-types = { path = "crates/jcode-auth-types" }

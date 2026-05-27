@@ -17,6 +17,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import qasync
 from platformdirs import user_config_dir, user_log_dir
@@ -510,7 +511,7 @@ def run() -> int:
             if task_id:
                 tray_icon.notify("iAgent", f"Queued {source_label} iagent task {task_id}.")
                 return task_id
-        except (asyncio.TimeoutError, asyncio.CancelledError, RuntimeError):
+        except (TimeoutError, asyncio.CancelledError, RuntimeError):
             pass  # Server not reachable — fall through to subprocess
         except Exception:
             pass  # Any other error — fall through to subprocess

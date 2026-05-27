@@ -41,7 +41,10 @@ def compose_screen_label(
 
     position = screen_index + 1
     if is_cursor_screen:
-        return f"screen {position} of {total_screens} \u2014 cursor is on this screen (primary focus)"
+        return (
+            f"screen {position} of {total_screens} \u2014 "
+            "cursor is on this screen (primary focus)"
+        )
     return f"screen {position} of {total_screens} \u2014 secondary screen"
 
 

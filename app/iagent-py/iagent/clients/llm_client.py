@@ -16,7 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Iterator
+from collections.abc import Iterator
 
 import httpx
 from PySide6.QtCore import QObject, Signal
@@ -184,8 +184,9 @@ class LLMClient(QObject):
         buf = b""
 
         try:
-            async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
-                async with client.stream(
+            async with (
+                httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client,
+                client.stream(
                     "POST",
                     url,
                     json=body,
@@ -194,22 +195,23 @@ class LLMClient(QObject):
                         "Content-Type": "application/json",
                         "Accept": "text/event-stream",
                     },
-                ) as response:
-                    response.raise_for_status()
+                ) as response,
+            ):
+                response.raise_for_status()
 
-                    async for chunk in response.aiter_bytes():
-                        buf += chunk
+                async for chunk in response.aiter_bytes():
+                    buf += chunk
 
-                        # Split on double-newline SSE boundaries. Keep any
-                        # incomplete trailing fragment in *buf* for the next
-                        # iteration.
-                        while b"\n\n" in buf:
-                            event_block, buf = buf.split(b"\n\n", 1)
-                            for text_fragment in parse_minimax_sse_stream(
-                                event_block + b"\n\n"
-                            ):
-                                self.delta.emit(text_fragment)
-                                full_text += text_fragment
+                    # Split on double-newline SSE boundaries. Keep any
+                    # incomplete trailing fragment in *buf* for the next
+                    # iteration.
+                    while b"\n\n" in buf:
+                        event_block, buf = buf.split(b"\n\n", 1)
+                        for text_fragment in parse_minimax_sse_stream(
+                            event_block + b"\n\n"
+                        ):
+                            self.delta.emit(text_fragment)
+                            full_text += text_fragment
 
             # Flush any remaining bytes in the buffer (final event may lack a
             # trailing blank line).
