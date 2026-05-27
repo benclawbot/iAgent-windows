@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 //! iAgent ambient service with Windows named-pipe IPC server.
 //!
 //! This binary runs the ambient background agent with an optional named-pipe
