@@ -5,7 +5,7 @@
 // behavior. When an LLM reaches a wrong conclusion, we trace backwards to
 // find which memories contributed to the error.
 
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use std::collections::HashSet;
 
 use crate::memory::MemoryManager;
@@ -324,7 +324,7 @@ impl MemoryAuditor {
                 let keyword_hits = self
                     .extract_keywords(conclusion)
                     .iter()
-                    .filter(|kw| lower_content.contains(&kw.as_str()))
+                    .filter(|kw| lower_content.contains(kw.as_str()))
                     .count();
                 keyword_hits as f32 / self.extract_keywords(conclusion).len().max(1) as f32
             })
@@ -421,7 +421,7 @@ impl MemoryAuditor {
             let lower_content = mem.content.to_lowercase();
             let hits = keywords
                 .iter()
-                .filter(|kw| lower_content.contains(&kw.as_str()))
+                .filter(|kw| lower_content.contains(kw.as_str()))
                 .count();
             if hits > 0 {
                 scores.push((id.clone(), hits as f32));

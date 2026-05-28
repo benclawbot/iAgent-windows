@@ -623,6 +623,7 @@ impl ConnectorPackStore {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn connector(
     id: &str,
     pack_id: &str,

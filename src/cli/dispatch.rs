@@ -379,7 +379,7 @@ async fn run_default_command(args: Args) -> Result<()> {
         return Ok(());
     }
 
-    let startup_hints = if args.fresh_spawn {
+    let _startup_hints = if args.fresh_spawn {
         None
     } else {
         setup_hints::maybe_show_setup_hints()

@@ -724,15 +724,11 @@ impl SafetySystem {
         }
 
         entries.retain(|entry| {
-            if let Some(risk_level) = query.risk_level {
-                if entry.risk_level != Some(risk_level) {
-                    return false;
-                }
+            if query.risk_level.is_some_and(|risk_level| entry.risk_level != Some(risk_level)) {
+                return false;
             }
-            if let Some(disposition) = query.disposition {
-                if entry.disposition != Some(disposition) {
-                    return false;
-                }
+            if query.disposition.is_some_and(|disposition| entry.disposition != Some(disposition)) {
+                return false;
             }
             if let Some(action_query) = &action_query {
                 let haystack = format!("{} {} {}", entry.kind, entry.action_type, entry.summary)

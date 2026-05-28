@@ -308,7 +308,7 @@ impl ComplianceEngine {
             .get(&(subject.to_string(), predicate.to_string()))
         {
             if verified.object == object {
-                if (Utc::now() - verified.verified_at).num_days() as i64 > 30 {
+                if (Utc::now() - verified.verified_at).num_days() > 30 {
                     ClaimStatus::Stale { valid_until: None }
                 } else {
                     ClaimStatus::Verified
@@ -341,9 +341,9 @@ impl ComplianceEngine {
                             memory.effective_confidence() * 100.0,
                             threshold * 100.0
                         ),
-                        suggested_fix: Some(format!(
-                            "Verify this fact or increase its source confidence"
-                        )),
+                        suggested_fix: Some(
+                            "Verify this fact or increase its source confidence".to_string(),
+                        ),
                     });
                 }
             }
@@ -408,10 +408,10 @@ impl ComplianceEngine {
                 let subject = words[0..i].join(" ");
                 let object = words[(i + 1)..].join(" ");
                 let claim_key = (subject.clone(), word.to_string());
-                if let Some(verified) = self.fact_registry.get(&claim_key) {
-                    if verified.object == object {
-                        return ClaimStatus::Verified;
-                    }
+                if let Some(verified) = self.fact_registry.get(&claim_key)
+                    && verified.object == object
+                {
+                    return ClaimStatus::Verified;
                 }
             }
         }

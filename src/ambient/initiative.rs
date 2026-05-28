@@ -85,15 +85,8 @@ impl InitiativeEngine {
     pub fn analyze(&self, memory_manager: &MemoryManager) -> Vec<InitiativeCandidate> {
         let mut candidates = Vec::new();
 
-        let project_graph = match memory_manager.load_project_graph() {
-            Ok(g) => Some(g),
-            Err(_) => None,
-        };
-
-        let global_graph = match memory_manager.load_global_graph() {
-            Ok(g) => Some(g),
-            Err(_) => None,
-        };
+        let project_graph = memory_manager.load_project_graph().ok();
+        let global_graph = memory_manager.load_global_graph().ok();
 
         if let Some(ref graph) = project_graph {
             let graph_candidates = self.analyze_graph(graph);
@@ -212,31 +205,31 @@ impl InitiativeEngine {
             }
         }
         for (mem_id, count) in correction_counts {
-            if count >= 2 {
-                if let Some(mem) = graph.memories.get(&mem_id) {
-                    let snippet = if mem.content.len() > 50 {
-                        format!("{}...", &mem.content[..50])
-                    } else {
-                        mem.content.clone()
-                    };
-                    candidates.push(InitiativeCandidate::new(
-                        InitiativeTrigger::RepeatedCorrection {
-                            memory_id: mem_id.clone(),
-                            content_snippet: snippet.clone(),
-                            correction_count: count,
-                        },
-                        &format!(
-                            "'{}' has been contradicted {} times — the agent may keep making the same mistake.",
-                            snippet, count
-                        ),
-                        vec![
-                            "Flag this as a known error pattern",
-                            "Create a strong Correction memory with evidence",
-                            "In next cycle, check before reasoning about this topic",
-                        ],
-                        0.8,
-                    ));
-                }
+            if count >= 2
+                && let Some(mem) = graph.memories.get(&mem_id)
+            {
+                let snippet = if mem.content.len() > 50 {
+                    format!("{}...", &mem.content[..50])
+                } else {
+                    mem.content.clone()
+                };
+                candidates.push(InitiativeCandidate::new(
+                    InitiativeTrigger::RepeatedCorrection {
+                        memory_id: mem_id.clone(),
+                        content_snippet: snippet.clone(),
+                        correction_count: count,
+                    },
+                    &format!(
+                        "'{}' has been contradicted {} times — the agent may keep making the same mistake.",
+                        snippet, count
+                    ),
+                    vec![
+                        "Flag this as a known error pattern",
+                        "Create a strong Correction memory with evidence",
+                        "In next cycle, check before reasoning about this topic",
+                    ],
+                    0.8,
+                ));
             }
         }
 
@@ -335,7 +328,7 @@ impl InitiativeEngine {
                 };
                 goal_memories
                     .entry(key)
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(mem.id.clone());
             }
         }

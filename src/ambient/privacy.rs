@@ -18,20 +18,15 @@ use crate::memory::MemoryManager;
 use crate::memory_graph::MemoryGraph;
 
 /// Privacy level for a memory entry.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum PrivacyLevel {
     /// Visible to the agent, not exported.
     Private,
     /// Visible to the agent, exportable on explicit user request.
+    #[default]
     Protected,
     /// Visible to the agent, included in all exports.
     Public,
-}
-
-impl Default for PrivacyLevel {
-    fn default() -> Self {
-        Self::Protected
-    }
 }
 
 /// A data category for export purposes.
@@ -228,10 +223,10 @@ impl PrivacyManager {
     /// Load privacy preferences from disk.
     pub fn load_prefs(&mut self) {
         let path = self.export_dir.join("preferences.json");
-        if let Ok(contents) = std::fs::read_to_string(&path) {
-            if let Ok(prefs) = serde_json::from_str(&contents) {
-                self.prefs = prefs;
-            }
+        if let Ok(contents) = std::fs::read_to_string(&path)
+            && let Ok(prefs) = serde_json::from_str(&contents)
+        {
+            self.prefs = prefs;
         }
     }
 
@@ -295,7 +290,7 @@ impl PrivacyManager {
     /// Returns count of memories imported.
     pub fn import_memories(
         &self,
-        memory_manager: &MemoryManager,
+        _memory_manager: &MemoryManager,
         export: &DataExport,
     ) -> Result<usize, ImportError> {
         let mut count = 0;
@@ -303,7 +298,7 @@ impl PrivacyManager {
             if !self.prefs.is_exportable(category) {
                 continue;
             }
-            for pmem in memories {
+            for _pmem in memories {
                 // Re-create memory entries via MemoryManager
                 // This is a simplified version — real implementation would
                 // need to map back to MemoryEntry format
@@ -414,7 +409,7 @@ impl PrivacyManager {
             export
                 .memories
                 .entry(portable.category.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(portable);
         }
 
@@ -458,7 +453,7 @@ impl PrivacyManager {
             export
                 .memories
                 .entry(category.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(portable);
         }
     }

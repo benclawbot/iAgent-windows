@@ -90,7 +90,7 @@ fn is_preference(mem: &crate::memory_types::MemoryEntry) -> bool {
 }
 
 /// Collect all high-confidence Preference memories from a graph.
-fn collect_preference_memories<'a>(graph: &'a MemoryGraph) -> Vec<&'a crate::memory_types::MemoryEntry> {
+fn collect_preference_memories(graph: &MemoryGraph) -> Vec<&crate::memory_types::MemoryEntry> {
     graph
         .memories
         .values()
@@ -122,7 +122,7 @@ fn infer_working_hours(graph: &MemoryGraph) -> Option<(u32, u32)> {
             continue;
         }
         // Use updated_at as a proxy for when the user was active on this topic.
-        let hour = mem.updated_at.hour() as u32;
+        let hour = mem.updated_at.hour();
         hour_counts[hour as usize] += 1;
         total += 1;
     }
@@ -270,12 +270,12 @@ fn infer_timezone_heuristic(graph: &MemoryGraph) -> Option<String> {
         .map(|(h, _)| h as u32)?;
 
     // Heuristic: if peak is afternoon UTC (14-18), user likely in Europe/Africa (UTC+1 to UTC+3)
-    if peak_hour >= 13 && peak_hour <= 18 {
+    if (13..=18).contains(&peak_hour) {
         Some("推测: Europe/Africa (UTC+1 to +3)".to_string())
     } else if peak_hour >= 20 || peak_hour <= 4 {
         // Night owl — Americas
         Some("推测: Americas (UTC-5 to UTC-8)".to_string())
-    } else if peak_hour >= 9 && peak_hour <= 14 {
+    } else if (9..=14).contains(&peak_hour) {
         Some("推测: Asia/Pacific (UTC+5 to UTC+9)".to_string())
     } else {
         None
@@ -287,16 +287,10 @@ pub fn build_identity_profile(memory_manager: &MemoryManager) -> UserIdentityPro
     let mut profile = UserIdentityProfile::default();
 
     // Analyze project graph (primary)
-    let project_graph = match memory_manager.load_project_graph() {
-        Ok(g) => Some(g),
-        Err(_) => None,
-    };
+    let project_graph = memory_manager.load_project_graph().ok();
 
     // Analyze global graph (secondary)
-    let global_graph = match memory_manager.load_global_graph() {
-        Ok(g) => Some(g),
-        Err(_) => None,
-    };
+    let global_graph = memory_manager.load_global_graph().ok();
 
     // --- Preferences from project graph ---
     if let Some(ref graph) = project_graph {
@@ -341,7 +335,7 @@ pub fn build_identity_profile(memory_manager: &MemoryManager) -> UserIdentityPro
                     };
                     goal_candidates
                         .entry(goal_text)
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push(mem.id.clone());
                 }
             }
@@ -371,10 +365,10 @@ pub fn build_identity_profile(memory_manager: &MemoryManager) -> UserIdentityPro
         let global_tags = extract_top_tags(&prefs, 3);
         // Merge any new tags not already in project preferences
         for tag in global_tags {
-            if !profile.project_preferences.contains(&tag) {
-                if profile.project_preferences.len() < 12 {
-                    profile.project_preferences.push(tag);
-                }
+            if !profile.project_preferences.contains(&tag)
+                && profile.project_preferences.len() < 12
+            {
+                profile.project_preferences.push(tag);
             }
         }
     }

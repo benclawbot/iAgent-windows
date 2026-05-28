@@ -218,7 +218,7 @@ impl ProactiveBriefingStore {
                 request
                     .projects
                     .iter()
-                    .map(|project| summarize_project(project))
+                    .map(summarize_project)
                     .collect(),
             ));
         }

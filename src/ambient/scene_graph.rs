@@ -255,7 +255,7 @@ impl TemporalTracker {
             let entry = self
                 .window_stats
                 .entry(node.id.clone())
-                .or_insert_with(WindowStats::default);
+                .or_default();
             entry.focus_count += 1;
             entry.last_focus = Some(now);
         }

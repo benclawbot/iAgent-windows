@@ -11,19 +11,14 @@ use serde::{Deserialize, Serialize};
 use crate::memory::MemoryManager;
 
 /// The user's communication style preference.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub enum CommunicationStyle {
     Concise,        // Short, to-the-point responses
     Detailed,       // Thorough explanations with context
     Technical,      // Uses jargon, assumes domain knowledge
+    #[default]
     Conversational, // Casual, friendly tone
     Formal,         // Professional, structured
-}
-
-impl Default for CommunicationStyle {
-    fn default() -> Self {
-        Self::Conversational
-    }
 }
 
 /// A working pattern — when and how the user prefers to work.
@@ -53,17 +48,12 @@ impl Default for WorkingPattern {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Default)]
 pub enum ResponseSpeed {
     Immediate, // Minutes
+    #[default]
     Normal,    // Hours
     Relaxed,   // Days
-}
-
-impl Default for ResponseSpeed {
-    fn default() -> Self {
-        Self::Normal
-    }
 }
 
 /// Domain expertise level per topic area.
@@ -75,17 +65,12 @@ pub struct ExpertiseLevel {
     pub topic: String,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Default)]
 pub enum Expertise {
     Novice,
+    #[default]
     Intermediate,
     Expert,
-}
-
-impl Default for Expertise {
-    fn default() -> Self {
-        Self::Intermediate
-    }
 }
 
 /// A specific preference inferred from behavior.
@@ -239,14 +224,13 @@ impl UserIdentity {
                 .iter()
                 .enumerate()
                 {
-                    if lower.contains(day_name) {
-                        if !self
+                    if lower.contains(day_name)
+                        && !self
                             .working_pattern
                             .deep_work_days
                             .contains(&(day_idx as u32))
-                        {
-                            self.working_pattern.deep_work_days.push(day_idx as u32);
-                        }
+                    {
+                        self.working_pattern.deep_work_days.push(day_idx as u32);
                     }
                 }
             }
@@ -257,7 +241,7 @@ impl UserIdentity {
         // Simple pattern: look for numbers followed by am/pm or just hour numbers
         // e.g., "9am", "9:00", "9"
         let re = regex::Regex::new(r"(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?").ok()?;
-        for cap in re.captures_iter(text) {
+        if let Some(cap) = re.captures_iter(text).next() {
             let hour: u32 = cap.get(1).and_then(|m| m.as_str().parse().ok())?;
             let _minute: u32 = cap
                 .get(2)

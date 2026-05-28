@@ -81,195 +81,219 @@ impl RecipeCatalog {
         Self {
             recipes: vec![
                 recipe(
-                    "folder_summary",
-                    "Summarize folder",
-                    "Summarize a local folder, identify important files, and prepare follow-up actions.",
-                    &["files", "summary", "research"],
-                    Some("Ctrl+Alt+F"),
-                    "confirm_before_read",
-                    &["personal", "read", "grep", "todo"],
-                    vec![input(
-                        "folder",
-                        "Folder",
-                        "path",
-                        true,
-                        "Folder path to summarize",
-                    )],
-                    vec![
-                        step(
-                            "personal",
-                            "preview_redaction",
-                            "Check folder goal text for sensitive context",
-                        ),
-                        step("grep", "search", "Find relevant documents and notes"),
-                        step("read", "read", "Read selected files"),
-                        step("todo", "write", "Create follow-up tasks from the summary"),
-                    ],
+                    RecipeMetadata {
+                        id: "folder_summary",
+                        title: "Summarize folder",
+                        description: "Summarize a local folder, identify important files, and prepare follow-up actions.",
+                        tags: &["files", "summary", "research"],
+                        hotkey: Some("Ctrl+Alt+F"),
+                        approval_policy: "confirm_before_read",
+                        required_tools: &["personal", "read", "grep", "todo"],
+                    },
+                    RecipeArrays {
+                        inputs: vec![input(
+                            "folder",
+                            "Folder",
+                            "path",
+                            true,
+                            "Folder path to summarize",
+                        )],
+                        steps: vec![
+                            step(
+                                "personal",
+                                "preview_redaction",
+                                "Check folder goal text for sensitive context",
+                            ),
+                            step("grep", "search", "Find relevant documents and notes"),
+                            step("read", "read", "Read selected files"),
+                            step("todo", "write", "Create follow-up tasks from the summary"),
+                        ],
+                    },
                 ),
                 recipe(
-                    "office_document",
-                    "Create Office document",
-                    "Create a Word, Excel, or PowerPoint artifact from a natural-language goal, then open the saved file.",
-                    &["office", "document", "deliverable"],
-                    Some("Ctrl+Alt+O"),
-                    "confirm_before_write",
-                    &["personal", "word", "open"],
-                    vec![
-                        input(
-                            "goal",
-                            "Goal",
+                    RecipeMetadata {
+                        id: "office_document",
+                        title: "Create Office document",
+                        description: "Create a Word, Excel, or PowerPoint artifact from a natural-language goal, then open the saved file.",
+                        tags: &["office", "document", "deliverable"],
+                        hotkey: Some("Ctrl+Alt+O"),
+                        approval_policy: "confirm_before_write",
+                        required_tools: &["personal", "word", "open"],
+                    },
+                    RecipeArrays {
+                        inputs: vec![
+                            input(
+                                "goal",
+                                "Goal",
+                                "text",
+                                true,
+                                "Document goal or source notes",
+                            ),
+                            input(
+                                "document_type",
+                                "Document type",
+                                "choice",
+                                true,
+                                "word, excel, or powerpoint",
+                            ),
+                        ],
+                        steps: vec![
+                            step(
+                                "personal",
+                                "preview_redaction",
+                                "Preview sensitive context before creating the artifact",
+                            ),
+                            step("word", "create", "Create the requested Office artifact"),
+                            step("open", "open", "Open the saved artifact for inspection"),
+                            step("flight_recorder", "view", "Capture the run evidence packet"),
+                        ],
+                    },
+                ),
+                recipe(
+                    RecipeMetadata {
+                        id: "web_form_fill",
+                        title: "Fill web form",
+                        description: "Open a web form, inspect its fields, fill from structured data, and stop for approval before submit.",
+                        tags: &["browser", "forms", "automation"],
+                        hotkey: Some("Ctrl+Alt+B"),
+                        approval_policy: "confirm_before_external_submit",
+                        required_tools: &["personal", "browser", "flight_recorder"],
+                    },
+                    RecipeArrays {
+                        inputs: vec![
+                            input("url", "URL", "url", true, "Form URL"),
+                            input(
+                                "data_source",
+                                "Data source",
+                                "text",
+                                true,
+                                "Structured data to fill",
+                            ),
+                        ],
+                        steps: vec![
+                            step(
+                                "personal",
+                                "preview_redaction",
+                                "Preview supplied form data for sensitive fields",
+                            ),
+                            step("browser", "navigate", "Open the form"),
+                            step("browser", "inspect", "Extract fields and labels"),
+                            step("browser", "fill", "Fill fields without submitting"),
+                            step(
+                                "flight_recorder",
+                                "view",
+                                "Summarize pending approval and evidence",
+                            ),
+                        ],
+                    },
+                ),
+                recipe(
+                    RecipeMetadata {
+                        id: "meeting_prep",
+                        title: "Prepare meeting brief",
+                        description: "Collect relevant project context and create a concise meeting brief with questions and decisions needed.",
+                        tags: &["meeting", "brief", "calendar"],
+                        hotkey: Some("Ctrl+Alt+M"),
+                        approval_policy: "confirm_before_write",
+                        required_tools: &["personal", "memory", "todo"],
+                    },
+                    RecipeArrays {
+                        inputs: vec![input(
+                            "topic",
+                            "Topic",
                             "text",
                             true,
-                            "Document goal or source notes",
-                        ),
-                        input(
-                            "document_type",
-                            "Document type",
-                            "choice",
-                            true,
-                            "word, excel, or powerpoint",
-                        ),
-                    ],
-                    vec![
-                        step(
-                            "personal",
-                            "preview_redaction",
-                            "Preview sensitive context before creating the artifact",
-                        ),
-                        step("word", "create", "Create the requested Office artifact"),
-                        step("open", "open", "Open the saved artifact for inspection"),
-                        step("flight_recorder", "view", "Capture the run evidence packet"),
-                    ],
+                            "Meeting topic or calendar title",
+                        )],
+                        steps: vec![
+                            step(
+                                "personal",
+                                "search_timeline",
+                                "Find recent related desktop context",
+                            ),
+                            step("memory", "search", "Recall explicit relevant facts"),
+                            step(
+                                "todo",
+                                "write",
+                                "Draft meeting questions and action checklist",
+                            ),
+                        ],
+                    },
                 ),
                 recipe(
-                    "web_form_fill",
-                    "Fill web form",
-                    "Open a web form, inspect its fields, fill from structured data, and stop for approval before submit.",
-                    &["browser", "forms", "automation"],
-                    Some("Ctrl+Alt+B"),
-                    "confirm_before_external_submit",
-                    &["personal", "browser", "flight_recorder"],
-                    vec![
-                        input("url", "URL", "url", true, "Form URL"),
-                        input(
-                            "data_source",
-                            "Data source",
+                    RecipeMetadata {
+                        id: "project_resume",
+                        title: "Resume project",
+                        description: "Reconstruct project state from workspace, timeline, tasks, and recent actions.",
+                        tags: &["project", "resume", "timeline"],
+                        hotkey: Some("Ctrl+Alt+R"),
+                        approval_policy: "auto_read_only",
+                        required_tools: &["personal", "flight_recorder", "todo"],
+                    },
+                    RecipeArrays {
+                        inputs: vec![input(
+                            "project",
+                            "Project",
                             "text",
                             true,
-                            "Structured data to fill",
-                        ),
-                    ],
-                    vec![
-                        step(
-                            "personal",
-                            "preview_redaction",
-                            "Preview supplied form data for sensitive fields",
-                        ),
-                        step("browser", "navigate", "Open the form"),
-                        step("browser", "inspect", "Extract fields and labels"),
-                        step("browser", "fill", "Fill fields without submitting"),
-                        step(
-                            "flight_recorder",
-                            "view",
-                            "Summarize pending approval and evidence",
-                        ),
-                    ],
+                            "Project name or workspace",
+                        )],
+                        steps: vec![
+                            step(
+                                "personal",
+                                "list_project_workspaces",
+                                "Find matching project workspace",
+                            ),
+                            step(
+                                "personal",
+                                "search_timeline",
+                                "Find recent project activity",
+                            ),
+                            step(
+                                "flight_recorder",
+                                "view",
+                                "Review recent actions and approvals",
+                            ),
+                            step("todo", "read", "Read open tasks"),
+                        ],
+                    },
                 ),
                 recipe(
-                    "meeting_prep",
-                    "Prepare meeting brief",
-                    "Collect relevant project context and create a concise meeting brief with questions and decisions needed.",
-                    &["meeting", "brief", "calendar"],
-                    Some("Ctrl+Alt+M"),
-                    "confirm_before_write",
-                    &["personal", "memory", "todo"],
-                    vec![input(
-                        "topic",
-                        "Topic",
-                        "text",
-                        true,
-                        "Meeting topic or calendar title",
-                    )],
-                    vec![
-                        step(
-                            "personal",
-                            "search_timeline",
-                            "Find recent related desktop context",
-                        ),
-                        step("memory", "search", "Recall explicit relevant facts"),
-                        step(
-                            "todo",
-                            "write",
-                            "Draft meeting questions and action checklist",
-                        ),
-                    ],
-                ),
-                recipe(
-                    "project_resume",
-                    "Resume project",
-                    "Reconstruct project state from workspace, timeline, tasks, and recent actions.",
-                    &["project", "resume", "timeline"],
-                    Some("Ctrl+Alt+R"),
-                    "auto_read_only",
-                    &["personal", "flight_recorder", "todo"],
-                    vec![input(
-                        "project",
-                        "Project",
-                        "text",
-                        true,
-                        "Project name or workspace",
-                    )],
-                    vec![
-                        step(
-                            "personal",
-                            "list_project_workspaces",
-                            "Find matching project workspace",
-                        ),
-                        step(
-                            "personal",
-                            "search_timeline",
-                            "Find recent project activity",
-                        ),
-                        step(
-                            "flight_recorder",
-                            "view",
-                            "Review recent actions and approvals",
-                        ),
-                        step("todo", "read", "Read open tasks"),
-                    ],
-                ),
-                recipe(
-                    "weekly_report",
-                    "Create weekly report",
-                    "Build a weekly report from recent work, completed tasks, approvals, and follow-up items.",
-                    &["reporting", "summary", "office"],
-                    Some("Ctrl+Alt+W"),
-                    "confirm_before_write",
-                    &["personal", "flight_recorder", "todo", "word"],
-                    vec![
-                        input("week", "Week", "text", true, "Week or date range"),
-                        input(
-                            "audience",
-                            "Audience",
-                            "text",
-                            false,
-                            "Who will read the report",
-                        ),
-                    ],
-                    vec![
-                        step(
-                            "personal",
-                            "search_timeline",
-                            "Collect recent desktop activity",
-                        ),
-                        step(
-                            "flight_recorder",
-                            "view",
-                            "Collect actions, approvals, and evidence",
-                        ),
-                        step("todo", "read", "Collect completed and pending tasks"),
-                        step("word", "create", "Create the weekly report document"),
-                    ],
+                    RecipeMetadata {
+                        id: "weekly_report",
+                        title: "Create weekly report",
+                        description: "Build a weekly report from recent work, completed tasks, approvals, and follow-up items.",
+                        tags: &["reporting", "summary", "office"],
+                        hotkey: Some("Ctrl+Alt+W"),
+                        approval_policy: "confirm_before_write",
+                        required_tools: &["personal", "flight_recorder", "todo", "word"],
+                    },
+                    RecipeArrays {
+                        inputs: vec![
+                            input("week", "Week", "text", true, "Week or date range"),
+                            input(
+                                "audience",
+                                "Audience",
+                                "text",
+                                false,
+                                "Who will read the report",
+                            ),
+                        ],
+                        steps: vec![
+                            step(
+                                "personal",
+                                "search_timeline",
+                                "Collect recent desktop activity",
+                            ),
+                            step(
+                                "flight_recorder",
+                                "view",
+                                "Collect actions, approvals, and evidence",
+                            ),
+                            step("todo", "read", "Collect completed and pending tasks"),
+                            step("word", "create", "Create the weekly report document"),
+                        ],
+                    },
                 ),
             ],
         }
@@ -365,30 +389,35 @@ impl RecipeCatalog {
     }
 }
 
-fn recipe(
-    id: &str,
-    title: &str,
-    description: &str,
-    tags: &[&str],
-    hotkey: Option<&str>,
-    approval_policy: &str,
-    required_tools: &[&str],
+struct RecipeMetadata<'a> {
+    id: &'a str,
+    title: &'a str,
+    description: &'a str,
+    tags: &'a [&'a str],
+    hotkey: Option<&'a str>,
+    approval_policy: &'a str,
+    required_tools: &'a [&'a str],
+}
+
+struct RecipeArrays {
     inputs: Vec<RecipeInputSpec>,
     steps: Vec<RecipeStepTemplate>,
-) -> Recipe {
+}
+
+fn recipe(meta: RecipeMetadata<'_>, arrays: RecipeArrays) -> Recipe {
     Recipe {
-        id: id.to_string(),
-        title: title.to_string(),
-        description: description.to_string(),
-        tags: tags.iter().map(|value| value.to_string()).collect(),
-        hotkey: hotkey.map(ToOwned::to_owned),
-        approval_policy: approval_policy.to_string(),
-        required_tools: required_tools
+        id: meta.id.to_string(),
+        title: meta.title.to_string(),
+        description: meta.description.to_string(),
+        tags: meta.tags.iter().map(|value| value.to_string()).collect(),
+        hotkey: meta.hotkey.map(ToOwned::to_owned),
+        approval_policy: meta.approval_policy.to_string(),
+        required_tools: meta.required_tools
             .iter()
             .map(|value| value.to_string())
             .collect(),
-        inputs,
-        steps,
+        inputs: arrays.inputs,
+        steps: arrays.steps,
     }
 }
 

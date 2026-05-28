@@ -58,8 +58,9 @@ pub struct RegisteredTool {
     pub last_health: Option<HealthStatus>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum ToolConnection {
+    #[default]
     Disconnected,
     Connected {
         since: chrono::DateTime<chrono::Utc>,
@@ -67,12 +68,6 @@ pub enum ToolConnection {
     Error {
         message: String,
     },
-}
-
-impl Default for ToolConnection {
-    fn default() -> Self {
-        Self::Disconnected
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -447,7 +442,7 @@ impl ToolBus {
         engine: Option<&crate::ambient::initiative::InitiativeEngine>,
         memory_manager: &crate::memory::MemoryManager,
     ) -> Result<serde_json::Value, ToolError> {
-        let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(5) as usize;
+        let _limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(5) as usize;
         let engine = engine.ok_or_else(|| {
             ToolError::ExecutionFailed("initiative engine not available".to_string())
         })?;
@@ -455,7 +450,7 @@ impl ToolBus {
         let candidates = engine.analyze(memory_manager);
         let top: Vec<serde_json::Value> = candidates
             .into_iter()
-            .take(limit)
+            .take(_limit)
             .map(|c| {
                 serde_json::json!({
                     "reason": c.reason,
@@ -709,7 +704,7 @@ impl ToolHandler for MemorySearchHandler {
             .get("query")
             .and_then(|v| v.as_str())
             .ok_or_else(|| ToolError::InvalidArgs("missing 'query'".to_string()))?;
-        let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(10) as usize;
+        let _limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(10) as usize;
 
         let results = self
             .memory_manager

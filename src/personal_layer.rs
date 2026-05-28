@@ -1086,7 +1086,7 @@ impl PersonalStore {
         let log_dir = self
             .path
             .parent()
-            .unwrap_or_else(|| self.path.as_path())
+            .unwrap_or(self.path.as_path())
             .join("jobs");
         fs::create_dir_all(&log_dir)?;
         let log_path = log_dir.join(format!("{}.json", job.id));
