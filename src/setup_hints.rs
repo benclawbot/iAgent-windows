@@ -83,7 +83,7 @@ impl StartupHints {
 
 impl SetupHintsState {
     fn path() -> Result<PathBuf> {
-        Ok(storage::jcode_dir()?.join("setup_hints.json"))
+        Ok(storage::iagent_dir()?.join("setup_hints.json"))
     }
 
     pub fn load() -> Self {
@@ -122,7 +122,7 @@ fn is_ghostty_installed() -> bool {
 
 #[cfg(target_os = "macos")]
 fn mac_hotkey_support_dir() -> Result<PathBuf> {
-    Ok(storage::jcode_dir()?.join("hotkey"))
+    Ok(storage::iagent_dir()?.join("hotkey"))
 }
 
 #[cfg(target_os = "macos")]

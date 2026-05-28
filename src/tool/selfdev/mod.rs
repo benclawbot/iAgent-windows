@@ -146,7 +146,7 @@ struct BuildRequest {
 
 impl BuildRequest {
     fn requests_dir() -> Result<PathBuf> {
-        let dir = storage::jcode_dir()?.join("selfdev-build-requests");
+        let dir = storage::iagent_dir()?.join("selfdev-build-requests");
         storage::ensure_dir(&dir)?;
         Ok(dir)
     }
@@ -516,7 +516,7 @@ impl SelfDevTool {
     fn resolve_repo_dir(working_dir: Option<&std::path::Path>) -> Option<std::path::PathBuf> {
         if let Some(dir) = working_dir {
             for ancestor in dir.ancestors() {
-                if build::is_jcode_repo(ancestor) {
+                if build::is_iagent_repo(ancestor) {
                     return Some(ancestor.to_path_buf());
                 }
             }
@@ -537,7 +537,7 @@ impl SelfDevTool {
     }
 
     fn build_lock_path(worktree_scope: &str) -> Result<PathBuf> {
-        let dir = storage::jcode_dir()?.join("selfdev-build-locks");
+        let dir = storage::iagent_dir()?.join("selfdev-build-locks");
         storage::ensure_dir(&dir)?;
         Ok(dir.join(format!("{}.lock", worktree_scope)))
     }

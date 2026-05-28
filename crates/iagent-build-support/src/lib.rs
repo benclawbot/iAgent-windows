@@ -6,7 +6,7 @@ mod storage_helpers;
 pub use paths::{
     SELFDEV_CARGO_PROFILE, binary_name, binary_stem, client_update_candidate,
     current_binary_build_time_string, current_binary_built_at, find_dev_binary,
-    find_repo_in_ancestors, get_repo_dir, is_iagent_repo, is_jcode_repo, launcher_binary_path, launcher_dir,
+    find_repo_in_ancestors, get_repo_dir, is_iagent_repo, launcher_binary_path, launcher_dir,
     preferred_reload_candidate, release_binary_path, run_selfdev_build, selfdev_binary_path,
     selfdev_build_command, selfdev_build_command_for_target, shared_server_update_candidate,
     update_launcher_symlink_to_current, update_launcher_symlink_to_stable,
@@ -255,7 +255,7 @@ pub fn write_current_dev_binary_source_metadata(
 fn read_binary_version_report(binary: &Path) -> Result<BinaryVersionReport> {
     let output = Command::new(binary)
         .args(["version", "--json"])
-        .env("JCODE_NON_INTERACTIVE", "1")
+        .env("IAGENT_NON_INTERACTIVE", "1")
         .output()?;
 
     if !output.status.success() {
@@ -559,12 +559,12 @@ pub fn smoke_test_server_binary(binary: &Path) -> Result<()> {
         .arg("serve")
         .arg("--socket")
         .arg(&socket_path)
-        .env("JCODE_NON_INTERACTIVE", "1")
-        .env("JCODE_RUNTIME_DIR", &runtime_dir)
-        .env("JCODE_GATEWAY_ENABLED", "0")
-        .env("JCODE_TEMP_SERVER", "1")
-        .env("JCODE_SERVER_OWNER_PID", std::process::id().to_string())
-        .env("JCODE_TEMP_SERVER_IDLE_SECS", "300")
+        .env("IAGENT_NON_INTERACTIVE", "1")
+        .env("IAGENT_RUNTIME_DIR", &runtime_dir)
+        .env("IAGENT_GATEWAY_ENABLED", "0")
+        .env("IAGENT_TEMP_SERVER", "1")
+        .env("IAGENT_SERVER_OWNER_PID", std::process::id().to_string())
+        .env("IAGENT_TEMP_SERVER_IDLE_SECS", "300")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::from(stderr))

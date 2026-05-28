@@ -65,7 +65,7 @@ fn load_testers_returns_empty_for_missing_or_empty_manifest() {
             .is_empty()
     );
 
-    let manifest_path = crate::storage::jcode_dir()
+    let manifest_path = crate::storage::iagent_dir()
         .expect("jcode dir")
         .join("testers.json");
     std::fs::write(&manifest_path, "").expect("write empty manifest");

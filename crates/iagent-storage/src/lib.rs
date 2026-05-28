@@ -10,9 +10,9 @@ use std::path::{Path, PathBuf};
 /// - macOS: `$TMPDIR` (per-user, e.g. `/var/folders/xx/.../T/`)
 /// - Fallback: `std::env::temp_dir()`
 ///
-/// Can be overridden with `$JCODE_RUNTIME_DIR`.
+/// Can be overridden with `$IAGENT_RUNTIME_DIR`.
 pub fn runtime_dir() -> PathBuf {
-    if let Ok(dir) = std::env::var("JCODE_RUNTIME_DIR") {
+    if let Ok(dir) = std::env::var("IAGENT_RUNTIME_DIR") {
         return PathBuf::from(dir);
     }
     if let Ok(dir) = std::env::var("XDG_RUNTIME_DIR") {
@@ -31,7 +31,7 @@ pub fn runtime_dir() -> PathBuf {
 }
 
 fn fallback_runtime_dir() -> PathBuf {
-    std::env::temp_dir().join(format!("jcode-{}", runtime_user_discriminator()))
+    std::env::temp_dir().join(format!("iagent-{}", runtime_user_discriminator()))
 }
 
 #[cfg(unix)]
@@ -65,7 +65,7 @@ fn ensure_private_runtime_dir(path: &Path) {
 }
 
 pub fn iagent_dir() -> Result<PathBuf> {
-    if let Ok(path) = std::env::var("IAGENT_HOME").or_else(|_| std::env::var("JCODE_HOME")) {
+    if let Ok(path) = std::env::var("IAGENT_HOME") {
         return Ok(PathBuf::from(path));
     }
 
@@ -73,31 +73,28 @@ pub fn iagent_dir() -> Result<PathBuf> {
     Ok(home.join(".iagent"))
 }
 
-/// Backward-compat alias — prefers IAGENT_HOME, falls back to JCODE_HOME
-pub fn jcode_dir() -> Result<PathBuf> { iagent_dir() }
-
 pub fn logs_dir() -> Result<PathBuf> {
     Ok(iagent_dir()?.join("logs"))
 }
 
-/// Resolve jcode's app-owned config directory.
+/// Resolve iagent's app-owned config directory.
 ///
-/// Default location is the platform config dir + `jcode` (for example
-/// `~/.config/jcode` on Linux). When `JCODE_HOME` is set, sandbox this under
-/// `$JCODE_HOME/config/jcode` so self-dev/tests do not leak into the user's
+/// Default location is the platform config dir + `iagent` (for example
+/// `~/.config/iagent` on Linux). When `IAGENT_HOME` is set, sandbox this under
+/// `$IAGENT_HOME/config/iagent` so self-dev/tests do not leak into the user's
 /// real config directory.
 pub fn app_config_dir() -> Result<PathBuf> {
-    if let Ok(path) = std::env::var("JCODE_HOME") {
-        return Ok(PathBuf::from(path).join("config").join("jcode"));
+    if let Ok(path) = std::env::var("IAGENT_HOME") {
+        return Ok(PathBuf::from(path).join("config").join("iagent"));
     }
 
     let config_dir =
         dirs::config_dir().ok_or_else(|| anyhow::anyhow!("No config directory found"))?;
-    Ok(config_dir.join("jcode"))
+    Ok(config_dir.join("iagent"))
 }
 
 /// Resolve a path under the user's home directory, but sandbox it under
-/// `$JCODE_HOME/external/` when `JCODE_HOME` is set.
+/// `$IAGENT_HOME/external/` when `IAGENT_HOME` is set.
 ///
 /// This keeps external provider auth files isolated during tests and sandboxed
 /// runs without changing default on-disk locations for normal users.
@@ -110,7 +107,7 @@ pub fn user_home_path(relative: impl AsRef<Path>) -> Result<PathBuf> {
         );
     }
 
-    if let Ok(path) = std::env::var("JCODE_HOME") {
+    if let Ok(path) = std::env::var("IAGENT_HOME") {
         return Ok(PathBuf::from(path).join("external").join(relative));
     }
 
@@ -124,7 +121,7 @@ pub fn user_home_path(relative: impl AsRef<Path>) -> Result<PathBuf> {
 /// filesystems, but it narrows exposure on typical Unix systems.
 pub fn harden_user_config_permissions() {
     if let Some(config_dir) = dirs::config_dir() {
-        let iagent_config_dir = config_dir.join("jcode");
+        let iagent_config_dir = config_dir.join("iagent");
         if iagent_config_dir.exists() {
             let _ = iagent_core::fs::set_directory_permissions_owner_only(&iagent_config_dir);
         }

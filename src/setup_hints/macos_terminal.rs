@@ -78,7 +78,7 @@ struct MacTerminalPreference {
 }
 
 fn mac_terminal_pref_path() -> Result<PathBuf> {
-    Ok(storage::jcode_dir()?.join("preferred_terminal.json"))
+    Ok(storage::iagent_dir()?.join("preferred_terminal.json"))
 }
 
 fn load_preferred_macos_terminal() -> Option<MacTerminalKind> {

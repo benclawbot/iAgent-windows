@@ -37,7 +37,7 @@ pub(super) async fn execute_tester_command(command: &str) -> Result<String> {
 }
 
 fn load_testers() -> Result<Vec<serde_json::Value>> {
-    let path = crate::storage::jcode_dir()?.join("testers.json");
+    let path = crate::storage::iagent_dir()?.join("testers.json");
     if path.exists() {
         let content = std::fs::read_to_string(&path)?;
         if content.trim().is_empty() {
@@ -50,7 +50,7 @@ fn load_testers() -> Result<Vec<serde_json::Value>> {
 }
 
 fn save_testers(testers: &[serde_json::Value]) -> Result<()> {
-    let path = crate::storage::jcode_dir()?.join("testers.json");
+    let path = crate::storage::iagent_dir()?.join("testers.json");
     std::fs::write(&path, serde_json::to_string_pretty(testers)?)?;
     Ok(())
 }

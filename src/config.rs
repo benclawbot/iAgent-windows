@@ -1,6 +1,6 @@
-//! Configuration file support for jcode
+//! Configuration file support for iagent
 //!
-//! Config is loaded from `~/.jcode/config.toml` (or `$JCODE_HOME/config.toml`)
+//! Config is loaded from `~/.iagent/config.toml` (or `$IAGENT_HOME/config.toml`)
 //! Environment variables override config file settings.
 
 pub use iagent_config_types::{

@@ -10,7 +10,7 @@ use std::collections::HashSet;
 /// Recover crashed sessions from the most recent crash window (text-only).
 /// Returns new recovery session IDs (most recent first).
 pub fn recover_crashed_sessions() -> Result<Vec<String>> {
-    let sessions_dir = storage::jcode_dir()?.join("sessions");
+    let sessions_dir = storage::iagent_dir()?.join("sessions");
     if !sessions_dir.exists() {
         return Ok(Vec::new());
     }
@@ -130,7 +130,7 @@ pub struct CrashedSessionsInfo {
 /// Returns info about crashed sessions within the crash window (60 seconds),
 /// excluding any that have already been recovered.
 pub fn detect_crashed_sessions() -> Result<Option<CrashedSessionsInfo>> {
-    let sessions_dir = storage::jcode_dir()?.join("sessions");
+    let sessions_dir = storage::iagent_dir()?.join("sessions");
     if !sessions_dir.exists() {
         return Ok(None);
     }
@@ -319,7 +319,7 @@ fn find_crashed_via_pid_files() -> Option<Vec<(String, String)>> {
 /// Legacy fallback: scan the full sessions directory.
 /// Used only on the first launch after upgrading to the active_pids system.
 fn find_crashed_legacy_scan() -> Vec<(String, String)> {
-    let sessions_dir = match storage::jcode_dir() {
+    let sessions_dir = match storage::iagent_dir() {
         Ok(d) => d.join("sessions"),
         Err(_) => return Vec::new(),
     };
@@ -484,7 +484,7 @@ pub fn find_session_by_name_or_id(name_or_id: &str) -> Result<String> {
     }
 
     // Otherwise, search for a session with matching short name or title.
-    let sessions_dir = storage::jcode_dir()?.join("sessions");
+    let sessions_dir = storage::iagent_dir()?.join("sessions");
     if !sessions_dir.exists() {
         anyhow::bail!("No sessions found");
     }

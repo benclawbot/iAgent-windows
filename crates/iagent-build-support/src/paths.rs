@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::SystemTime;
 
-/// Get the jcode repository directory
+/// Get the iagent repository directory
 pub fn get_repo_dir() -> Option<PathBuf> {
     // First try: compile-time directory
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
@@ -225,26 +225,26 @@ fn non_empty_env_path(name: &str) -> Option<PathBuf> {
 
 /// Directory for the single launcher path users execute from PATH.
 ///
-/// Defaults to `~/.local/bin` on Unix, `%LOCALAPPDATA%\jcode\bin` on Windows.
-/// Overridable with `JCODE_INSTALL_DIR`.
+/// Defaults to `~/.local/bin` on Unix, `%LOCALAPPDATA%\iagent\bin` on Windows.
+/// Overridable with `IAGENT_INSTALL_DIR`.
 pub fn launcher_dir() -> Result<PathBuf> {
-    if let Some(custom) = non_empty_env_path("JCODE_INSTALL_DIR") {
+    if let Some(custom) = non_empty_env_path("IAGENT_INSTALL_DIR") {
         return Ok(custom);
     }
 
-    if let Some(sandbox_home) = non_empty_env_path("JCODE_HOME") {
+    if let Some(sandbox_home) = non_empty_env_path("IAGENT_HOME") {
         return Ok(sandbox_home.join("bin"));
     }
 
     #[cfg(windows)]
     {
         if let Ok(local) = std::env::var("LOCALAPPDATA") {
-            return Ok(PathBuf::from(local).join("jcode").join("bin"));
+            return Ok(PathBuf::from(local).join("iagent").join("bin"));
         }
         Ok(home_dir()?
             .join("AppData")
             .join("Local")
-            .join("jcode")
+            .join("iagent")
             .join("bin"))
     }
     #[cfg(not(windows))]
@@ -384,9 +384,8 @@ pub fn preferred_reload_candidate(is_selfdev_session: bool) -> Option<(PathBuf, 
     }
 }
 
-/// Check if a directory is the iagent repository (or jcode, for backward compat)
+/// Check if a directory is the iagent repository
 pub fn is_iagent_repo(dir: &Path) -> bool {
-    // Check for Cargo.toml with name = "iagent" (or "jcode" for legacy repos)
     let cargo_toml = dir.join("Cargo.toml");
     if !cargo_toml.exists() {
         return false;
@@ -399,16 +398,13 @@ pub fn is_iagent_repo(dir: &Path) -> bool {
 
     // Read Cargo.toml and check package name
     if let Ok(content) = std::fs::read_to_string(&cargo_toml)
-        && (content.contains("name = \"iagent\"") || content.contains("name = \"jcode\""))
+        && content.contains("name = \"iagent\"")
     {
         return true;
     }
 
     false
 }
-
-/// Backward-compat alias
-pub fn is_jcode_repo(dir: &Path) -> bool { is_iagent_repo(dir) }
 
 #[cfg(test)]
 mod tests {
@@ -424,7 +420,7 @@ mod tests {
         }
         std::fs::write(
             temp.path().join("Cargo.toml"),
-            "[package]\nname = \"jcode\"\nversion = \"0.1.0\"\n",
+            "[package]\nname = \"iagent\"\nversion = \"0.1.0\"\n",
         )
         .expect("Cargo.toml");
         temp
@@ -433,7 +429,7 @@ mod tests {
     #[test]
     fn find_repo_in_ancestors_finds_workspace_from_crate_dir() {
         let repo = repo_fixture(false);
-        let crate_dir = repo.path().join("crates").join("jcode-build-support");
+        let crate_dir = repo.path().join("crates").join("iagent-build-support");
         std::fs::create_dir_all(&crate_dir).expect("crate dir");
 
         assert_eq!(

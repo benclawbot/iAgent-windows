@@ -438,7 +438,7 @@ fn external_codex_sessions_are_searchable_without_jcode_session_dir() {
         options.context_after = 1;
         let report = run_report(home, "external-codex-needle", &options);
 
-        assert_eq!(report.scanned_jcode_sessions, 0);
+        assert_eq!(report.scanned_iagent_sessions, 0);
         assert!(report.scanned_external_sessions >= 1);
         assert_eq!(report.external_sources, vec!["codex"]);
         assert_eq!(report.results.len(), 1);

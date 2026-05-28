@@ -1,7 +1,7 @@
 use super::*;
 
 pub(super) fn active_pids_dir() -> Option<std::path::PathBuf> {
-    storage::jcode_dir().ok().map(|d| d.join("active_pids"))
+    storage::iagent_dir().ok().map(|d| d.join("active_pids"))
 }
 
 pub(super) fn register_active_pid(session_id: &str, pid: u32) {

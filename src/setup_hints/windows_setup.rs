@@ -81,7 +81,7 @@ fn create_hotkey_shortcut(use_alacritty: bool) -> Result<()> {
         )
     };
 
-    let hotkey_dir = storage::jcode_dir()?.join("hotkey");
+    let hotkey_dir = storage::iagent_dir()?.join("hotkey");
     std::fs::create_dir_all(&hotkey_dir)?;
 
     let _ = std::process::Command::new("powershell")

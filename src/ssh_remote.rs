@@ -22,11 +22,11 @@ fn default_workspace() -> String {
 }
 
 pub fn config_path() -> Result<PathBuf> {
-    Ok(crate::storage::jcode_dir()?.join("ssh_remotes.json"))
+    Ok(crate::storage::iagent_dir()?.join("ssh_remotes.json"))
 }
 
 pub fn control_dir() -> Result<PathBuf> {
-    Ok(crate::storage::jcode_dir()?.join("ssh-control"))
+    Ok(crate::storage::iagent_dir()?.join("ssh-control"))
 }
 
 pub fn control_socket_path(name: &str) -> Result<PathBuf> {

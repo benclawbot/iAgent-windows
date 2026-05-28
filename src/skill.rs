@@ -81,12 +81,12 @@ impl SkillRegistry {
     /// Import skills from Claude Code and Codex CLI on first run.
     /// Only runs if ~/.jcode/skills/ doesn't exist yet.
     fn import_from_external() {
-        let jcode_skills = match crate::storage::jcode_dir() {
+        let iagent_skills = match crate::storage::iagent_dir() {
             Ok(dir) => dir.join("skills"),
             Err(_) => return,
         };
 
-        if jcode_skills.exists() {
+        if iagent_skills.exists() {
             return; // Not first run
         }
 
@@ -97,10 +97,10 @@ impl SkillRegistry {
         if let Ok(claude_skills) = crate::storage::user_home_path(".claude/skills")
             && claude_skills.is_dir()
         {
-            let count = Self::copy_skills_dir(&claude_skills, &jcode_skills);
+            let count = Self::copy_skills_dir(&claude_skills, &iagent_skills);
             if count > 0 {
                 sources.push(format!("{} from Claude Code", count));
-                copied.extend(Self::list_skill_names(&jcode_skills));
+                copied.extend(Self::list_skill_names(&iagent_skills));
             }
         }
 
@@ -108,10 +108,10 @@ impl SkillRegistry {
         if let Ok(codex_skills) = crate::storage::user_home_path(".codex/skills")
             && codex_skills.is_dir()
         {
-            let count = Self::copy_skills_dir(&codex_skills, &jcode_skills);
+            let count = Self::copy_skills_dir(&codex_skills, &iagent_skills);
             if count > 0 {
                 sources.push(format!("{} from Codex CLI", count));
-                copied.extend(Self::list_skill_names(&jcode_skills));
+                copied.extend(Self::list_skill_names(&iagent_skills));
             }
         }
 
@@ -220,10 +220,10 @@ impl SkillRegistry {
         let mut registry = Self::default();
 
         // Load from ~/.jcode/skills/ (jcode's own global skills)
-        if let Ok(jcode_dir) = crate::storage::jcode_dir() {
-            let jcode_skills = jcode_dir.join("skills");
-            if jcode_skills.exists() {
-                registry.load_from_dir(&jcode_skills)?;
+        if let Ok(iagent_dir) = crate::storage::iagent_dir() {
+            let iagent_skills = iagent_dir.join("skills");
+            if iagent_skills.exists() {
+                registry.load_from_dir(&iagent_skills)?;
             }
         }
 
@@ -378,10 +378,10 @@ impl SkillRegistry {
         let mut count = 0;
 
         // Load from ~/.jcode/skills/ (jcode's own global skills)
-        if let Ok(jcode_dir) = crate::storage::jcode_dir() {
-            let jcode_skills = jcode_dir.join("skills");
-            if jcode_skills.exists() {
-                count += self.load_from_dir_count(&jcode_skills)?;
+        if let Ok(iagent_dir) = crate::storage::iagent_dir() {
+            let iagent_skills = iagent_dir.join("skills");
+            if iagent_skills.exists() {
+                count += self.load_from_dir_count(&iagent_skills)?;
             }
         }
 
@@ -585,7 +585,7 @@ mod tests {
     }
 
     #[test]
-    fn load_for_working_dir_reads_project_local_jcode_skills() {
+    fn load_for_working_dir_reads_project_local_iagent_skills() {
         let temp = tempfile::tempdir().expect("tempdir");
         write_test_skill(temp.path(), ".jcode", "wd-only");
 

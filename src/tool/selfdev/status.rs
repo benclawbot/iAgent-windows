@@ -223,7 +223,7 @@ impl SelfDevTool {
             "main_socket": main_socket.to_string_lossy(),
             "debug_enabled": crate::config::config().display.debug_socket ||
                              std::env::var("JCODE_DEBUG_CONTROL").is_ok() ||
-                             crate::storage::jcode_dir().map(|d| d.join("debug_control").exists()).unwrap_or(false),
+                             crate::storage::iagent_dir().map(|d| d.join("debug_control").exists()).unwrap_or(false),
             "connect_example": format!(
                 "echo '{{\"type\":\"debug_command\",\"id\":1,\"command\":\"help\"}}' | nc -U {}",
                 debug_socket.display()

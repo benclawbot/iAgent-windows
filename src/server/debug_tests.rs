@@ -248,7 +248,7 @@ mod transcript_routing_tests {
     #[tokio::test]
     async fn resolve_transcript_target_session_prefers_last_focused_live_session() {
         let _guard = crate::storage::lock_test_env();
-        let jcode_dir = crate::storage::jcode_dir().expect("jcode dir");
+        let jcode_dir = crate::storage::iagent_dir().expect("jcode dir");
         let active_dir = jcode_dir.join("active_pids");
         std::fs::create_dir_all(&active_dir).expect("create active_pids");
         std::fs::write(active_dir.join("session_focus"), "12345").expect("write active pid");
@@ -305,7 +305,7 @@ mod transcript_routing_tests {
     async fn resolve_transcript_target_session_falls_back_to_most_recent_live_tui_when_last_focused_not_connected()
      {
         let _guard = crate::storage::lock_test_env();
-        let jcode_dir = crate::storage::jcode_dir().expect("jcode dir");
+        let jcode_dir = crate::storage::iagent_dir().expect("jcode dir");
         let active_dir = jcode_dir.join("active_pids");
         std::fs::create_dir_all(&active_dir).expect("create active_pids");
         std::fs::write(active_dir.join("session_stale"), "12345").expect("write active pid");
