@@ -64,7 +64,7 @@ pub(crate) fn ensure_model_allowed_for_subscription(model: &str) -> Result<()> {
         && !crate::subscription_catalog::is_curated_model(model)
     {
         anyhow::bail!(
-            "Model '{}' is not included in the current jcode subscription catalog",
+            "Model '{}' is not included in the current iagent subscription catalog",
             model
         );
     }

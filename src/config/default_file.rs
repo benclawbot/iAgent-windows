@@ -10,11 +10,11 @@ impl Config {
             std::fs::create_dir_all(parent)?;
         }
 
-        let default_content = r#"# jcode configuration file
-# Location: ~/.jcode/config.toml
+        let default_content = r#"# iagent configuration file
+# Location: ~/.iagent/config.toml
 #
 # Environment variables override these settings.
-# Run `/config` in jcode to see current settings.
+# Run `/config` in iagent to see current settings.
 
 [keybindings]
 # Scroll keys (vim-style by default)

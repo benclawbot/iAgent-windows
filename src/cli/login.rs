@@ -171,14 +171,14 @@ pub async fn run_login(
         ProviderChoice::Auto => {
             if options.uses_scriptable_flow()? {
                 anyhow::bail!(
-                    "Scriptable login flags require an explicit provider. Use `jcode login --provider <provider> ...`."
+                    "Scriptable login flags require an explicit provider. Use `iagent login --provider <provider> ...`."
                 );
             }
             crate::telemetry::record_setup_step_once("login_picker_opened");
             let providers = crate::provider_catalog::cli_login_providers();
             if !io::stdin().is_terminal() {
                 anyhow::bail!(
-                    "`jcode login --provider auto` requires an interactive terminal. Use `jcode login --provider <provider>` in non-interactive mode."
+                    "`iagent login --provider auto` requires an interactive terminal. Use `iagent login --provider <provider>` in non-interactive mode."
                 );
             }
             if let Some(imported) =
@@ -435,7 +435,7 @@ fn maybe_persist_default_provider_after_login(
     }
 }
 
-/// Best-effort: tell a running jcode server that on-disk auth has changed so it
+/// Best-effort: tell a running iagent server that on-disk auth has changed so it
 /// can hot-initialize any newly-configured providers. No-op if no server is running.
 async fn notify_running_server_auth_changed_best_effort(provider: Option<&str>) {
     let Ok(mut client) = crate::server::Client::connect().await else {
@@ -462,7 +462,7 @@ async fn notify_running_server_auth_changed_best_effort(provider: Option<&str>) 
 fn login_iagent_flow() -> Result<()> {
     eprintln!("Setting up Jcode subscription access...");
     eprintln!(
-        "Paste the jcode subscription API key from your account portal. This key is used for your curated jcode router access.\n"
+        "Paste the iagent subscription API key from your account portal. This key is used for your curated iagent router access.\n"
     );
     eprint!("Paste your Jcode API key: ");
     io::stdout().flush()?;
@@ -511,7 +511,7 @@ fn login_iagent_flow() -> Result<()> {
             .collect::<Vec<_>>()
             .join(", ")
     );
-    crate::telemetry::record_auth_success("jcode", "api_key");
+    crate::telemetry::record_auth_success("iagent", "api_key");
     Ok(())
 }
 
@@ -666,7 +666,7 @@ fn login_azure_flow() -> Result<()> {
 
     eprintln!("Setting up Azure OpenAI...");
     eprintln!(
-        "Reference: OpenCode supports Azure OpenAI with Entra credentials. jcode uses Azure OpenAI's newer `/openai/v1` API with either Microsoft Entra ID or an API key.\n"
+        "Reference: OpenCode supports Azure OpenAI with Entra credentials. iagent uses Azure OpenAI's newer `/openai/v1` API with either Microsoft Entra ID or an API key.\n"
     );
 
     let endpoint_raw = read_line_trimmed(
@@ -711,7 +711,7 @@ fn login_azure_flow() -> Result<()> {
         eprintln!();
         eprintln!("Using Microsoft Entra ID via Azure's DefaultAzureCredential chain.");
         eprintln!(
-            "That means jcode can authenticate via `az login`, managed identity, or Azure environment credentials."
+            "That means iagent can authenticate via `az login`, managed identity, or Azure environment credentials."
         );
     } else {
         eprint!("Paste your Azure OpenAI API key: ");
@@ -1023,7 +1023,7 @@ fn login_cursor_flow() -> Result<()> {
             .join("cursor.env")
             .display()
     );
-    eprintln!("jcode will use the native Cursor HTTPS transport.");
+    eprintln!("iagent will use the native Cursor HTTPS transport.");
     crate::telemetry::record_auth_success("cursor", "api_key");
     Ok(())
 }
@@ -1080,10 +1080,10 @@ async fn login_copilot_device_flow(no_browser: bool) -> Result<()> {
 async fn login_antigravity_flow(no_browser: bool) -> Result<()> {
     eprintln!("Starting native Antigravity login...");
     eprintln!(
-        "jcode will authenticate directly with Google Antigravity; the Antigravity desktop app is not required."
+        "iagent will authenticate directly with Google Antigravity; the Antigravity desktop app is not required."
     );
     eprintln!(
-        "If browser launch fails, or you pass `--no-browser`, jcode will prompt for the callback URL instead."
+        "If browser launch fails, or you pass `--no-browser`, iagent will prompt for the callback URL instead."
     );
     eprintln!(
         "If the browser later shows a loopback/callback error page, copy the full URL from the address bar and re-run with `--no-browser`."
@@ -1113,7 +1113,7 @@ async fn login_gemini_flow(no_browser: bool) -> Result<()> {
         "If your student/education plan is attached to your Google account, use that account in the browser flow."
     );
     eprintln!(
-        "If browser launch fails, or you pass `--no-browser`, jcode will prompt for the manual authorization code."
+        "If browser launch fails, or you pass `--no-browser`, iagent will prompt for the manual authorization code."
     );
     eprintln!(
         "Note: school / Workspace Google accounts may also require GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION for Code Assist entitlement checks."
@@ -1266,7 +1266,7 @@ async fn login_google_flow(no_browser: bool) -> Result<()> {
                         no_browser,
                     );
                     eprintln!("   - Choose 'External' user type");
-                    eprintln!("   - Fill in app name (e.g. 'jcode') and your email");
+                    eprintln!("   - Fill in app name (e.g. 'iagent') and your email");
                     eprintln!("   - Skip scopes (we'll request them during login)");
                     eprintln!("   - Add your email as a test user");
                     eprintln!("   - Save and continue through all steps");
@@ -1282,7 +1282,7 @@ async fn login_google_flow(no_browser: bool) -> Result<()> {
                     );
                     eprintln!("   - Click '+ Create Credentials' > 'OAuth client ID'");
                     eprintln!("   - Application type: 'Desktop app'");
-                    eprintln!("   - Name: 'jcode'");
+                    eprintln!("   - Name: 'iagent'");
                     eprintln!("   - Click 'Create'\n");
                     eprintln!("   A dialog will show your Client ID and Client Secret.\n");
 

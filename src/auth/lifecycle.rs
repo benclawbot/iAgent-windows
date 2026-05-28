@@ -246,7 +246,7 @@ fn normalized_login_provider_id(provider_id: &str) -> Option<&'static str> {
             Some("openai-api")
         }
         "openrouter" => Some("openrouter"),
-        "jcode" | "subscription" | "jcode-subscription" => Some("jcode"),
+        "iagent" | "subscription" | "iagent-subscription" => Some("iagent"),
         "bedrock" | "aws-bedrock" | "aws_bedrock" => Some("bedrock"),
         "cursor" => Some("cursor"),
         "copilot" => Some("copilot"),
@@ -358,7 +358,7 @@ fn direct_provider_activation(provider_id: &str) -> Option<ProviderActivation> {
             RuntimeProviderId::OpenRouter,
             ActiveProvider::OpenRouter,
         )),
-        "jcode" => Some(ProviderActivation::locked(
+        "iagent" => Some(ProviderActivation::locked(
             RuntimeProviderId::Jcode,
             ActiveProvider::OpenRouter,
         )),
@@ -402,7 +402,7 @@ pub fn model_switch_request_for_provider_id(
         }
         Some("claude") => format!("claude:{}", model),
         Some("openai") | Some("openai-api") => format!("openai:{}", model),
-        Some("openrouter") | Some("jcode") => format!("openrouter:{}", model),
+        Some("openrouter") | Some("iagent") => format!("openrouter:{}", model),
         Some("bedrock") => format!("bedrock:{}", model),
         Some("cursor") => format!("cursor:{}", model),
         Some("copilot") => format!("copilot:{}", model),
@@ -481,7 +481,7 @@ mod tests {
             ("openai", "openai", "OpenAI"),
             ("openai-key", "openai-api", "OpenAI API"),
             ("openrouter", "openrouter", "OpenRouter"),
-            ("subscription", "jcode", "Jcode Subscription"),
+            ("subscription", "iagent", "iagent Subscription"),
             ("bedrock", "bedrock", "AWS Bedrock"),
             ("cursor", "cursor", "Cursor"),
             ("copilot", "copilot", "GitHub Copilot"),
@@ -535,7 +535,7 @@ mod tests {
             ("openai", "openai", "openai"),
             ("openai-api", "openai-api", "openai"),
             ("openrouter", "openrouter", "openrouter"),
-            ("jcode", "jcode", "openrouter"),
+            ("iagent", "jcode", "openrouter"),
             ("bedrock", "bedrock", "bedrock"),
             ("cursor", "cursor", "cursor"),
             ("copilot", "copilot", "copilot"),
@@ -577,7 +577,7 @@ mod tests {
         for provider in crate::provider_catalog::login_providers() {
             let Some((normalized, runtime, active, switch_prefix)) = (match provider.target {
                 crate::provider_catalog::LoginProviderTarget::Jcode => {
-                    Some(("jcode", "jcode", "openrouter", "openrouter"))
+                    Some(("iagent", "iagent", "openrouter", "openrouter"))
                 }
                 crate::provider_catalog::LoginProviderTarget::Claude => {
                     Some(("claude", "claude", "claude", "claude"))
@@ -669,7 +669,7 @@ mod tests {
             "openai",
             "openai-api",
             "openrouter",
-            "jcode",
+            "iagent",
             "bedrock",
             "cursor",
             "copilot",

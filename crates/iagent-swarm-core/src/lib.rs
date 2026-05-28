@@ -328,7 +328,7 @@ pub fn normalize_completion_report(report: Option<String>) -> Option<String> {
         return Some(report);
     }
 
-    let suffix = "\n\n[Report truncated by jcode before delivery.]";
+    let suffix = "\n\n[Report truncated by iagent before delivery.]";
     let keep_chars = MAX_SWARM_COMPLETION_REPORT_CHARS.saturating_sub(suffix.chars().count());
     let mut truncated: String = report.chars().take(keep_chars).collect();
     truncated.push_str(suffix);
@@ -461,7 +461,7 @@ mod tests {
             normalized.chars().count(),
             MAX_SWARM_COMPLETION_REPORT_CHARS
         );
-        assert!(normalized.ends_with("[Report truncated by jcode before delivery.]"));
+        assert!(normalized.ends_with("[Report truncated by iagent before delivery.]"));
     }
 
     #[test]

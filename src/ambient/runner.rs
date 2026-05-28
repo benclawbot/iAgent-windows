@@ -996,16 +996,16 @@ impl AmbientRunnerHandle {
             let _ = std::fs::remove_file(&result_path);
         }
 
-        // Find the jcode binary
+        // Find the iagent binary
         let iagent_bin =
             std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("iagent"));
 
-        // Spawn kitty with `jcode ambient run-visible`
+        // Spawn kitty with `iagent ambient run-visible`
         logging::info("Ambient visible: spawning kitty with iagent TUI");
         let child = std::process::Command::new("kitty")
             .args([
                 "--title",
-                "🤖 jcode ambient cycle",
+                "🤖 iagent ambient cycle",
                 "-e",
                 &iagent_bin.to_string_lossy(),
                 "ambient",

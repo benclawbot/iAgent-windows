@@ -87,7 +87,7 @@ fn test_binary_version_hash_mismatch_rejects_publish_candidate() {
         git_hash: Some("oldhash".to_string()),
     };
 
-    let error = validate_binary_version_matches_source_report(&report, Path::new("jcode"), &source)
+    let error = validate_binary_version_matches_source_report(&report, Path::new("iagent"), &source)
         .expect_err("mismatched git hash should be rejected");
 
     assert!(
@@ -219,7 +219,7 @@ fn test_client_update_candidate_prefers_dev_binary_for_selfdev() {
 fn launcher_dir_uses_sandbox_bin_when_iagent_home_is_set() {
     with_temp_iagent_home(|| {
         let launcher_dir = launcher_dir().expect("launcher dir");
-        let expected = storage::iagent_dir().expect("jcode dir").join("bin");
+        let expected = storage::iagent_dir().expect("iagent dir").join("bin");
         assert_eq!(launcher_dir, expected);
     });
 }

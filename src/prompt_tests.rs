@@ -148,7 +148,7 @@ fn test_non_selfdev_prompt_includes_lightweight_selfdev_hint() {
 #[test]
 fn test_selfdev_prompt_uses_full_selfdev_instructions() {
     let prompt = build_system_prompt_with_selfdev(None, &[], true);
-    assert!(prompt.contains("You are working on the jcode codebase itself."));
+    assert!(prompt.contains("You are working on the iagent codebase itself."));
     assert!(!prompt.contains("Self-Development Access"));
 }
 

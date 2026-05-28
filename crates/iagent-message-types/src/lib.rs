@@ -35,7 +35,7 @@ impl ToolDefinition {
 
     /// Approximate prompt-token cost of this tool's top-level description.
     ///
-    /// This uses jcode's standard chars/4 heuristic, matching other token
+    /// This uses iagent's standard chars/4 heuristic, matching other token
     /// budget estimates in the codebase.
     pub fn description_token_estimate(&self) -> usize {
         estimate_tokens(&self.description)
@@ -608,7 +608,7 @@ pub enum StreamEvent {
     },
     /// Upstream provider info (e.g., which provider OpenRouter routed to)
     UpstreamProvider { provider: String },
-    /// Native tool call from a provider bridge that needs execution by jcode
+    /// Native tool call from a provider bridge that needs execution by iagent
     NativeToolCall {
         request_id: String,
         tool_name: String,

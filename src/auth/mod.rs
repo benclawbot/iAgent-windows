@@ -103,7 +103,7 @@ fn log_auth_status_snapshot(event: &str, status: &AuthStatus) {
         event,
         "all",
         &[
-            ("jcode", auth_state_label(status.jcode)),
+            ("iagent", auth_state_label(status.iagent)),
             ("claude", auth_state_label(status.anthropic.state)),
             ("openai", auth_state_label(status.openai)),
             ("openrouter", auth_state_label(status.openrouter)),
@@ -227,7 +227,7 @@ impl AuthStatus {
     /// Returns true if at least one provider has usable credentials.
     pub fn has_any_available(&self) -> bool {
         self.anthropic.state == AuthState::Available
-            || self.jcode == AuthState::Available
+            || self.iagent == AuthState::Available
             || self.openai == AuthState::Available
             || self.openrouter == AuthState::Available
             || self.azure == AuthState::Available
@@ -256,7 +256,7 @@ impl AuthStatus {
                     AuthState::NotConfigured
                 }
             }
-            LoginProviderAuthStateKey::Jcode => self.jcode,
+            LoginProviderAuthStateKey::Jcode => self.iagent,
             LoginProviderAuthStateKey::Anthropic => self.anthropic.state,
             LoginProviderAuthStateKey::OpenAi => self.openai,
             LoginProviderAuthStateKey::Azure => self.azure,
@@ -722,7 +722,7 @@ fn token_state(result: anyhow::Result<bool>) -> AuthState {
 
 fn probe_iagent_status(status: &mut AuthStatus) {
     if crate::subscription_catalog::has_credentials() {
-        status.jcode = AuthState::Available;
+        status.iagent = AuthState::Available;
     }
 }
 

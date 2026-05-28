@@ -344,7 +344,7 @@ impl Default for NamedProviderConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct AuthConfig {
-    /// External auth source ids that the user has approved jcode to read/use.
+    /// External auth source ids that the user has approved iagent to read/use.
     pub trusted_external_sources: Vec<String>,
     /// Path-bound approvals for external auth sources managed by other tools.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -687,7 +687,7 @@ pub struct ProviderConfig {
     pub openai_native_compaction_threshold_tokens: usize,
     /// How to handle cross-provider failover when the same input would be resent elsewhere.
     pub cross_provider_failover: CrossProviderFailoverMode,
-    /// Whether jcode should automatically try another account on the same provider
+    /// Whether iagent should automatically try another account on the same provider
     /// before falling back to a different provider.
     pub same_provider_account_failover: bool,
     /// Copilot premium request mode: "normal", "one", or "zero"

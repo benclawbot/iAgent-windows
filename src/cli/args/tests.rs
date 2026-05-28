@@ -3,36 +3,36 @@ use crate::cli::provider_init::ProviderChoice;
 
 #[test]
 fn test_provider_choice_aliases_parse() {
-    let args = Args::try_parse_from(["jcode", "--provider", "z.ai", "run", "smoke"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "--provider", "z.ai", "run", "smoke"]).unwrap();
     assert_eq!(args.provider, ProviderChoice::Zai);
 
     let args =
-        Args::try_parse_from(["jcode", "--provider", "kimi-for-coding", "run", "smoke"]).unwrap();
+        Args::try_parse_from(["iagent", "--provider", "kimi-for-coding", "run", "smoke"]).unwrap();
     assert_eq!(args.provider, ProviderChoice::Kimi);
 
     let args =
-        Args::try_parse_from(["jcode", "--provider", "cerebrascode", "run", "smoke"]).unwrap();
+        Args::try_parse_from(["iagent", "--provider", "cerebrascode", "run", "smoke"]).unwrap();
     assert_eq!(args.provider, ProviderChoice::Cerebras);
 
-    let args = Args::try_parse_from(["jcode", "--provider", "compat", "run", "smoke"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "--provider", "compat", "run", "smoke"]).unwrap();
     assert_eq!(args.provider, ProviderChoice::OpenaiCompatible);
 
-    let args = Args::try_parse_from(["jcode", "--provider", "bailian", "run", "smoke"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "--provider", "bailian", "run", "smoke"]).unwrap();
     assert_eq!(args.provider, ProviderChoice::AlibabaCodingPlan);
 
-    let args = Args::try_parse_from(["jcode", "--provider", "together", "run", "smoke"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "--provider", "together", "run", "smoke"]).unwrap();
     assert_eq!(args.provider, ProviderChoice::TogetherAi);
 
-    let args = Args::try_parse_from(["jcode", "--provider", "grok", "run", "smoke"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "--provider", "grok", "run", "smoke"]).unwrap();
     assert_eq!(args.provider, ProviderChoice::Xai);
 
-    let args = Args::try_parse_from(["jcode", "--provider", "cgc", "run", "smoke"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "--provider", "cgc", "run", "smoke"]).unwrap();
     assert_eq!(args.provider, ProviderChoice::Comtegra);
 }
 
 #[test]
 fn model_list_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "model", "list", "--json", "--verbose"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "model", "list", "--json", "--verbose"]).unwrap();
     match args.command {
         Some(Command::Model(ModelCommand::List { json, verbose })) => {
             assert!(json);
@@ -45,7 +45,7 @@ fn model_list_subcommand_parses() {
 #[test]
 fn session_rename_subcommand_parses() {
     let args = Args::try_parse_from([
-        "jcode",
+        "iagent",
         "session",
         "rename",
         "fox",
@@ -68,7 +68,7 @@ fn session_rename_subcommand_parses() {
         other => panic!("unexpected command: {:?}", other),
     }
 
-    let args = Args::try_parse_from(["jcode", "session", "rename", "fox", "--clear"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "session", "rename", "fox", "--clear"]).unwrap();
     match args.command {
         Some(Command::Session(SessionCommand::Rename {
             session,
@@ -87,7 +87,7 @@ fn session_rename_subcommand_parses() {
 
 #[test]
 fn login_no_browser_flag_parses() {
-    let args = Args::try_parse_from(["jcode", "login", "--no-browser"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "login", "--no-browser"]).unwrap();
     match args.command {
         Some(Command::Login {
             account,
@@ -119,7 +119,7 @@ fn login_no_browser_flag_parses() {
         other => panic!("unexpected command: {:?}", other),
     }
 
-    let args = Args::try_parse_from(["jcode", "login", "--headless"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "login", "--headless"]).unwrap();
     match args.command {
         Some(Command::Login { no_browser, .. }) => assert!(no_browser),
         other => panic!("unexpected command: {:?}", other),
@@ -129,7 +129,7 @@ fn login_no_browser_flag_parses() {
 #[test]
 fn login_openai_compatible_scriptable_flags_parse() {
     let args = Args::try_parse_from([
-        "jcode",
+        "iagent",
         "--provider",
         "openai-compatible",
         "--model",
@@ -159,7 +159,7 @@ fn login_openai_compatible_scriptable_flags_parse() {
 #[test]
 fn login_openai_compatible_accepts_global_provider_and_model_after_subcommand() {
     let args = Args::try_parse_from([
-        "jcode",
+        "iagent",
         "login",
         "--provider",
         "openai-compatible",
@@ -182,7 +182,7 @@ fn login_openai_compatible_accepts_global_provider_and_model_after_subcommand() 
 
 #[test]
 fn login_scriptable_flags_parse() {
-    let args = Args::try_parse_from(["jcode", "login", "--print-auth-url", "--json"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "login", "--print-auth-url", "--json"]).unwrap();
     match args.command {
         Some(Command::Login {
             print_auth_url,
@@ -204,7 +204,7 @@ fn login_scriptable_flags_parse() {
     }
 
     let args = Args::try_parse_from([
-        "jcode",
+        "iagent",
         "login",
         "--callback-url",
         "http://localhost:1455/auth/callback?code=x&state=y",
@@ -220,7 +220,7 @@ fn login_scriptable_flags_parse() {
         other => panic!("unexpected command: {:?}", other),
     }
 
-    let args = Args::try_parse_from(["jcode", "login", "--auth-code", "abc123"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "login", "--auth-code", "abc123"]).unwrap();
     match args.command {
         Some(Command::Login { auth_code, .. }) => {
             assert_eq!(auth_code.as_deref(), Some("abc123"));
@@ -229,7 +229,7 @@ fn login_scriptable_flags_parse() {
     }
 
     let args = Args::try_parse_from([
-        "jcode",
+        "iagent",
         "login",
         "--complete",
         "--google-access-tier",
@@ -251,13 +251,13 @@ fn login_scriptable_flags_parse() {
 
 #[test]
 fn quiet_global_flag_parses() {
-    let args = Args::try_parse_from(["jcode", "--quiet", "model", "list"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "--quiet", "model", "list"]).unwrap();
     assert!(args.quiet);
 }
 
 #[test]
 fn run_json_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "run", "--json", "hello"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "run", "--json", "hello"]).unwrap();
     match args.command {
         Some(Command::Run {
             json,
@@ -274,7 +274,7 @@ fn run_json_subcommand_parses() {
 
 #[test]
 fn ambient_desktop_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "ambient", "desktop", "--headless"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "ambient", "desktop", "--headless"]).unwrap();
     match args.command {
         Some(Command::Ambient(AmbientCommand::Desktop { headless })) => assert!(headless),
         other => panic!("unexpected command: {:?}", other),
@@ -283,7 +283,7 @@ fn ambient_desktop_subcommand_parses() {
 
 #[test]
 fn run_ndjson_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "run", "--ndjson", "hello"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "run", "--ndjson", "hello"]).unwrap();
     match args.command {
         Some(Command::Run {
             json,
@@ -300,7 +300,7 @@ fn run_ndjson_subcommand_parses() {
 
 #[test]
 fn version_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "version", "--json"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "version", "--json"]).unwrap();
     match args.command {
         Some(Command::Version { json }) => assert!(json),
         other => panic!("unexpected command: {:?}", other),
@@ -309,7 +309,7 @@ fn version_subcommand_parses() {
 
 #[test]
 fn usage_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "usage", "--json"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "usage", "--json"]).unwrap();
     match args.command {
         Some(Command::Usage { json }) => assert!(json),
         other => panic!("unexpected command: {:?}", other),
@@ -318,7 +318,7 @@ fn usage_subcommand_parses() {
 
 #[test]
 fn auth_status_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "auth", "status", "--json"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "auth", "status", "--json"]).unwrap();
     match args.command {
         Some(Command::Auth(AuthCommand::Status { json })) => assert!(json),
         other => panic!("unexpected command: {:?}", other),
@@ -327,7 +327,7 @@ fn auth_status_subcommand_parses() {
 
 #[test]
 fn auth_doctor_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "auth", "doctor", "openai", "--validate", "--json"])
+    let args = Args::try_parse_from(["iagent", "auth", "doctor", "openai", "--validate", "--json"])
         .unwrap();
     match args.command {
         Some(Command::Auth(AuthCommand::Doctor {
@@ -345,7 +345,7 @@ fn auth_doctor_subcommand_parses() {
 
 #[test]
 fn provider_list_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "provider", "list", "--json"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "provider", "list", "--json"]).unwrap();
     match args.command {
         Some(Command::Provider(ProviderCommand::List { json })) => assert!(json),
         other => panic!("unexpected command: {:?}", other),
@@ -354,7 +354,7 @@ fn provider_list_subcommand_parses() {
 
 #[test]
 fn provider_current_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "provider", "current", "--json"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "provider", "current", "--json"]).unwrap();
     match args.command {
         Some(Command::Provider(ProviderCommand::Current { json })) => assert!(json),
         other => panic!("unexpected command: {:?}", other),
@@ -364,7 +364,7 @@ fn provider_current_subcommand_parses() {
 #[test]
 fn provider_add_subcommand_parses_agent_friendly_flags() {
     let args = Args::try_parse_from([
-        "jcode",
+        "iagent",
         "provider",
         "add",
         "my-api",
@@ -409,7 +409,7 @@ fn provider_add_subcommand_parses_agent_friendly_flags() {
 
 #[test]
 fn restart_save_subcommand_parses() {
-    let args = Args::try_parse_from(["jcode", "restart", "save"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "restart", "save"]).unwrap();
     match args.command {
         Some(Command::Restart {
             action: RestartCommand::Save {
@@ -422,7 +422,7 @@ fn restart_save_subcommand_parses() {
 
 #[test]
 fn restart_save_auto_restore_flag_parses() {
-    let args = Args::try_parse_from(["jcode", "restart", "save", "--auto-restore"]).unwrap();
+    let args = Args::try_parse_from(["iagent", "restart", "save", "--auto-restore"]).unwrap();
     match args.command {
         Some(Command::Restart {
             action: RestartCommand::Save { auto_restore: true },

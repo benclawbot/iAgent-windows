@@ -27,7 +27,7 @@ fn compile_static_regex(pattern: &str) -> Option<Regex> {
     match Regex::new(pattern) {
         Ok(regex) => Some(regex),
         Err(err) => {
-            eprintln!("jcode: failed to compile static regex: {err}");
+            eprintln!("iagent: failed to compile static regex: {err}");
             None
         }
     }

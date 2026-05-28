@@ -237,7 +237,7 @@ pub trait Provider: Send + Sync {
         PremiumMode::Normal
     }
 
-    /// Returns true if jcode should use its own compaction for this provider.
+    /// Returns true if iagent should use its own compaction for this provider.
     fn supports_compaction(&self) -> bool {
         false
     }
@@ -374,8 +374,8 @@ impl NativeToolResult {
     }
 }
 
-/// Canonical User-Agent for generic outbound Jcode HTTP requests.
-pub const JCODE_USER_AGENT: &str = concat!("jcode/", env!("CARGO_PKG_VERSION"));
+/// Canonical User-Agent for generic outbound iagent HTTP requests.
+pub const JCODE_USER_AGENT: &str = concat!("iagent/", env!("CARGO_PKG_VERSION"));
 
 /// Shared HTTP client for all generic provider requests. Creating a `reqwest::Client` is expensive
 /// (~10ms due to TLS init, connection pool setup), so we reuse a single instance. Provider-specific
@@ -394,7 +394,7 @@ pub fn shared_http_client() -> reqwest::Client {
                 .pool_max_idle_per_host(8)
                 .build()
                 .unwrap_or_else(|err| {
-                    eprintln!("jcode: failed to build shared provider HTTP client: {err}");
+                    eprintln!("iagent: failed to build shared provider HTTP client: {err}");
                     reqwest::Client::builder()
                         .user_agent(JCODE_USER_AGENT)
                         .build()
@@ -595,7 +595,7 @@ mod tests {
     }
 
     #[test]
-    fn canonical_user_agent_identifies_jcode() {
-        assert!(JCODE_USER_AGENT.starts_with("jcode/"));
+    fn canonical_user_agent_identifies_iagent() {
+        assert!(JCODE_USER_AGENT.starts_with("iagent/"));
     }
 }

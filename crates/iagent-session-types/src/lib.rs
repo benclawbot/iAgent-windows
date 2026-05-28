@@ -892,11 +892,11 @@ mod session_search_tests {
             "/TMP/project"
         ));
         assert!(session_search_working_dir_matches(
-            "/workspace/jcode",
-            "jcode"
+            "/workspace/iagent",
+            "iagent"
         ));
         assert!(!session_search_working_dir_matches(
-            "/workspace/jcode",
+            "/workspace/iagent",
             "/workspace/other"
         ));
     }

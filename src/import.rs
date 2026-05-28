@@ -1,7 +1,7 @@
-//! Import Claude Code sessions into jcode
+//! Import Claude Code sessions into iagent
 //!
 //! This module handles discovering, parsing, and converting Claude Code sessions
-//! so they can be resumed within jcode.
+//! so they can be resumed within iagent.
 
 use crate::message::{ContentBlock, Role};
 use crate::session::{Session, SessionStatus, StoredMessage};

@@ -104,9 +104,9 @@ pub fn hot_reload(session_id: &str) -> Result<()> {
 pub fn hot_rebuild(session_id: &str) -> Result<()> {
     let cwd = std::env::current_dir()?;
     let repo_dir =
-        build::get_repo_dir().ok_or_else(|| anyhow::anyhow!("Could not find jcode repository"))?;
+        build::get_repo_dir().ok_or_else(|| anyhow::anyhow!("Could not find iagent repository"))?;
 
-    eprintln!("Rebuilding jcode with session {}...", session_id);
+    eprintln!("Rebuilding iagent with session {}...", session_id);
 
     eprintln!("Pulling latest changes...");
     if let Err(e) = update::run_git_pull_ff_only(&repo_dir, true) {
@@ -186,7 +186,7 @@ pub fn spawn_background_session_rebuild(session_id: String) {
             publish(SessionUpdateStatus::Error {
                 session_id,
                 action,
-                message: "Rebuild failed: could not find the jcode repository.".to_string(),
+                message: "Rebuild failed: could not find the iagent repository.".to_string(),
             });
             return;
         };
@@ -412,7 +412,7 @@ pub fn check_for_updates() -> Option<bool> {
 
 pub fn run_auto_update() -> Result<()> {
     let repo_dir =
-        get_repo_dir().ok_or_else(|| anyhow::anyhow!("Could not find jcode repository"))?;
+        get_repo_dir().ok_or_else(|| anyhow::anyhow!("Could not find iagent repository"))?;
 
     update::run_git_pull_ff_only(&repo_dir, true)?;
 
@@ -472,7 +472,7 @@ pub fn run_update() -> Result<()> {
                         ));
                     })?;
                 update::print_centered(&format!("✅ Updated to {}", release.tag_name));
-                update::print_centered("Restart jcode to use the new version.");
+                update::print_centered("Restart iagent to use the new version.");
             }
             Ok(None) => {
                 update::print_centered(&format!("Already up to date ({})", env!("IAGENT_VERSION")));
@@ -485,9 +485,9 @@ pub fn run_update() -> Result<()> {
     }
 
     let repo_dir =
-        get_repo_dir().ok_or_else(|| anyhow::anyhow!("Could not find jcode repository"))?;
+        get_repo_dir().ok_or_else(|| anyhow::anyhow!("Could not find iagent repository"))?;
 
-    update::print_centered(&format!("Updating jcode from {}...", repo_dir.display()));
+    update::print_centered(&format!("Updating iagent from {}...", repo_dir.display()));
 
     update::print_centered("Pulling latest changes (fast-forward only)...");
     update::run_git_pull_ff_only(&repo_dir, true)?;

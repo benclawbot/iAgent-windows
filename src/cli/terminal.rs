@@ -65,7 +65,7 @@ pub fn show_crash_resume_hint() {
 
     if crashed.len() == 1 {
         eprintln!(
-            "\x1b[33m💥 Session \x1b[1m{}\x1b[0m\x1b[33m crashed. Resume with:\x1b[0m  jcode --resume {}",
+            "\x1b[33m💥 Session \x1b[1m{}\x1b[0m\x1b[33m crashed. Resume with:\x1b[0m  iagent --resume {}",
             session_label, id
         );
     } else {
@@ -74,8 +74,8 @@ pub fn show_crash_resume_hint() {
             crashed.len(),
             session_label
         );
-        eprintln!("\x1b[33m   Resume with:\x1b[0m  jcode --resume {}", id);
-        eprintln!("\x1b[33m   List all:\x1b[0m     jcode --resume");
+        eprintln!("\x1b[33m   Resume with:\x1b[0m  iagent --resume {}", id);
+        eprintln!("\x1b[33m   List all:\x1b[0m     iagent --resume");
     }
     eprintln!();
 }
@@ -87,7 +87,7 @@ pub fn print_session_resume_hint(session_id: &str) {
         "\x1b[33mSession \x1b[1m{}\x1b[0m\x1b[33m - to resume:\x1b[0m",
         session_name
     );
-    eprintln!("  jcode --resume {}", session_id);
+    eprintln!("  iagent --resume {}", session_id);
     eprintln!();
 }
 
@@ -187,8 +187,8 @@ mod tests {
         set_current_session(test_session);
 
         if let Some(session_id) = get_current_session() {
-            let expected_cmd = format!("jcode --resume {}", session_id);
-            assert!(expected_cmd.starts_with("jcode --resume "));
+            let expected_cmd = format!("iagent --resume {}", session_id);
+            assert!(expected_cmd.starts_with("iagent --resume "));
             assert!(!session_id.is_empty());
         } else {
             panic!("Session ID should be set");

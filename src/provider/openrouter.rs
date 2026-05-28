@@ -1527,7 +1527,7 @@ impl OpenRouterProvider {
                         })
                     } else {
                         anyhow::bail!(
-                            "Azure OpenAI is configured for Entra ID, but Azure settings are incomplete. Run `jcode login --provider azure`."
+                            "Azure OpenAI is configured for Entra ID, but Azure settings are incomplete. Run `iagent login --provider azure`."
                         )
                     }
                 }

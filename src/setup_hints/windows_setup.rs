@@ -167,7 +167,7 @@ $shell = New-Object -ComObject WScript.Shell
 $shortcut = $shell.CreateShortcut("{startup_dir}\jcode-hotkey.lnk")
 $shortcut.TargetPath = "wscript.exe"
 $shortcut.Arguments = '"{vbs_path}"'
-$shortcut.Description = "jcode Alt+; hotkey listener"
+$shortcut.Description = "iagent Alt+; hotkey listener"
 $shortcut.WindowStyle = 7
 $shortcut.Save()
 Write-Output "OK"
@@ -249,7 +249,7 @@ fn nudge_hotkey(state: &mut SetupHintsState) -> bool {
 
     eprintln!("\x1b[36m┌─────────────────────────────────────────────────────────────┐\x1b[0m");
     eprintln!(
-        "\x1b[36m│\x1b[0m \x1b[1m💡 Set up Alt+; to launch jcode from anywhere?\x1b[0m              \x1b[36m│\x1b[0m"
+        "\x1b[36m│\x1b[0m \x1b[1m💡 Set up Alt+; to launch iagent from anywhere?\x1b[0m              \x1b[36m│\x1b[0m"
     );
     eprintln!(
         "\x1b[36m│\x1b[0m                                                             \x1b[36m│\x1b[0m"
@@ -258,7 +258,7 @@ fn nudge_hotkey(state: &mut SetupHintsState) -> bool {
         "\x1b[36m│\x1b[0m    Creates a global hotkey - no extra software needed.       \x1b[36m│\x1b[0m"
     );
     eprintln!(
-        "\x1b[36m│\x1b[0m    Opens jcode in {:<39}    \x1b[36m│\x1b[0m",
+        "\x1b[36m│\x1b[0m    Opens iagent in {:<39}    \x1b[36m│\x1b[0m",
         format!("{}.", terminal_name)
     );
     eprintln!(
@@ -281,7 +281,7 @@ fn nudge_hotkey(state: &mut SetupHintsState) -> bool {
                     state.hotkey_configured = true;
                     let _ = state.save();
                     eprintln!(
-                        "  \x1b[32m✓\x1b[0m Created hotkey (\x1b[1mAlt+;\x1b[0m) → {} + jcode",
+                        "  \x1b[32m✓\x1b[0m Created hotkey (\x1b[1mAlt+;\x1b[0m) → {} + iagent",
                         terminal_name
                     );
                     eprintln!();
@@ -290,7 +290,7 @@ fn nudge_hotkey(state: &mut SetupHintsState) -> bool {
                 Err(e) => {
                     eprintln!("  \x1b[31m✗\x1b[0m Failed to create hotkey: {}", e);
                     eprintln!(
-                        "    You can set it up manually later with: \x1b[1mjcode setup-hotkey\x1b[0m"
+                        "    You can set it up manually later with: \x1b[1miagent setup-hotkey\x1b[0m"
                     );
                     eprintln!();
                     false
@@ -317,7 +317,7 @@ fn nudge_alacritty(state: &mut SetupHintsState) -> bool {
 
     eprintln!("\x1b[36m┌─────────────────────────────────────────────────────────────┐\x1b[0m");
     eprintln!(
-        "\x1b[36m│\x1b[0m \x1b[1m💡 Alacritty: the fastest terminal for jcode\x1b[0m               \x1b[36m│\x1b[0m"
+        "\x1b[36m│\x1b[0m \x1b[1m💡 Alacritty: the fastest terminal for iagent\x1b[0m               \x1b[36m│\x1b[0m"
     );
     eprintln!(
         "\x1b[36m│\x1b[0m                                                             \x1b[36m│\x1b[0m"
@@ -364,7 +364,7 @@ fn nudge_alacritty(state: &mut SetupHintsState) -> bool {
                         match create_hotkey_shortcut(true) {
                             Ok(()) => {
                                 eprintln!(
-                                    "  \x1b[32m✓\x1b[0m Hotkey updated: \x1b[1mAlt+;\x1b[0m → Alacritty + jcode"
+                                    "  \x1b[32m✓\x1b[0m Hotkey updated: \x1b[1mAlt+;\x1b[0m → Alacritty + iagent"
                                 );
                             }
                             Err(e) => {
@@ -401,7 +401,7 @@ fn prompt_try_it_out(installed_alacritty: bool) {
         "\x1b[32m│\x1b[0m                                                             \x1b[32m│\x1b[0m"
     );
     eprintln!(
-        "\x1b[32m│\x1b[0m    Press \x1b[1mAlt+;\x1b[0m from anywhere to launch jcode.                \x1b[32m│\x1b[0m"
+        "\x1b[32m│\x1b[0m    Press \x1b[1mAlt+;\x1b[0m from anywhere to launch iagent.                \x1b[32m│\x1b[0m"
     );
     if installed_alacritty {
         eprintln!(
@@ -412,7 +412,7 @@ fn prompt_try_it_out(installed_alacritty: bool) {
         "\x1b[32m│\x1b[0m                                                             \x1b[32m│\x1b[0m"
     );
     eprintln!(
-        "\x1b[32m│\x1b[0m    \x1b[90m(Starting jcode normally in 3 seconds...)\x1b[0m                 \x1b[32m│\x1b[0m"
+        "\x1b[32m│\x1b[0m    \x1b[90m(Starting iagent normally in 3 seconds...)\x1b[0m                 \x1b[32m│\x1b[0m"
     );
     eprintln!("\x1b[32m└─────────────────────────────────────────────────────────────┘\x1b[0m");
     eprintln!();
@@ -460,7 +460,7 @@ pub(super) fn run_setup_hotkey_windows() -> Result<()> {
     let terminal = detect_terminal();
     let already_using_alacritty = terminal == "alacritty";
 
-    eprintln!("\x1b[1mjcode setup-hotkey\x1b[0m");
+    eprintln!("\x1b[1miagent setup-hotkey\x1b[0m");
     eprintln!();
 
     eprintln!(
@@ -518,7 +518,7 @@ pub(super) fn run_setup_hotkey_windows() -> Result<()> {
     };
 
     eprintln!(
-        "  Setting up \x1b[1mAlt+;\x1b[0m → {} + jcode...",
+        "  Setting up \x1b[1mAlt+;\x1b[0m → {} + iagent...",
         terminal_name
     );
 
@@ -558,7 +558,7 @@ $shell = New-Object -ComObject WScript.Shell
 $shortcut = $shell.CreateShortcut("{shortcut_path}")
 $shortcut.TargetPath = "{target}"
 $shortcut.Arguments = '{args}'
-$shortcut.Description = "jcode - AI coding agent"
+$shortcut.Description = "iagent - AI coding agent"
 $shortcut.Save()
 Write-Output "OK"
 "#,

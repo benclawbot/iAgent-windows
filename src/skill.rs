@@ -79,7 +79,7 @@ impl SkillRegistry {
     }
 
     /// Import skills from Claude Code and Codex CLI on first run.
-    /// Only runs if ~/.jcode/skills/ doesn't exist yet.
+    /// Only runs if ~/.iagent/skills/ doesn't exist yet.
     fn import_from_external() {
         let iagent_skills = match crate::storage::iagent_dir() {
             Ok(dir) => dir.join("skills"),
@@ -219,7 +219,7 @@ impl SkillRegistry {
 
         let mut registry = Self::default();
 
-        // Load from ~/.jcode/skills/ (jcode's own global skills)
+        // Load from ~/.iagent/skills/ (iagent's own global skills)
         if let Ok(iagent_dir) = crate::storage::iagent_dir() {
             let iagent_skills = iagent_dir.join("skills");
             if iagent_skills.exists() {
@@ -238,10 +238,10 @@ impl SkillRegistry {
     }
 
     fn load_project_local_dirs(&mut self, working_dir: Option<&Path>) -> Result<()> {
-        // Load from ./.jcode/skills/ (project-local jcode skills)
-        let local_jcode = Self::project_local_dir(working_dir, ".jcode");
-        if local_jcode.exists() {
-            self.load_from_dir(&local_jcode)?;
+        // Load from ./.iagent/skills/ (project-local iagent skills)
+        let local_iagent = Self::project_local_dir(working_dir, ".iagent");
+        if local_iagent.exists() {
+            self.load_from_dir(&local_iagent)?;
         }
 
         // Fallback: ./.claude/skills/ (project-local Claude skills for compatibility)
@@ -377,7 +377,7 @@ impl SkillRegistry {
 
         let mut count = 0;
 
-        // Load from ~/.jcode/skills/ (jcode's own global skills)
+        // Load from ~/.iagent/skills/ (iagent's own global skills)
         if let Ok(iagent_dir) = crate::storage::iagent_dir() {
             let iagent_skills = iagent_dir.join("skills");
             if iagent_skills.exists() {
@@ -385,10 +385,10 @@ impl SkillRegistry {
             }
         }
 
-        // Load from ./.jcode/skills/ (project-local jcode skills)
-        let local_jcode = Self::project_local_dir(working_dir, ".jcode");
-        if local_jcode.exists() {
-            count += self.load_from_dir_count(&local_jcode)?;
+        // Load from ./.iagent/skills/ (project-local iagent skills)
+        let local_iagent = Self::project_local_dir(working_dir, ".iagent");
+        if local_iagent.exists() {
+            count += self.load_from_dir_count(&local_iagent)?;
         }
 
         // Fallback: ./.claude/skills/ (project-local Claude skills for compatibility)
@@ -587,7 +587,7 @@ mod tests {
     #[test]
     fn load_for_working_dir_reads_project_local_iagent_skills() {
         let temp = tempfile::tempdir().expect("tempdir");
-        write_test_skill(temp.path(), ".jcode", "wd-only");
+        write_test_skill(temp.path(), ".iagent", "wd-only");
 
         let registry = SkillRegistry::load_for_working_dir(Some(temp.path())).expect("load skills");
 
@@ -601,7 +601,7 @@ mod tests {
     #[test]
     fn reload_all_for_working_dir_replaces_stale_snapshot_with_session_local_skills() {
         let temp = tempfile::tempdir().expect("tempdir");
-        write_test_skill(temp.path(), ".jcode", "session-skill");
+        write_test_skill(temp.path(), ".iagent", "session-skill");
 
         let mut registry = SkillRegistry::default();
         let count = registry

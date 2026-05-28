@@ -1,8 +1,8 @@
-//! Embedding facade for jcode.
+//! Embedding facade for iagent.
 //!
-//! The heavy ONNX/tokenizer implementation lives in the `jcode-embedding`
+//! The heavy ONNX/tokenizer implementation lives in the `iagent-embedding`
 //! workspace crate so unchanged embedding code can stay cached across self-dev
-//! builds. This module keeps jcode's process-wide cache, stats, and local path /
+//! builds. This module keeps iagent's process-wide cache, stats, and local path /
 //! logging integration stable.
 
 use anyhow::Result;

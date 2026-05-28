@@ -42,7 +42,7 @@ pub async fn send_email(request: SendEmailRequest<'_>) -> Result<()> {
         .header(ContentType::TEXT_HTML);
 
     if let Some(cid) = request.cycle_id {
-        let msg_id = format!("<ambient-{}@jcode>", cid);
+        let msg_id = format!("<ambient-{}@iagent>", cid);
         builder = builder.message_id(Some(msg_id));
     }
 
@@ -71,8 +71,8 @@ pub fn poll_imap_once(host: &str, port: u16, user: &str, pass: &str) -> Result<V
 
     session.select("INBOX")?;
 
-    let reply_search = session.search("UNSEEN HEADER In-Reply-To \"@jcode>\"")?;
-    let button_search = session.search("UNSEEN SUBJECT \"[jcode-perm:\"")?;
+    let reply_search = session.search("UNSEEN HEADER In-Reply-To \"@iagent>\"")?;
+    let button_search = session.search("UNSEEN SUBJECT \"[iagent-perm:\"")?;
 
     let mut all_seqs: Vec<_> = reply_search.into_iter().chain(button_search).collect();
     all_seqs.sort_unstable();
@@ -98,13 +98,13 @@ pub fn poll_imap_once(host: &str, port: u16, user: &str, pass: &str) -> Result<V
             let in_reply_to = parsed.in_reply_to().as_text().unwrap_or("").to_string();
             let subject = parsed.subject().unwrap_or("");
 
-            let cycle_id = if in_reply_to.contains("@jcode>") {
+            let cycle_id = if in_reply_to.contains("@iagent>") {
                 in_reply_to
                     .trim_start_matches("<ambient-")
-                    .trim_end_matches("@jcode>")
+                    .trim_end_matches("@iagent>")
                     .to_string()
-            } else if let Some(start) = subject.find("[jcode-perm:") {
-                let rest = &subject[start + "[jcode-perm:".len()..];
+            } else if let Some(start) = subject.find("[iagent-perm:") {
+                let rest = &subject[start + "[iagent-perm:".len()..];
                 rest.split(']').next().unwrap_or("").to_string()
             } else {
                 continue;
@@ -187,8 +187,8 @@ pub fn build_permission_email_html(
     let now = chrono::Utc::now();
     let timestamp = now.format("%Y-%m-%d %H:%M:%S UTC").to_string();
 
-    let approve_subj_raw = format!("[jcode-perm:{}] Approved", request_id);
-    let deny_subj_raw = format!("[jcode-perm:{}] Denied", request_id);
+    let approve_subj_raw = format!("[iagent-perm:{}] Approved", request_id);
+    let deny_subj_raw = format!("[iagent-perm:{}] Denied", request_id);
     let approve_subject = urlencoding::encode(&approve_subj_raw);
     let deny_subject = urlencoding::encode(&deny_subj_raw);
     let approve_body = urlencoding::encode("Approved");
@@ -317,7 +317,7 @@ pub fn build_permission_email_html(
   <div class="timestamp">Sent at {timestamp}</div>
 </div>
 <div class="footer">
-  Sent by jcode ambient mode
+  Sent by iagent ambient mode
 </div>
 </body>
 </html>"#
@@ -410,7 +410,7 @@ fn markdown_to_html_email(markdown: &str) -> String {
 {html_content}
 </div>
 <div class="footer">
-  Sent by jcode ambient mode
+  Sent by iagent ambient mode
 </div>
 </body>
 </html>"#
@@ -441,7 +441,7 @@ mod tests {
         let html = markdown_to_html_email(md);
         assert!(html.contains("<strong>Ambient Cycle Summary:</strong>"));
         assert!(html.contains("<li>"));
-        assert!(html.contains("jcode ambient mode"));
+        assert!(html.contains("iagent ambient mode"));
     }
 
     #[test]
@@ -521,10 +521,10 @@ mod tests {
             "apply patch",
             "Touch Cargo.toml",
             "req_123",
-            "jcode@example.com",
+            "iagent@example.com",
         );
         assert!(html.contains("Permission Request"));
         assert!(html.contains("req_123"));
-        assert!(html.contains("mailto:jcode@example.com"));
+        assert!(html.contains("mailto:iagent@example.com"));
     }
 }

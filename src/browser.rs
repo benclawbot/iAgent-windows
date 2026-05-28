@@ -28,7 +28,7 @@ const REQUIRED_BRIDGE_ACTION_PROBES: &[(&str, &str)] = &[
     ("scroll", r#"{"position":"top"}"#),
     (
         "uploadFile",
-        r#"{"selector":"input[type=file]","path":"/tmp/jcode-browser-capability-probe"}"#,
+        r#"{"selector":"input[type=file]","path":"/tmp/iagent-browser-capability-probe"}"#,
     ),
 ];
 
@@ -36,7 +36,7 @@ fn iagent_dir() -> PathBuf {
     storage::iagent_dir().unwrap_or_else(|_| {
         dirs::home_dir()
             .unwrap_or_else(|| PathBuf::from("."))
-            .join(".jcode")
+            .join(".iagent")
     })
 }
 
@@ -204,7 +204,7 @@ pub async fn ensure_browser_setup() -> Result<String> {
     }
 
     if initial_status.responding && !initial_status.compatible {
-        log.push_str("Browser bridge is connected, but the live Firefox extension is out of date for this jcode build. Attempting repair steps...\n");
+        log.push_str("Browser bridge is connected, but the live Firefox extension is out of date for this iagent build. Attempting repair steps...\n");
         if !initial_status.missing_actions.is_empty() {
             log.push_str(&format!(
                 "Missing actions: {}\n",
@@ -303,7 +303,7 @@ pub async fn ensure_browser_setup() -> Result<String> {
                             Ok(false) => {
                                 log.push_str("timed out\n");
                                 log.push_str(
-                                    "       Extension not detected. You can retry with: jcode browser setup\n",
+                                    "       Extension not detected. You can retry with: iagent browser setup\n",
                                 );
                                 log.push_str(
                                     "       Or manually install: Firefox > about:addons > Install from file > ",
@@ -330,7 +330,7 @@ pub async fn ensure_browser_setup() -> Result<String> {
                     "       Existing browser setup was already completed, so setup will not reopen the extension installer.\n",
                 );
                 log.push_str(
-                    "       Make sure Firefox is running with the Browser Agent Bridge extension enabled, then re-run `jcode browser status`.\n",
+                    "       Make sure Firefox is running with the Browser Agent Bridge extension enabled, then re-run `iagent browser status`.\n",
                 );
             }
         }
@@ -344,18 +344,18 @@ pub async fn ensure_browser_setup() -> Result<String> {
     if final_status.ready {
         log.push_str("\nSetup complete. Browser bridge is ready.\n");
     } else if final_status.responding && !final_status.compatible {
-        log.push_str("\nSetup is not complete yet. The Firefox extension is connected, but it is still missing required actions for this jcode build.\n");
+        log.push_str("\nSetup is not complete yet. The Firefox extension is connected, but it is still missing required actions for this iagent build.\n");
         if !final_status.missing_actions.is_empty() {
             log.push_str(&format!(
                 "Missing actions: {}\n",
                 final_status.missing_actions.join(", ")
             ));
         }
-        log.push_str("Use `jcode browser status` to verify readiness after updating the extension in Firefox.\n");
+        log.push_str("Use `iagent browser status` to verify readiness after updating the extension in Firefox.\n");
     } else if final_status.binary_installed {
         log.push_str("\nSetup is not complete yet. Browser bridge binaries are installed, but the Firefox extension/bridge is not responding.\n");
         log.push_str(
-            "Use `jcode browser status` to re-check readiness after any manual Firefox step.\n",
+            "Use `iagent browser status` to re-check readiness after any manual Firefox step.\n",
         );
     } else {
         log.push_str("\nSetup is not complete yet. Browser bridge binary is still missing.\n");
@@ -575,7 +575,7 @@ fn install_native_host_manifest() -> Result<bool> {
 
     let manifest = serde_json::json!({
         "name": NATIVE_HOST_NAME,
-        "description": "Native host for Firefox Agent Bridge (managed by jcode)",
+        "description": "Native host for Firefox Agent Bridge (managed by iagent)",
         "path": effective_host,
         "type": "stdio",
         "allowed_extensions": [

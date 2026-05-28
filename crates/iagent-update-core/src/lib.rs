@@ -390,7 +390,7 @@ mod tests {
 
     #[test]
     fn sha256sums_rejects_invalid_digest() {
-        let err = parse_sha256sums("not-a-digest  jcode\n")
+        let err = parse_sha256sums("not-a-digest  iagent\n")
             .unwrap_err()
             .to_string();
         assert!(err.contains("invalid SHA256 digest"));

@@ -212,7 +212,7 @@ pub fn copilot_pricing(model: &str, zero_premium_mode: bool) -> RouteCheapnessEs
         Some(included_requests),
         estimated_reference,
         Some(if zero_premium_mode {
-            "Copilot zero-premium mode: jcode will send requests as agent/non-premium when possible"
+            "Copilot zero-premium mode: iagent will send requests as agent/non-premium when possible"
                 .to_string()
         } else if likely_premium_model {
             "Copilot premium-request estimate using Pro+/premium pricing".to_string()

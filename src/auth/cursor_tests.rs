@@ -2,17 +2,17 @@ use super::*;
 use tempfile::TempDir;
 
 #[test]
-fn config_file_path_under_jcode() {
+fn config_file_path_under_iagent() {
     let path = config_file_path().unwrap();
     let path_str = path.to_string_lossy();
-    assert!(path_str.contains("jcode"));
+    assert!(path_str.contains("iagent"));
     assert!(path_str.ends_with("cursor.env"));
 }
 
 #[test]
 fn save_and_load_api_key() {
     let dir = TempDir::new().unwrap();
-    let file = dir.path().join("jcode").join("cursor.env");
+    let file = dir.path().join("iagent").join("cursor.env");
 
     std::fs::create_dir_all(file.parent().unwrap()).unwrap();
     let content = "CURSOR_API_KEY=test_key_123\n";

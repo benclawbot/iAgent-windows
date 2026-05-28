@@ -27,7 +27,7 @@ impl SelfDevBuildTarget {
     pub fn parse(value: Option<&str>) -> Result<Self> {
         match value.unwrap_or("auto").trim().to_ascii_lowercase().as_str() {
             "" | "auto" => Ok(Self::Auto),
-            "backend" | "jcode" | "all" | "both" => Ok(Self::Backend),
+            "backend" | "iagent" | "all" | "both" => Ok(Self::Backend),
             other => anyhow::bail!(
                 "invalid selfdev build target `{}`; expected auto or backend",
                 other

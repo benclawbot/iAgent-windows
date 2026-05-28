@@ -253,7 +253,7 @@ pub fn launcher_dir() -> Result<PathBuf> {
     }
 }
 
-/// Path to the launcher binary (`~/.local/bin/jcode` by default).
+/// Path to the launcher binary (`~/.local/bin/iagent` by default).
 pub fn launcher_binary_path() -> Result<PathBuf> {
     Ok(launcher_dir()?.join(binary_name()))
 }

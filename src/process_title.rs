@@ -82,14 +82,14 @@ fn set_killall_process_name() {
 }
 
 pub(crate) fn set_server_title(server_name: &str) {
-    set_title(compact_process_title("jcode:s:", Some(server_name)));
+    set_title(compact_process_title("iagent:s:", Some(server_name)));
 }
 
 pub(crate) fn set_client_generic_title(is_selfdev: bool) {
     let prefix = if is_selfdev {
-        "jcode:selfdev"
+        "iagent:selfdev"
     } else {
-        "jcode:client"
+        "iagent:client"
     };
     set_title(compact_process_title(prefix, None));
 }
@@ -99,7 +99,7 @@ pub(crate) fn set_client_session_title(session_id: &str, is_selfdev: bool) {
 }
 
 pub(crate) fn set_client_display_title(session_name: &str, is_selfdev: bool) {
-    let prefix = if is_selfdev { "jcode:d:" } else { "jcode:c:" };
+    let prefix = if is_selfdev { "iagent:d:" } else { "iagent:c:" };
     set_title(compact_process_title(prefix, Some(session_name)));
 }
 
@@ -108,60 +108,60 @@ pub(crate) fn set_client_remote_display_title(
     session_name: &str,
     is_selfdev: bool,
 ) {
-    if server_name.is_empty() || server_name.eq_ignore_ascii_case("jcode") {
+    if server_name.is_empty() || server_name.eq_ignore_ascii_case("iagent") {
         set_client_display_title(session_name, is_selfdev);
         return;
     }
-    let prefix = if is_selfdev { "jcode:d:" } else { "jcode:c:" };
+    let prefix = if is_selfdev { "iagent:d:" } else { "iagent:c:" };
     set_title(format!("{prefix}{server_name}/{session_name}"));
 }
 
 pub(crate) fn initial_title(args: &Args) -> String {
     match &args.command {
-        Some(Command::Serve { .. }) => "jcode:server".to_string(),
-        Some(Command::Connect) => "jcode:client".to_string(),
-        Some(Command::Run { .. }) => "jcode run".to_string(),
-        Some(Command::Login { .. }) => "jcode login".to_string(),
-        Some(Command::Repl) => "jcode repl".to_string(),
-        Some(Command::Update) => "jcode update".to_string(),
-        Some(Command::Version { .. }) => "jcode version".to_string(),
-        Some(Command::Usage { .. }) => "jcode usage".to_string(),
-        Some(Command::SelfDev { .. }) => "jcode:selfdev".to_string(),
-        Some(Command::Debug { .. }) => "jcode debug".to_string(),
-        Some(Command::Auth(_)) => "jcode auth".to_string(),
-        Some(Command::Provider(_)) => "jcode provider".to_string(),
-        Some(Command::Memory(_)) => "jcode memory".to_string(),
-        Some(Command::Session(_)) => "jcode session".to_string(),
-        Some(Command::Ambient(_)) => "jcode ambient".to_string(),
-        Some(Command::PersonalDaemon { .. }) => "jcode personal daemon".to_string(),
-        Some(Command::Pair { .. }) => "jcode pair".to_string(),
-        Some(Command::Dictate { .. }) => "jcode dictate".to_string(),
+        Some(Command::Serve { .. }) => "iagent:server".to_string(),
+        Some(Command::Connect) => "iagent:client".to_string(),
+        Some(Command::Run { .. }) => "iagent run".to_string(),
+        Some(Command::Login { .. }) => "iagent login".to_string(),
+        Some(Command::Repl) => "iagent repl".to_string(),
+        Some(Command::Update) => "iagent update".to_string(),
+        Some(Command::Version { .. }) => "iagent version".to_string(),
+        Some(Command::Usage { .. }) => "iagent usage".to_string(),
+        Some(Command::SelfDev { .. }) => "iagent:selfdev".to_string(),
+        Some(Command::Debug { .. }) => "iagent debug".to_string(),
+        Some(Command::Auth(_)) => "iagent auth".to_string(),
+        Some(Command::Provider(_)) => "iagent provider".to_string(),
+        Some(Command::Memory(_)) => "iagent memory".to_string(),
+        Some(Command::Session(_)) => "iagent session".to_string(),
+        Some(Command::Ambient(_)) => "iagent ambient".to_string(),
+        Some(Command::PersonalDaemon { .. }) => "iagent personal daemon".to_string(),
+        Some(Command::Pair { .. }) => "iagent pair".to_string(),
+        Some(Command::Dictate { .. }) => "iagent dictate".to_string(),
         Some(Command::SetupHotkey {
             listen_macos_hotkey,
         }) => {
             if *listen_macos_hotkey {
-                "jcode hotkey listener".to_string()
+                "iagent hotkey listener".to_string()
             } else {
-                "jcode hotkey setup".to_string()
+                "iagent hotkey setup".to_string()
             }
         }
-        Some(Command::Browser { .. }) => "jcode browser".to_string(),
-        Some(Command::Model(_)) => "jcode model".to_string(),
-        Some(Command::AuthTest { .. }) => "jcode auth-test".to_string(),
-        Some(Command::Restart { .. }) => "jcode restart".to_string(),
-        Some(Command::SetupLauncher) => "jcode setup-launcher".to_string(),
+        Some(Command::Browser { .. }) => "iagent browser".to_string(),
+        Some(Command::Model(_)) => "iagent model".to_string(),
+        Some(Command::AuthTest { .. }) => "iagent auth-test".to_string(),
+        Some(Command::Restart { .. }) => "iagent restart".to_string(),
+        Some(Command::SetupLauncher) => "iagent setup-launcher".to_string(),
         None => {
             if let Some(resume) = args.resume.as_deref().filter(|resume| !resume.is_empty()) {
                 let prefix = if crate::cli::selfdev::client_selfdev_requested() {
-                    "jcode:d:"
+                    "iagent:d:"
                 } else {
-                    "jcode:c:"
+                    "iagent:c:"
                 };
                 compact_process_title(prefix, Some(&session_name(resume)))
             } else if crate::cli::selfdev::client_selfdev_requested() {
-                "jcode:selfdev".to_string()
+                "iagent:selfdev".to_string()
             } else {
-                "jcode:client".to_string()
+                "iagent:client".to_string()
             }
         }
     }
@@ -194,16 +194,16 @@ mod tests {
     #[test]
     fn initial_title_labels_server() {
         with_selfdev_env_removed(|| {
-            let args = Args::parse_from(["jcode", "serve"]);
-            assert_eq!(initial_title(&args), "jcode:server");
+            let args = Args::parse_from(["iagent", "serve"]);
+            assert_eq!(initial_title(&args), "iagent:server");
         });
     }
 
     #[test]
     fn initial_title_labels_resume_client_with_short_name() {
         with_selfdev_env_removed(|| {
-            let args = Args::parse_from(["jcode", "--resume", "session_fox_123"]);
-            assert_eq!(initial_title(&args), "jcode:c:fox");
+            let args = Args::parse_from(["iagent", "--resume", "session_fox_123"]);
+            assert_eq!(initial_title(&args), "iagent:c:fox");
         });
     }
 
@@ -247,8 +247,8 @@ mod tests {
     #[test]
     fn initial_title_labels_selfdev_command() {
         with_selfdev_env_removed(|| {
-            let args = Args::parse_from(["jcode", "self-dev"]);
-            assert_eq!(initial_title(&args), "jcode:selfdev");
+            let args = Args::parse_from(["iagent", "self-dev"]);
+            assert_eq!(initial_title(&args), "iagent:selfdev");
         });
     }
 }

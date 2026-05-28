@@ -720,7 +720,7 @@ mod telemetry_helper_tests {
     fn detects_test_runs_from_tool_input() {
         assert!(looks_like_telemetry_test_run(
             "bash",
-            &serde_json::json!({ "command": "cargo test -p jcode" })
+            &serde_json::json!({ "command": "cargo test -p iagent" })
         ));
         assert!(looks_like_telemetry_test_run(
             "schedule",

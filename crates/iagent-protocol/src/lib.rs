@@ -1,4 +1,4 @@
-//! Client-server protocol for jcode
+//! Client-server protocol for iagent
 //!
 //! Uses newline-delimited JSON over Unix socket.
 //! Server streams events back to clients during message processing.
@@ -436,7 +436,7 @@ pub enum Request {
         capabilities: Vec<String>,
     },
 
-    /// Send a task to jcode agent
+    /// Send a task to iagent agent
     #[serde(rename = "agent_task")]
     AgentTask {
         id: u64,
@@ -449,7 +449,7 @@ pub enum Request {
         async_: bool,
     },
 
-    /// Query jcode agent's capabilities
+    /// Query iagent agent's capabilities
     #[serde(rename = "agent_capabilities")]
     AgentCapabilities { id: u64 },
 
@@ -1905,7 +1905,7 @@ pub fn truncate_comm_completion_report(report: &str) -> String {
     if report.chars().count() <= MAX_REPORT_CHARS {
         return report.to_string();
     }
-    let suffix = "\n\n[Report truncated by jcode.]";
+    let suffix = "\n\n[Report truncated by iagent.]";
     let keep = MAX_REPORT_CHARS.saturating_sub(suffix.chars().count());
     let mut out: String = report.chars().take(keep).collect();
     out.push_str(suffix);

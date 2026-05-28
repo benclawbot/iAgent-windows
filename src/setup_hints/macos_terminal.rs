@@ -140,10 +140,10 @@ pub(super) fn escape_applescript_text(input: &str) -> String {
     input.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
-pub(super) fn paused_jcode_shell_command(exe_path: &str) -> String {
+pub(super) fn paused_iagent_shell_command(exe_path: &str) -> String {
     let escaped_exe = escape_shell_single_quotes(exe_path);
     format!(
-        r#"if [ ! -x '{exe}' ]; then printf 'jcode executable not found.\n'; exit 127; fi; '{exe}'; status=$?; if [ "$status" -ne 0 ]; then printf '\nJcode exited with status %s.\n' "$status"; printf 'Press Enter to close... '; read -r _; fi; exit "$status""#,
+        r#"if [ ! -x '{exe}' ]; then printf 'iagent executable not found.\n'; exit 127; fi; '{exe}'; status=$?; if [ "$status" -ne 0 ]; then printf '\niagent exited with status %s.\n' "$status"; printf 'Press Enter to close... '; read -r _; fi; exit "$status""#,
         exe = escaped_exe,
     )
 }

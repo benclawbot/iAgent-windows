@@ -1,6 +1,6 @@
-//! Logging infrastructure for jcode
+//! Logging infrastructure for iagent
 //!
-//! Logs to ~/.jcode/logs/ with automatic rotation
+//! Logs to ~/.iagent/logs/ with automatic rotation
 //!
 //! Supports thread-local context for server, session, provider, and model info.
 
@@ -173,11 +173,11 @@ impl Logger {
         let ctx = context_prefix();
         let line = format!("[{}] [{}] {}{}\n", timestamp, level, ctx, message);
         if let Err(err) = self.file.write_all(line.as_bytes()) {
-            eprintln!("jcode logger write failed: {err}");
+            eprintln!("iagent logger write failed: {err}");
             return;
         }
         if let Err(err) = self.file.flush() {
-            eprintln!("jcode logger flush failed: {err}");
+            eprintln!("iagent logger flush failed: {err}");
         }
     }
 }
@@ -378,7 +378,7 @@ pub fn cleanup_old_logs() {
                 if modified < cutoff
                     && let Err(err) = fs::remove_file(entry.path())
                 {
-                    eprintln!("jcode logger cleanup failed: {err}");
+                    eprintln!("iagent logger cleanup failed: {err}");
                 }
             }
         }

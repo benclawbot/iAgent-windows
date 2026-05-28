@@ -13,7 +13,7 @@ impl AuthTestSandbox {
     pub(crate) fn new() -> anyhow::Result<Self> {
         let lock = crate::storage::lock_test_env();
         let temp = tempfile::Builder::new()
-            .prefix("jcode-auth-lifecycle-")
+            .prefix("iagent-auth-lifecycle-")
             .tempdir()?;
         let saved_env = tracked_env_vars()
             .into_iter()
@@ -45,7 +45,7 @@ impl AuthTestSandbox {
     }
 
     pub(crate) fn config_dir(&self) -> PathBuf {
-        self.root().join("config").join("jcode")
+        self.root().join("config").join("iagent")
     }
 
     pub(crate) fn external_dir(&self) -> PathBuf {

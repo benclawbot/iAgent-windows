@@ -1,6 +1,6 @@
 use super::{
     MacTerminalKind, SetupHintsState, effective_macos_terminal, escape_applescript_text,
-    escape_shell_single_quotes, launch_command_for_macos_terminal, paused_jcode_shell_command,
+    escape_shell_single_quotes, launch_command_for_macos_terminal, paused_iagent_shell_command,
     save_preferred_macos_terminal,
 };
 use anyhow::{Context, Result};
@@ -155,14 +155,14 @@ fn should_refresh_macos_app_launcher_paths(
 fn macos_launcher_script(terminal: MacTerminalKind, exe_path: &str, app_dir: &Path) -> String {
     let app_dir_escaped = escape_shell_single_quotes(&app_dir.to_string_lossy());
     let exe_path_escaped = escape_shell_single_quotes(exe_path);
-    let shell_command = paused_jcode_shell_command(exe_path);
+    let shell_command = paused_iagent_shell_command(exe_path);
     let launch_command = launch_command_for_macos_terminal(terminal, &shell_command);
     let missing_message = escape_applescript_text(&format!(
-        "Jcode could not launch because the executable was not found.\n\nExpected path:\n{}\n\nTry reinstalling jcode or rerun:\njcode setup-launcher",
+        "iagent could not launch because the executable was not found.\n\nExpected path:\n{}\n\nTry reinstalling iagent or rerun:\niagent setup-launcher",
         exe_path
     ));
     let terminal_failure_message = escape_applescript_text(&format!(
-        "Jcode could not open {}.\n\nTry rerunning:\njcode setup-launcher\n\nLauncher log:\n~/.jcode/launcher/macos-launcher.log",
+        "iagent could not open {}.\n\nTry rerunning:\niagent setup-launcher\n\nLauncher log:\n~/.jcode/launcher/macos-launcher.log",
         terminal.label()
     ));
 
@@ -177,13 +177,13 @@ mkdir -p "$LOG_DIR" >/dev/null 2>&1 || true
 
 show_missing_executable() {{
   /usr/bin/osascript <<'APPLESCRIPT' >/dev/null 2>&1 || true
-display alert "Jcode launch failed" message "{missing_message}" as critical
+display alert "iagent launch failed" message "{missing_message}" as critical
 APPLESCRIPT
 }}
 
 show_terminal_launch_failure() {{
   /usr/bin/osascript <<'APPLESCRIPT' >/dev/null 2>&1 || true
-display alert "Jcode launch failed" message "{terminal_failure_message}" as critical
+display alert "iagent launch failed" message "{terminal_failure_message}" as critical
 APPLESCRIPT
 }}
 
