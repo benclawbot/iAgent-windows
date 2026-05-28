@@ -13,12 +13,7 @@ use crate::storage;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
-use jcode_import_core::{
-    ExternalMessageRecord, ExternalSessionRecord, ImportCoreResult, collect_recent_files_recursive,
-    load_claude_external_messages, load_codex_external_session, load_opencode_external_session,
-    load_pi_external_session,
-};
-use jcode_session_types::{
+use iagent_session_types::{
     SessionSearchContextLine as ResultContextLine, SessionSearchQueryProfile as QueryProfile,
     SessionSearchRenderOptions, SessionSearchReport as SearchReport,
     SessionSearchResult as SearchResult, SessionSearchResultKind as SearchResultKind,
@@ -31,6 +26,11 @@ use jcode_session_types::{
     session_search_raw_matches_query as raw_matches_query,
     session_search_truncate_title_text as truncate_title_text,
     session_search_working_dir_matches as working_dir_matches,
+};
+use jcode_import_core::{
+    ExternalMessageRecord, ExternalSessionRecord, ImportCoreResult, collect_recent_files_recursive,
+    load_claude_external_messages, load_codex_external_session, load_opencode_external_session,
+    load_pi_external_session,
 };
 use serde::Deserialize;
 use serde_json::{Value, json};

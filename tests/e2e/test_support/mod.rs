@@ -158,13 +158,21 @@ pub(crate) fn reserve_tcp_port() -> Result<u16> {
 
 pub(crate) async fn wait_for_socket(path: &std::path::Path) -> Result<()> {
     let start = Instant::now();
-    while !path.exists() {
+    loop {
+        #[cfg(windows)]
+        let socket_ready = server::has_live_listener(path).await;
+        #[cfg(not(windows))]
+        let socket_ready = path.exists();
+
+        if socket_ready {
+            return Ok(());
+        }
+
         if start.elapsed() > Duration::from_secs(10) {
             anyhow::bail!("Server socket did not appear");
         }
         tokio::time::sleep(Duration::from_millis(25)).await;
     }
-    Ok(())
 }
 
 pub(crate) async fn wait_for_debug_socket_ready(path: &std::path::Path) -> Result<()> {

@@ -1,5 +1,5 @@
 use super::*;
-pub use jcode_selfdev_types::ReloadRecoveryDirective;
+pub use iagent_selfdev_types::ReloadRecoveryDirective;
 
 impl ReloadContext {
     fn sanitize_session_id(session_id: &str) -> String {

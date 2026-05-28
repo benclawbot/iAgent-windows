@@ -5,7 +5,7 @@
 //! - When the next automatic compaction will trigger
 //! - Manual trigger option
 //!
-//! Note: Most config options (threshold, mode, etc.) are in jcode-config-types
+//! Note: Most config options (threshold, mode, etc.) are in iagent-config-types
 //! and controlled via config.toml. This tool provides visibility only.
 
 use crate::compaction::CompactionManager;

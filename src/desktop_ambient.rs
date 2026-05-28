@@ -3,13 +3,13 @@ use std::time::Duration;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use desktop_monitor::{
+use iagent_desktop_monitor::{
     DesktopMonitor, ImportanceScorer, NotificationDetector, NotificationState, UserPatterns,
 };
-use overlay_ui::{
+use iagent_overlay_ui::{
     ImportantNotification as OverlayNotification, OverlayConfig, spawn_overlay_daemon,
 };
-use suggestion_engine::{EngineConfig, LanguageModelProvider, SuggestionEngine};
+use iagent_suggestion_engine::{EngineConfig, LanguageModelProvider, SuggestionEngine};
 
 use crate::cli::provider_init::{ProviderChoice, init_provider_and_registry};
 use crate::config::config;

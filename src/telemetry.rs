@@ -2,7 +2,7 @@ use crate::storage;
 mod lifecycle;
 mod state_support;
 use chrono::{DateTime, NaiveDate, Utc};
-use jcode_usage_types::{
+use iagent_usage_types::{
     AuthEvent, ErrorCounts, FeedbackEvent, InstallEvent, OnboardingStepEvent,
     SessionLifecycleEvent, SessionStartEvent, TelemetryProjectProfile as ProjectProfile,
     TelemetryToolCategory as ToolCategory, TelemetryWorkflowCounts, TurnEndEvent, UpgradeEvent,
@@ -11,7 +11,7 @@ use jcode_usage_types::{
     mcp_telemetry_server_name as mcp_server_name, sanitize_feedback_text, sanitize_telemetry_label,
     telemetry_workflow_flags_from_counts,
 };
-pub use jcode_usage_types::{ErrorCategory, SessionEndReason};
+pub use iagent_usage_types::{ErrorCategory, SessionEndReason};
 use lifecycle::emit_lifecycle_event;
 use serde_json::Value;
 use state_support::*;

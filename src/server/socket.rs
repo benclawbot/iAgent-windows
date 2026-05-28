@@ -70,7 +70,11 @@ pub async fn connect_socket(path: &std::path::Path) -> Result<Stream> {
 }
 
 pub(super) async fn socket_has_live_listener(path: &std::path::Path) -> bool {
-    crate::transport::is_socket_path(path) && Stream::connect(path).await.is_ok()
+    crate::transport::is_socket_path(path)
+        && matches!(
+            tokio::time::timeout(Duration::from_millis(50), Stream::connect(path)).await,
+            Ok(Ok(_))
+        )
 }
 
 /// Return true if a live server process is listening on the socket path.
@@ -248,7 +252,11 @@ pub async fn wait_for_server_ready(path: &std::path::Path, timeout: Duration) ->
     let start = Instant::now();
     while start.elapsed() < timeout {
         if crate::transport::is_socket_path(path)
-            && let Ok(mut client) = Client::connect_with_path(path.to_path_buf()).await
+            && let Ok(Ok(mut client)) = tokio::time::timeout(
+                Duration::from_millis(250),
+                Client::connect_with_path(path.to_path_buf()),
+            )
+            .await
             && let Ok(Ok(true)) =
                 tokio::time::timeout(Duration::from_millis(250), client.ping()).await
         {
@@ -267,7 +275,9 @@ async fn probe_server_ready(path: &std::path::Path, ping_timeout: Duration) -> b
         return false;
     }
 
-    let Ok(mut client) = Client::connect_with_path(path.to_path_buf()).await else {
+    let Ok(Ok(mut client)) =
+        tokio::time::timeout(ping_timeout, Client::connect_with_path(path.to_path_buf())).await
+    else {
         return false;
     };
 
@@ -320,7 +330,7 @@ pub(super) fn format_server_start_error(
 ) -> String {
     if stderr_output.trim().is_empty() {
         format!(
-            "Server exited before signalling ready ({}). Check logs at ~/.jcode/logs/",
+            "Server exited before signalling ready ({}). Check iAgent app-data logs.",
             status
         )
     } else {

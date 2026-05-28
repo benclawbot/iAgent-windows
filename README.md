@@ -463,15 +463,12 @@ irm "https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/in
 
 ## Build
 
-```bash
-cargo build
-```
-
-## Release Build
-
-```bash
-cargo build --profile release-lto
-```
+| Command | Profile | Use case |
+|---|---|---|
+| `cargo build` | `dev` | Development |
+| `cargo build --release` | `release` | Standard distribution binary |
+| `cargo build --profile release-fast` | `release-fast` | Iteration with near-release performance |
+| `cargo build --profile release-lto` | `release-lto` | Final CI artifact; slowest and smallest |
 
 ## Run
 
@@ -623,26 +620,26 @@ If issues persist:
 
 | Crate | Purpose |
 |---|---|
-| `app-integrations` | Browser, form-fill, OfficeCLI, and Office workflow integrations |
-| `desktop-monitor` | Active desktop context, window state, and safe file operations |
+| `iagent-app-integrations` | Browser, form-fill, OfficeCLI, and Office workflow integrations |
+| `iagent-desktop-monitor` | Active desktop context, window state, and safe file operations |
 | `iagent-settings` | Shared desktop/runtime settings |
 | `jcode-agent-runtime` | Runtime orchestration |
-| `jcode-ambient-types` | Ambient workflow data contracts |
-| `jcode-auth-types` | Authentication data contracts |
+| `iagent-ambient-types` | Ambient workflow data contracts |
+| `iagent-auth-types` | Authentication data contracts |
 | `jcode-compaction-core` | Conversation/context compaction support |
-| `jcode-memory-types` | Memory structures |
+| `iagent-memory-types` | Memory structures |
 | `jcode-plan` | Planning engine |
 | `jcode-protocol` | Runtime protocol and transport types |
 | `jcode-provider-core` | Provider abstraction layer |
 | `jcode-provider-openai` | OpenAI integration |
 | `jcode-provider-openrouter` | OpenRouter integration |
 | `jcode-provider-gemini` | Gemini integration |
-| `jcode-session-types` | Session state contracts |
+| `iagent-session-types` | Session state contracts |
 | `jcode-storage` | Persistence layer |
 | `jcode-tool-core` | Shared tool traits and execution contracts |
-| `jcode-tool-types` | Shared tool input/output types |
-| `overlay-ui` | Overlay runtime |
-| `suggestion-engine` | Suggestion systems |
+| `iagent-tool-types` | Shared tool input/output types |
+| `iagent-overlay-ui` | Overlay runtime |
+| `iagent-suggestion-engine` | Suggestion systems |
 
 ---
 

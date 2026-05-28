@@ -73,14 +73,14 @@ fn validate_external_auth_file_rejects_symlink() {
 }
 
 #[test]
-fn app_config_dir_uses_jcode_home_when_set() {
+fn app_config_dir_uses_iagent_config_under_jcode_home_when_set() {
     let _guard = lock_test_env();
     let prev_home = std::env::var_os("JCODE_HOME");
     let temp = tempfile::TempDir::new().expect("create temp dir");
     crate::env::set_var("JCODE_HOME", temp.path());
 
     let resolved = app_config_dir().expect("resolve app config dir");
-    assert_eq!(resolved, temp.path().join("config").join("jcode"));
+    assert_eq!(resolved, temp.path().join("config").join("iAgent"));
 
     if let Some(prev_home) = prev_home {
         crate::env::set_var("JCODE_HOME", prev_home);

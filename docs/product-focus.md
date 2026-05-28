@@ -8,11 +8,11 @@ Ship one high-confidence loop end to end:
 ## In Scope (Default Product Path)
 
 1. Context capture
-- Foreground app/window context from `desktop-monitor`.
+- Foreground app/window context from `iagent-desktop-monitor`.
 - Notification-derived context events with dedupe/throttle.
 
 2. Suggestion generation
-- Intent-aware suggestion cards from `suggestion-engine`.
+- Intent-aware suggestion cards from `iagent-suggestion-engine`.
 - Confidence-based fallback to rewrite suggestions when intent confidence is low.
 
 3. Safety and approval
@@ -21,8 +21,8 @@ Ship one high-confidence loop end to end:
 - Persistent "never again" deny rules.
 
 4. Execution
-- Browser execution via CDP (`app-integrations::browser` + `form_fill` workflow).
-- Office workflows via `app-integrations::office_workflows`.
+- Browser execution via CDP (`iagent-app-integrations::browser` + `form_fill` workflow).
+- Office workflows via `iagent-app-integrations::office_workflows`.
 
 5. Learning and memory
 - Persist accepted/denied actions and safety decisions for future policy routing.
@@ -39,10 +39,10 @@ Ship one high-confidence loop end to end:
 
 1. Mark non-core modules as experimental behind feature flags.
 2. Keep core loop crates always-on:
-- `desktop-monitor`
-- `suggestion-engine`
-- `app-integrations`
-- `overlay-ui`
+- `iagent-desktop-monitor`
+- `iagent-suggestion-engine`
+- `iagent-app-integrations`
+- `iagent-overlay-ui`
 - `src/safety.rs` policy flow
 
 3. Route all mutating actions through:

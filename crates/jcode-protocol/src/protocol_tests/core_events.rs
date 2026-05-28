@@ -317,7 +317,7 @@ fn test_history_event_decodes_without_compaction_mode_for_older_servers() -> Res
     assert_eq!(connection_type.as_deref(), Some("websocket"));
     assert_eq!(
         compaction_mode,
-        jcode_config_types::CompactionMode::Reactive
+        iagent_config_types::CompactionMode::Reactive
     );
     assert!(!side_panel.has_pages());
     Ok(())
@@ -359,16 +359,16 @@ fn test_history_event_roundtrip_preserves_side_panel_snapshot() -> Result<()> {
         subagent_model: None,
         autoreview_enabled: None,
         autojudge_enabled: None,
-        compaction_mode: jcode_config_types::CompactionMode::Reactive,
+        compaction_mode: iagent_config_types::CompactionMode::Reactive,
         activity: None,
-        side_panel: jcode_side_panel_types::SidePanelSnapshot {
+        side_panel: iagent_side_panel_types::SidePanelSnapshot {
             focused_page_id: Some("page-1".to_string()),
-            pages: vec![jcode_side_panel_types::SidePanelPage {
+            pages: vec![iagent_side_panel_types::SidePanelPage {
                 id: "page-1".to_string(),
                 title: "Notes".to_string(),
                 file_path: "/tmp/notes.md".to_string(),
-                format: jcode_side_panel_types::SidePanelPageFormat::Markdown,
-                source: jcode_side_panel_types::SidePanelPageSource::Managed,
+                format: iagent_side_panel_types::SidePanelPageFormat::Markdown,
+                source: iagent_side_panel_types::SidePanelPageSource::Managed,
                 content: "# Notes".to_string(),
                 updated_at_ms: 42,
             }],
@@ -442,14 +442,14 @@ fn test_compacted_history_event_roundtrip() -> Result<()> {
 #[test]
 fn test_side_panel_state_event_roundtrip() -> Result<()> {
     let event = ServerEvent::SidePanelState {
-        snapshot: jcode_side_panel_types::SidePanelSnapshot {
+        snapshot: iagent_side_panel_types::SidePanelSnapshot {
             focused_page_id: Some("page-1".to_string()),
-            pages: vec![jcode_side_panel_types::SidePanelPage {
+            pages: vec![iagent_side_panel_types::SidePanelPage {
                 id: "page-1".to_string(),
                 title: "Notes".to_string(),
                 file_path: "/tmp/notes.md".to_string(),
-                format: jcode_side_panel_types::SidePanelPageFormat::Markdown,
-                source: jcode_side_panel_types::SidePanelPageSource::Managed,
+                format: iagent_side_panel_types::SidePanelPageFormat::Markdown,
+                source: iagent_side_panel_types::SidePanelPageSource::Managed,
                 content: "updated".to_string(),
                 updated_at_ms: 99,
             }],

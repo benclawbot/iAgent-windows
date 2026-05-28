@@ -1,6 +1,8 @@
 use crate::cli::GrepArgs;
 use crate::structure::{extract_file_structure, StructureItem};
-use crate::workspace::{collect_file_entries, read_text_file, SearchScope};
+use crate::workspace::{
+    collect_file_entries, normalize_relative_path, read_text_file, SearchScope,
+};
 use regex::Regex;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -524,7 +526,7 @@ fn parse_rg_json(
 }
 
 fn normalize_rg_path(path: &str) -> String {
-    path.strip_prefix("./").unwrap_or(path).to_string()
+    normalize_relative_path(path)
 }
 
 fn process_rg_match_file(

@@ -7,7 +7,7 @@ Accepted - 2026-05-21
 The project now has two browser automation backends:
 
 1. Firefox Agent Bridge (existing runtime integration and operations workflow).
-2. CDP-based Chrome/Edge automation (`crates/app-integrations/src/browser.rs`).
+2. CDP-based Chrome/Edge automation (`crates/iagent-app-integrations/src/browser.rs`).
 
 We need a stable strategy for routing browser actions without breaking existing Firefox users.
 

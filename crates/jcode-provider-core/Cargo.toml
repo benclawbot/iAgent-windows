@@ -11,7 +11,7 @@ path = "src/lib.rs"
 anyhow = "1"
 async-trait = "0.1"
 futures = "0.3"
-jcode-message-types = { path = "../jcode-message-types" }
+iagent-message-types = { path = "../iagent-message-types" }
 reqwest = { version = "0.12", features = ["json", "stream"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

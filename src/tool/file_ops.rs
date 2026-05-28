@@ -1,12 +1,12 @@
 //! `file` tool — Safe file operations with path traversal protection and trash-based deletion.
 //!
-//! Wraps desktop_monitor::file_ops functions with XDG shortcut support.
+//! Wraps iagent_desktop_monitor::file_ops functions with XDG shortcut support.
 //! All operations enforce home-directory boundaries and protected directory rules.
 
 use crate::tool::{Tool, ToolContext, ToolOutput, intent_schema_property};
 use anyhow::Result;
 use async_trait::async_trait;
-use desktop_monitor::file_ops;
+use iagent_desktop_monitor::file_ops;
 use serde::Deserialize;
 use serde_json::{Value, json};
 

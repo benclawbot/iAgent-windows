@@ -16,7 +16,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use jcode_memory_types::{MemoryEntry, MemoryGraph};
+use iagent_memory_types::{MemoryEntry, MemoryGraph};
 
 /// A fact claim extracted from memory content.
 #[derive(Debug, Clone)]

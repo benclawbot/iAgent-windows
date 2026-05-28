@@ -23,8 +23,10 @@ const DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(120);
 const DOWNLOAD_PROGRESS_UPDATE_STEP: u64 = 1_048_576;
 
 pub fn print_centered(msg: &str) {
-    let width = crossterm::terminal::size()
-        .map(|(w, _)| w as usize)
+    let width = std::env::var("COLUMNS")
+        .ok()
+        .and_then(|value| value.parse::<usize>().ok())
+        .filter(|value| *value > 0)
         .unwrap_or(80);
     for line in msg.lines() {
         let visible_len = unicode_display_width(line);

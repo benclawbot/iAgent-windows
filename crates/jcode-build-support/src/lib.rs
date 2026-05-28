@@ -36,7 +36,7 @@ use std::process::Command;
 #[cfg(unix)]
 use std::time::{Duration, Instant};
 
-pub use jcode_selfdev_types::{
+pub use iagent_selfdev_types::{
     BinaryChoice, BinaryVersionReport, BuildInfo, CanaryStatus, CrashInfo, DevBinarySourceMetadata,
     MigrationContext, PendingActivation, PublishedBuild, SelfDevBuildCommand, SelfDevBuildTarget,
     SourceState,

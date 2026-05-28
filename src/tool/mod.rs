@@ -54,15 +54,15 @@ use crate::goal_judge::GoalJudge;
 use crate::provider::Provider;
 use crate::skill::SkillRegistry;
 use anyhow::Result;
-use jcode_message_types::ToolDefinition;
+use iagent_message_types::ToolDefinition;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+pub use iagent_tool_types::{ToolImage, ToolOutput};
 pub(crate) use jcode_tool_core::intent_schema_property;
 pub use jcode_tool_core::{StdinInputRequest, Tool, ToolContext, ToolExecutionMode};
-pub use jcode_tool_types::{ToolImage, ToolOutput};
 
 /// Registry of available tools (Arc-wrapped for sharing)
 ///

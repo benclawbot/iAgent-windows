@@ -1,4 +1,4 @@
-use jcode_message_types::{
+use iagent_message_types::{
     ContentBlock, Message as ChatMessage, Role, TOOL_OUTPUT_MISSING_TEXT, ToolDefinition,
     sanitize_tool_id,
 };
@@ -534,7 +534,7 @@ pub fn build_responses_input_with_logger(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jcode_message_types::ToolDefinition;
+    use iagent_message_types::ToolDefinition;
     use serde_json::json;
 
     #[test]

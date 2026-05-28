@@ -248,12 +248,12 @@ pub fn maybe_unload_if_idle(idle_for: Duration) -> bool {
             .force_attribution(),
         );
 
-        #[cfg(feature = "jemalloc")]
+        #[cfg(all(feature = "jemalloc", not(windows)))]
         if let Err(err) = crate::process_memory::purge_allocator() {
             log_info!(("jemalloc purge after model unload failed: {}", err));
         }
 
-        #[cfg(all(target_os = "linux", not(feature = "jemalloc")))]
+        #[cfg(all(target_os = "linux", not(all(feature = "jemalloc", not(windows)))))]
         {
             unsafe extern "C" {
                 fn malloc_trim(pad: usize) -> i32;
@@ -296,12 +296,12 @@ pub fn unload_now() -> bool {
             .force_attribution(),
         );
 
-        #[cfg(feature = "jemalloc")]
+        #[cfg(all(feature = "jemalloc", not(windows)))]
         if let Err(err) = crate::process_memory::purge_allocator() {
             log_info!(("jemalloc purge after force unload failed: {}", err));
         }
 
-        #[cfg(all(target_os = "linux", not(feature = "jemalloc")))]
+        #[cfg(all(target_os = "linux", not(all(feature = "jemalloc", not(windows)))))]
         {
             unsafe extern "C" {
                 fn malloc_trim(pad: usize) -> i32;

@@ -106,7 +106,7 @@ fn test_input_shell_request_roundtrip() -> Result<()> {
 #[test]
 fn test_input_shell_result_event_roundtrip() -> Result<()> {
     let event = ServerEvent::InputShellResult {
-        result: jcode_message_types::InputShellResult {
+        result: iagent_message_types::InputShellResult {
             command: "pwd".to_string(),
             cwd: Some("/tmp/project".to_string()),
             output: "/tmp/project\n".to_string(),

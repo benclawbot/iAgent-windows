@@ -911,7 +911,7 @@ impl PersonalStore {
     }
 
     pub fn capture_active_window(&self) -> Result<Option<AppWindowRecord>> {
-        let Some(context) = desktop_monitor::capture_window_context() else {
+        let Some(context) = iagent_desktop_monitor::capture_window_context() else {
             return Ok(None);
         };
 

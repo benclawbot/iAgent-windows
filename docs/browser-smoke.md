@@ -2,7 +2,7 @@
 
 The CDP smoke suite lives in:
 
-- `crates/app-integrations/tests/browser_smoke.rs`
+- `crates/iagent-app-integrations/tests/browser_smoke.rs`
 
 Both tests are marked `#[ignore]` because they require a live browser launched with remote debugging.
 
@@ -15,7 +15,7 @@ Both tests are marked `#[ignore]` because they require a live browser launched w
 `msedge --remote-debugging-port=9223`
 
 3. Run ignored smoke tests:
-`cargo test -p app-integrations --test browser_smoke -- --ignored`
+`cargo test -p iagent-app-integrations --test browser_smoke -- --ignored`
 
 ## Optional Environment Overrides
 

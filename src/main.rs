@@ -1,4 +1,4 @@
-#[cfg(feature = "jemalloc")]
+#[cfg(all(feature = "jemalloc", not(windows)))]
 #[global_allocator]
 static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
@@ -11,14 +11,14 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 // narenas:4            — limit arena count (17 threads don't need 64 arenas)
 // prof:true            — enable profiling support in jemalloc-prof builds
 // prof_active:false    — keep sampling disabled until explicitly enabled at runtime
-#[cfg(all(feature = "jemalloc", not(feature = "jemalloc-prof")))]
+#[cfg(all(feature = "jemalloc", not(feature = "jemalloc-prof"), not(windows)))]
 // jemalloc reads this exact exported symbol name at startup.
 #[allow(non_upper_case_globals)]
 #[unsafe(no_mangle)]
 pub static malloc_conf: Option<&'static [u8; 50]> =
     Some(b"dirty_decay_ms:1000,muzzy_decay_ms:1000,narenas:4\0");
 
-#[cfg(feature = "jemalloc-prof")]
+#[cfg(all(feature = "jemalloc-prof", not(windows)))]
 // jemalloc reads this exact exported symbol name at startup.
 #[allow(non_upper_case_globals)]
 #[unsafe(no_mangle)]

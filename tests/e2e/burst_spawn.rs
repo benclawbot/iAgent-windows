@@ -44,7 +44,11 @@ async fn burst_attach_resumed_client(
 
     let deadline = Instant::now() + Duration::from_secs(10);
     while Instant::now() < deadline {
-        let event = timeout(Duration::from_secs(1), client.read_event()).await??;
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        let event = match timeout(remaining, client.read_event()).await {
+            Ok(event) => event?,
+            Err(_) => break,
+        };
         event_count += 1;
         match event {
             ServerEvent::Ack { .. } => ack_count += 1,
@@ -120,7 +124,11 @@ async fn burst_attach_resumed_client_with_options(
 
     let deadline = Instant::now() + Duration::from_secs(10);
     while Instant::now() < deadline {
-        let event = timeout(Duration::from_secs(1), client.read_event()).await??;
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        let event = match timeout(remaining, client.read_event()).await {
+            Ok(event) => event?,
+            Err(_) => break,
+        };
         event_count += 1;
         match event {
             ServerEvent::Ack { .. } => ack_count += 1,

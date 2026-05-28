@@ -1,4 +1,4 @@
-use overlay_ui::{OverlayConfig, run_overlay_daemon};
+use iagent_overlay_ui::{OverlayConfig, run_overlay_daemon};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

@@ -9,28 +9,28 @@ autobins = false
 members = [
     ".",
     "crates/jcode-agent-runtime",
-    "crates/jcode-ambient-types",
-    "crates/jcode-auth-types",
+    "crates/iagent-ambient-types",
+    "crates/iagent-auth-types",
     "crates/jcode-embedding",
-    "crates/jcode-gateway-types",
+    "crates/iagent-gateway-types",
     "crates/jcode-import-core",
     "crates/jcode-pdf",
-    "crates/jcode-background-types",
-    "crates/jcode-batch-types",
+    "crates/iagent-background-types",
+    "crates/iagent-batch-types",
     "crates/jcode-build-support",
     "crates/jcode-compaction-core",
-    "crates/jcode-config-types",
+    "crates/iagent-config-types",
     "crates/jcode-core",
-    "crates/jcode-memory-types",
-    "crates/jcode-message-types",
+    "crates/iagent-memory-types",
+    "crates/iagent-message-types",
     "crates/jcode-overnight-core",
     "crates/jcode-plan",
     "crates/jcode-swarm-core",
     "crates/jcode-protocol",
-    "crates/jcode-selfdev-types",
-    "crates/jcode-session-types",
+    "crates/iagent-selfdev-types",
+    "crates/iagent-session-types",
     "crates/jcode-storage",
-    "crates/jcode-side-panel-types",
+    "crates/iagent-side-panel-types",
     "crates/jcode-azure-auth",
     "crates/jcode-notify-email",
     "crates/jcode-provider-metadata",
@@ -38,16 +38,16 @@ members = [
     "crates/jcode-provider-openrouter",
     "crates/jcode-provider-openai",
     "crates/jcode-provider-gemini",
-    "crates/jcode-usage-types",
-    "crates/jcode-task-types",
+    "crates/iagent-usage-types",
+    "crates/iagent-task-types",
     "crates/jcode-tool-core",
-    "crates/jcode-tool-types",
+    "crates/iagent-tool-types",
     "crates/jcode-update-core",
     "crates/jcode-terminal-launch",
-    "crates/desktop-monitor",
-    "crates/suggestion-engine",
-    "crates/overlay-ui",
-    "crates/app-integrations",
+    "crates/iagent-desktop-monitor",
+    "crates/iagent-suggestion-engine",
+    "crates/iagent-overlay-ui",
+    "crates/iagent-app-integrations",
     "crates/agentgrep",
 ]
 
@@ -76,11 +76,6 @@ name = "iagent-overlay-ui"
 path = "src/bin/overlay_ui.rs"
 
 [dependencies]
-# Memory allocator (reduces fragmentation for long-running server)
-tikv-jemallocator = { version = "0.6", features = ["unprefixed_malloc_on_supported_platforms"], optional = true }
-tikv-jemalloc-ctl = { version = "0.6", optional = true }
-tikv-jemalloc-sys = { version = "0.6", optional = true }
-
 # Async runtime
 tokio = { version = "1", features = ["fs", "io-std", "io-util", "macros", "net", "process", "rt-multi-thread", "signal", "sync", "time"] }
 futures = "0.3"
@@ -99,6 +94,7 @@ toml = "0.8"
 
 # CLI
 clap = { version = "4", features = ["derive"] }
+rpassword = "7"
 
 # File operations
 glob = "0.3"
@@ -118,7 +114,7 @@ proctitle = "0.1"
 
 # Embeddings (local inference) - behind feature flag (163 crates, slow to compile)
 jcode-embedding = { path = "crates/jcode-embedding", optional = true }
-jcode-gateway-types = { path = "crates/jcode-gateway-types" }
+iagent-gateway-types = { path = "crates/iagent-gateway-types" }
 jcode-import-core = { path = "crates/jcode-import-core" }
 
 # OAuth
@@ -129,10 +125,10 @@ hex = "0.4"
 libc = "0.2"
 url = "2"
 open = "5"               # Open URLs in browser
-jcode-auth-types = { path = "crates/jcode-auth-types" }
+iagent-auth-types = { path = "crates/iagent-auth-types" }
 jcode-azure-auth = { path = "crates/jcode-azure-auth" }
 jcode-agent-runtime = { path = "crates/jcode-agent-runtime" }
-jcode-ambient-types = { path = "crates/jcode-ambient-types" }
+iagent-ambient-types = { path = "crates/iagent-ambient-types" }
 jcode-notify-email = { path = "crates/jcode-notify-email" }
 jcode-provider-metadata = { path = "crates/jcode-provider-metadata" }
 jcode-provider-core = { path = "crates/jcode-provider-core" }
@@ -142,43 +138,42 @@ jcode-provider-gemini = { path = "crates/jcode-provider-gemini" }
 iagent-settings = { path = "crates/iagent-settings" }
 
 arboard = "3"
-desktop-monitor = { path = "crates/desktop-monitor" }
-suggestion-engine = { path = "crates/suggestion-engine" }
-overlay-ui = { path = "crates/overlay-ui" }
-app-integrations = { path = "crates/app-integrations" }
+iagent-desktop-monitor = { path = "crates/iagent-desktop-monitor" }
+iagent-suggestion-engine = { path = "crates/iagent-suggestion-engine" }
+iagent-overlay-ui = { path = "crates/iagent-overlay-ui" }
+iagent-app-integrations = { path = "crates/iagent-app-integrations" }
 jcode-update-core = { path = "crates/jcode-update-core" }
 jcode-terminal-launch = { path = "crates/jcode-terminal-launch" }
-jcode-usage-types = { path = "crates/jcode-usage-types" }
+iagent-usage-types = { path = "crates/iagent-usage-types" }
 
 # Streaming
 tokio-stream = "0.1"
 bytes = "1"
 
-crossterm = { version = "0.29", features = ["event-stream"] }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }  # Only PNG/JPEG (skip avif/rav1e, exr, gif, tiff, etc)
 unicode-width = "0.2"
 
 # PDF parsing (behind feature flag)
 jcode-pdf = { path = "crates/jcode-pdf", optional = true }
-jcode-background-types = { path = "crates/jcode-background-types" }
-jcode-batch-types = { path = "crates/jcode-batch-types" }
+iagent-background-types = { path = "crates/iagent-background-types" }
+iagent-batch-types = { path = "crates/iagent-batch-types" }
 jcode-build-support = { path = "crates/jcode-build-support" }
 jcode-compaction-core = { path = "crates/jcode-compaction-core" }
-jcode-config-types = { path = "crates/jcode-config-types" }
+iagent-config-types = { path = "crates/iagent-config-types" }
 jcode-core = { path = "crates/jcode-core" }
-jcode-memory-types = { path = "crates/jcode-memory-types" }
-jcode-message-types = { path = "crates/jcode-message-types" }
+iagent-memory-types = { path = "crates/iagent-memory-types" }
+iagent-message-types = { path = "crates/iagent-message-types" }
 jcode-overnight-core = { path = "crates/jcode-overnight-core" }
 jcode-plan = { path = "crates/jcode-plan" }
 jcode-swarm-core = { path = "crates/jcode-swarm-core" }
 jcode-protocol = { path = "crates/jcode-protocol" }
-jcode-selfdev-types = { path = "crates/jcode-selfdev-types" }
-jcode-session-types = { path = "crates/jcode-session-types" }
+iagent-selfdev-types = { path = "crates/iagent-selfdev-types" }
+iagent-session-types = { path = "crates/iagent-session-types" }
 jcode-storage = { path = "crates/jcode-storage" }
-jcode-task-types = { path = "crates/jcode-task-types" }
+iagent-task-types = { path = "crates/iagent-task-types" }
 jcode-tool-core = { path = "crates/jcode-tool-core" }
-jcode-tool-types = { path = "crates/jcode-tool-types" }
-jcode-side-panel-types = { path = "crates/jcode-side-panel-types" }
+iagent-tool-types = { path = "crates/iagent-tool-types" }
+iagent-side-panel-types = { path = "crates/iagent-side-panel-types" }
 
 # Archive extraction (for auto-update)
 flate2 = "1"
@@ -232,18 +227,27 @@ terminal-ui = []
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_Graphics_Gdi", "Win32_System_Threading", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_Storage_FileSystem", "Win32_System_IO"] }
 
+[target.'cfg(not(windows))'.dependencies]
+# Memory allocator (reduces fragmentation for long-running server). Jemalloc is
+# disabled on Windows because the upstream crate is not a supported MSVC build.
+tikv-jemallocator = { version = "0.6", features = ["unprefixed_malloc_on_supported_platforms"], optional = true }
+tikv-jemalloc-ctl = { version = "0.6", optional = true }
+tikv-jemalloc-sys = { version = "0.6", optional = true }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 global-hotkey = "0.7"
 
 [profile.release]
-opt-level     = 2
+opt-level     = 3
 debug         = 0
 codegen-units = 16
 incremental   = false
 
-[profile.selfdev]
+[profile.release-fast]
 inherits = "release"
-opt-level = 0
+opt-level = 1
+codegen-units = 256
+incremental = true
 
 # Full LTO release for stable/distribution builds
 [profile.release-lto]
@@ -251,6 +255,10 @@ inherits = "release"
 lto = "thin"
 codegen-units = 16
 incremental = false
+
+[profile.selfdev]
+inherits = "release-fast"
+opt-level = 0
 
 [profile.dev]
 debug = 0

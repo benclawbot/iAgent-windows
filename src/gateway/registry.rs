@@ -2,7 +2,7 @@ use anyhow::Result;
 use sha2::{Digest, Sha256};
 
 use crate::storage;
-use jcode_gateway_types::{PairedDevice, PairingCode};
+use iagent_gateway_types::{PairedDevice, PairingCode};
 
 // ---------------------------------------------------------------------------
 // Device registry (persisted to ~/.jcode/devices.json)

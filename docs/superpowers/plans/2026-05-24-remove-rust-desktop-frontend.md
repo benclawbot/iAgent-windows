@@ -22,4 +22,4 @@ Retire the `jcode-desktop` Rust frontend from the active `iagent-windows` worksp
 
 ## Notes
 
-The crates named `desktop-monitor`, `suggestion-engine`, `overlay-ui`, and `app-integrations` are not removed. They support the ambient backend/suggestion loop and are distinct from the retired Rust frontend crate.
+The crates named `iagent-desktop-monitor`, `iagent-suggestion-engine`, `iagent-overlay-ui`, and `iagent-app-integrations` are not removed. They support the ambient backend/suggestion loop and are distinct from the retired Rust frontend crate.

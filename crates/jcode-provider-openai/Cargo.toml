@@ -5,6 +5,6 @@ edition = "2024"
 publish = false
 
 [dependencies]
-jcode-message-types = { path = "../jcode-message-types" }
+iagent-message-types = { path = "../iagent-message-types" }
 jcode-provider-core = { path = "../jcode-provider-core" }
 serde_json = "1"

@@ -225,7 +225,7 @@ fn non_empty_env_path(name: &str) -> Option<PathBuf> {
 
 /// Directory for the single launcher path users execute from PATH.
 ///
-/// Defaults to `~/.local/bin` on Unix, `%LOCALAPPDATA%\jcode\bin` on Windows.
+/// Defaults to `~/.local/bin` on Unix, `%LOCALAPPDATA%\iAgent\bin` on Windows.
 /// Overridable with `JCODE_INSTALL_DIR`.
 pub fn launcher_dir() -> Result<PathBuf> {
     if let Some(custom) = non_empty_env_path("JCODE_INSTALL_DIR") {
@@ -239,12 +239,12 @@ pub fn launcher_dir() -> Result<PathBuf> {
     #[cfg(windows)]
     {
         if let Ok(local) = std::env::var("LOCALAPPDATA") {
-            return Ok(PathBuf::from(local).join("jcode").join("bin"));
+            return Ok(PathBuf::from(local).join("iAgent").join("bin"));
         }
         Ok(home_dir()?
             .join("AppData")
             .join("Local")
-            .join("jcode")
+            .join("iAgent")
             .join("bin"))
     }
     #[cfg(not(windows))]

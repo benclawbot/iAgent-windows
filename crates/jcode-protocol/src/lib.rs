@@ -21,10 +21,10 @@ use std::collections::{HashMap, HashSet};
 mod notifications;
 pub use notifications::{FeatureToggle, NotificationType};
 
-use jcode_batch_types::BatchProgress;
-use jcode_message_types::{InputShellResult, ToolCall};
+use iagent_batch_types::BatchProgress;
+use iagent_message_types::{InputShellResult, ToolCall};
+use iagent_side_panel_types::{SidePanelSnapshot, snapshot_is_empty};
 use jcode_plan::{PlanItem, VersionedPlan, next_runnable_item_ids, summarize_plan_graph};
-use jcode_side_panel_types::{SidePanelSnapshot, snapshot_is_empty};
 
 #[path = "protocol_memory.rs"]
 mod memory_snapshots;
@@ -161,7 +161,7 @@ impl AuthChanged {
     }
 }
 
-pub type ReloadRecoverySnapshot = jcode_selfdev_types::ReloadRecoveryDirective;
+pub type ReloadRecoverySnapshot = iagent_selfdev_types::ReloadRecoveryDirective;
 
 /// Client request to server
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -370,7 +370,7 @@ pub enum Request {
     #[serde(rename = "set_compaction_mode")]
     SetCompactionMode {
         id: u64,
-        mode: jcode_config_types::CompactionMode,
+        mode: iagent_config_types::CompactionMode,
     },
 
     /// Set or clear the active session's custom display title.
@@ -1007,7 +1007,7 @@ pub enum ServerEvent {
         session_id: String,
         messages: Vec<HistoryMessage>,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
-        images: Vec<jcode_session_types::RenderedImage>,
+        images: Vec<iagent_session_types::RenderedImage>,
         /// Provider name (e.g. "anthropic", "openai")
         #[serde(skip_serializing_if = "Option::is_none")]
         provider_name: Option<String>,
@@ -1082,7 +1082,7 @@ pub enum ServerEvent {
         autojudge_enabled: Option<bool>,
         /// Active compaction mode for this session
         #[serde(default)]
-        compaction_mode: jcode_config_types::CompactionMode,
+        compaction_mode: iagent_config_types::CompactionMode,
         /// Current live processing state for this session, if known.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         activity: Option<SessionActivitySnapshot>,
@@ -1098,7 +1098,7 @@ pub enum ServerEvent {
         session_id: String,
         messages: Vec<HistoryMessage>,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
-        images: Vec<jcode_session_types::RenderedImage>,
+        images: Vec<iagent_session_types::RenderedImage>,
         compacted_total: usize,
         compacted_visible: usize,
         compacted_remaining: usize,
@@ -1176,7 +1176,7 @@ pub enum ServerEvent {
     #[serde(rename = "compaction_mode_changed")]
     CompactionModeChanged {
         id: u64,
-        mode: jcode_config_types::CompactionMode,
+        mode: iagent_config_types::CompactionMode,
         #[serde(skip_serializing_if = "Option::is_none")]
         error: Option<String>,
     },

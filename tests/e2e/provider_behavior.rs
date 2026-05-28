@@ -832,10 +832,10 @@ async fn test_system_prompt_no_claude_code_identity() -> Result<()> {
         identity_portion
     );
 
-    // Should identify as jcode
+    // Should identify as iAgent
     assert!(
-        lower_identity.contains("jcode"),
-        "System prompt should identify as jcode. Found: {}",
+        lower_identity.contains("iagent"),
+        "System prompt should identify as iAgent. Found: {}",
         identity_portion
     );
 

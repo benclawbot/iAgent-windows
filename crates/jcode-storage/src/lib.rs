@@ -6,6 +6,10 @@ use serde::de::DeserializeOwned;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+const APP_NAME: &str = "iAgent";
+const LEGACY_APP_NAME: &str = "jcode";
+const HOME_FALLBACK_DIR: &str = ".iAgent";
+
 /// Platform-aware runtime directory for sockets and ephemeral state.
 ///
 /// - Linux: `$XDG_RUNTIME_DIR` (typically `/run/user/<uid>`)
@@ -33,7 +37,7 @@ pub fn runtime_dir() -> PathBuf {
 }
 
 fn fallback_runtime_dir() -> PathBuf {
-    std::env::temp_dir().join(format!("jcode-{}", runtime_user_discriminator()))
+    std::env::temp_dir().join(format!("iagent-{}", runtime_user_discriminator()))
 }
 
 #[cfg(unix)]
@@ -71,8 +75,12 @@ pub fn jcode_dir() -> Result<PathBuf> {
         return Ok(PathBuf::from(path));
     }
 
+    if let Some(data_dir) = dirs::data_local_dir() {
+        return Ok(data_dir.join(APP_NAME));
+    }
+
     let home = dirs::home_dir().ok_or_else(|| anyhow::anyhow!("No home directory"))?;
-    Ok(home.join(".jcode"))
+    Ok(home.join(HOME_FALLBACK_DIR))
 }
 
 pub fn logs_dir() -> Result<PathBuf> {
@@ -87,12 +95,12 @@ pub fn logs_dir() -> Result<PathBuf> {
 /// real config directory.
 pub fn app_config_dir() -> Result<PathBuf> {
     if let Ok(path) = std::env::var("JCODE_HOME") {
-        return Ok(PathBuf::from(path).join("config").join("jcode"));
+        return Ok(PathBuf::from(path).join("config").join(APP_NAME));
     }
 
     let config_dir =
         dirs::config_dir().ok_or_else(|| anyhow::anyhow!("No config directory found"))?;
-    Ok(config_dir.join("jcode"))
+    Ok(config_dir.join(APP_NAME))
 }
 
 /// Resolve a path under the user's home directory, but sandbox it under
@@ -123,9 +131,11 @@ pub fn user_home_path(relative: impl AsRef<Path>) -> Result<PathBuf> {
 /// filesystems, but it narrows exposure on typical Unix systems.
 pub fn harden_user_config_permissions() {
     if let Some(config_dir) = dirs::config_dir() {
-        let jcode_config_dir = config_dir.join("jcode");
-        if jcode_config_dir.exists() {
-            let _ = jcode_core::fs::set_directory_permissions_owner_only(&jcode_config_dir);
+        for app_name in [APP_NAME, LEGACY_APP_NAME] {
+            let app_config_dir = config_dir.join(app_name);
+            if app_config_dir.exists() {
+                let _ = jcode_core::fs::set_directory_permissions_owner_only(&app_config_dir);
+            }
         }
     }
 

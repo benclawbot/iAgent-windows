@@ -116,8 +116,18 @@ pub fn normalize_file_type(file_type: &str) -> String {
 }
 
 pub fn normalize_display_path(root: &Path, path: &Path) -> String {
-    path.strip_prefix(root)
+    let display_path = path
+        .strip_prefix(root)
         .unwrap_or(path)
         .display()
+        .to_string();
+    normalize_relative_path(&display_path)
+}
+
+pub fn normalize_relative_path(path: &str) -> String {
+    let normalized = path.replace('\\', "/");
+    normalized
+        .strip_prefix("./")
+        .unwrap_or(&normalized)
         .to_string()
 }

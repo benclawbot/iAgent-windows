@@ -210,7 +210,7 @@ pub fn capture_snapshot(config: &PersonalDaemonConfig) -> PersonalDaemonSnapshot
     }
 
     if config.capture_active_window
-        && let Some(context) = desktop_monitor::capture_window_context()
+        && let Some(context) = iagent_desktop_monitor::capture_window_context()
     {
         snapshot.active_app = Some(context.app_name);
         snapshot.active_window_title = Some(context.window_title);
@@ -348,7 +348,8 @@ mod windows_snippet_hook {
         }
 
         let store = PersonalStore::load().ok()?;
-        let active_app = desktop_monitor::capture_window_context().map(|context| context.app_name);
+        let active_app =
+            iagent_desktop_monitor::capture_window_context().map(|context| context.app_name);
         apply_snippet_expansion_to_buffer(&store, &mut state.buffer, active_app.as_deref())
             .ok()
             .flatten()

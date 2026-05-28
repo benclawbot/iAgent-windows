@@ -35,8 +35,8 @@ pub mod bedrock {
     impl jcode_provider_core::Provider for BedrockProvider {
         async fn complete(
             &self,
-            _messages: &[jcode_message_types::Message],
-            _tools: &[jcode_message_types::ToolDefinition],
+            _messages: &[iagent_message_types::Message],
+            _tools: &[iagent_message_types::ToolDefinition],
             _system: &str,
             _resume_session_id: Option<&str>,
         ) -> anyhow::Result<jcode_provider_core::EventStream> {
@@ -89,7 +89,7 @@ use account_failover::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use jcode_message_types::StreamEvent;
+use iagent_message_types::StreamEvent;
 #[cfg(test)]
 use jcode_provider_core::FailoverDecision;
 use std::sync::{Arc, RwLock};

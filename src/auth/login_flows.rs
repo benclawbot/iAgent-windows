@@ -3,19 +3,9 @@ use anyhow::{Context, Result};
 fn run_external_login_command_inner(
     program: &str,
     args: &[String],
-    suspend_raw_mode: bool,
+    _suspend_raw_mode: bool,
 ) -> Result<()> {
-    let raw_was_enabled =
-        suspend_raw_mode && crossterm::terminal::is_raw_mode_enabled().unwrap_or(false);
-    if raw_was_enabled {
-        let _ = crossterm::terminal::disable_raw_mode();
-    }
-
     let status_result = std::process::Command::new(program).args(args).status();
-
-    if raw_was_enabled {
-        let _ = crossterm::terminal::enable_raw_mode();
-    }
 
     let status = status_result
         .with_context(|| format!("Failed to start command: {} {}", program, args.join(" ")))?;

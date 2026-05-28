@@ -1,6 +1,6 @@
-//! Logging infrastructure for jcode
+//! Logging infrastructure for iAgent
 //!
-//! Logs to ~/.jcode/logs/ with automatic rotation
+//! Logs to the iAgent app-data logs directory with automatic rotation.
 //!
 //! Supports thread-local context for server, session, provider, and model info.
 
@@ -157,7 +157,7 @@ impl Logger {
 
         // Use date-based log file
         let date = Local::now().format("%Y-%m-%d");
-        let path = log_dir.join(format!("jcode-{}.log", date));
+        let path = log_dir.join(format!("iagent-{}.log", date));
 
         let file = OpenOptions::new()
             .create(true)
@@ -173,11 +173,11 @@ impl Logger {
         let ctx = context_prefix();
         let line = format!("[{}] [{}] {}{}\n", timestamp, level, ctx, message);
         if let Err(err) = self.file.write_all(line.as_bytes()) {
-            eprintln!("jcode logger write failed: {err}");
+            eprintln!("iAgent logger write failed: {err}");
             return;
         }
         if let Err(err) = self.file.flush() {
-            eprintln!("jcode logger flush failed: {err}");
+            eprintln!("iAgent logger flush failed: {err}");
         }
     }
 }
@@ -361,7 +361,7 @@ pub fn current_session() -> Option<String> {
 pub fn log_path() -> Option<PathBuf> {
     let log_dir = log_dir()?;
     let date = Local::now().format("%Y-%m-%d");
-    Some(log_dir.join(format!("jcode-{}.log", date)))
+    Some(log_dir.join(format!("iagent-{}.log", date)))
 }
 
 /// Clean up old logs (keep last 7 days)
@@ -378,7 +378,7 @@ pub fn cleanup_old_logs() {
                 if modified < cutoff
                     && let Err(err) = fs::remove_file(entry.path())
                 {
-                    eprintln!("jcode logger cleanup failed: {err}");
+                    eprintln!("iAgent logger cleanup failed: {err}");
                 }
             }
         }

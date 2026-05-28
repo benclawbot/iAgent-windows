@@ -181,9 +181,18 @@ async fn wait_for_resuming_server_detects_delayed_listener_without_marker() {
     let (release_tx, release_rx) = tokio::sync::oneshot::channel();
     let bind_task = tokio::spawn(async move {
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-        let listener = Listener::bind(&bind_path).expect("bind delayed listener");
-        let _listener = listener;
-        let _ = release_rx.await;
+        let mut listener = Listener::bind(&bind_path).expect("bind delayed listener");
+        let mut release_rx = release_rx;
+        loop {
+            tokio::select! {
+                _ = &mut release_rx => break,
+                accepted = listener.accept() => {
+                    if accepted.is_err() {
+                        break;
+                    }
+                }
+            }
+        }
     });
 
     let result = tokio::time::timeout(

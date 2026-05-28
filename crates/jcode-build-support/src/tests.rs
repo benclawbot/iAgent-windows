@@ -22,6 +22,26 @@ fn with_temp_jcode_home<T>(f: impl FnOnce() -> T) -> T {
     result
 }
 
+fn assert_published_binary_matches_version(
+    published_path: impl AsRef<std::path::Path>,
+    version_binary: impl AsRef<std::path::Path>,
+) {
+    let published_path = published_path.as_ref();
+    let version_binary = version_binary.as_ref();
+
+    #[cfg(unix)]
+    assert_eq!(
+        std::fs::canonicalize(published_path).expect("canonical published binary"),
+        std::fs::canonicalize(version_binary).expect("canonical version binary")
+    );
+
+    #[cfg(windows)]
+    assert_eq!(
+        std::fs::read(published_path).expect("read published binary"),
+        std::fs::read(version_binary).expect("read version binary")
+    );
+}
+
 fn create_git_repo_fixture() -> tempfile::TempDir {
     let temp = tempfile::tempdir().expect("tempdir");
     std::fs::create_dir_all(temp.path().join(".git")).expect("create .git dir");
@@ -203,10 +223,7 @@ fn test_client_update_candidate_prefers_dev_binary_for_selfdev() {
 
     let candidate = client_update_candidate(true).expect("expected selfdev candidate");
     assert_eq!(candidate.1, "current");
-    assert_eq!(
-        std::fs::canonicalize(candidate.0).expect("canonical candidate"),
-        std::fs::canonicalize(version_binary).expect("canonical version binary")
-    );
+    assert_published_binary_matches_version(candidate.0, version_binary);
 
     if let Some(prev_home) = prev_home {
         jcode_core::env::set_var("JCODE_HOME", prev_home);
@@ -239,10 +256,7 @@ fn update_launcher_symlink_stays_inside_sandbox_home() {
             .join("bin")
             .join(binary_name());
         assert_eq!(launcher, expected_launcher);
-        assert_eq!(
-            std::fs::canonicalize(&launcher).expect("canonical launcher"),
-            std::fs::canonicalize(version_binary).expect("canonical version binary")
-        );
+        assert_published_binary_matches_version(&launcher, version_binary);
     });
 }
 
@@ -348,9 +362,9 @@ fn shared_server_candidate_prefers_approved_channel_over_current() {
         let candidate =
             shared_server_update_candidate(true).expect("expected shared-server candidate");
         assert_eq!(candidate.1, "shared-server");
-        let selected = std::fs::canonicalize(candidate.0).expect("canonical selected");
-        let approved = std::fs::canonicalize(version_binary_path(approved_version).unwrap())
-            .expect("canonical approved");
-        assert_eq!(selected, approved);
+        assert_published_binary_matches_version(
+            candidate.0,
+            version_binary_path(approved_version).unwrap(),
+        );
     });
 }

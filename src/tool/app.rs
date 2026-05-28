@@ -22,8 +22,8 @@
 use crate::skill::SkillRegistry;
 use crate::tool::{Tool, ToolContext, ToolOutput};
 use anyhow::Result;
-use app_integrations::{browser, form_fill, office_workflows, officecli};
 use async_trait::async_trait;
+use iagent_app_integrations::{browser, form_fill, office_workflows, officecli};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::sync::Arc;
@@ -40,7 +40,7 @@ impl AppTool {
 
     /// Returns true if OfficeCLI is available on this system.
     pub fn officecli_ready() -> bool {
-        app_integrations::officecli::is_installed()
+        iagent_app_integrations::officecli::is_installed()
     }
 }
 

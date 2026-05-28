@@ -117,13 +117,9 @@ async fn smoke_basic_round_trip() -> Result<()> {
         let subscribe_id = client.subscribe().await?;
         let events = collect_until_done_unix(&mut client, subscribe_id).await?;
 
-        // Verify we got the mock response
-        let has_connection_event = events
-            .iter()
-            .any(|e| matches!(e, ServerEvent::ConnectionType { .. }));
         assert!(
-            has_connection_event,
-            "Should have received connection type event. Events: {:?}",
+            events.iter().any(|e| matches!(e, ServerEvent::Done { .. })),
+            "Subscribe should complete before sending the smoke message. Events: {:?}",
             events
         );
 

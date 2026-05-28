@@ -231,9 +231,17 @@ async fn test_wait_for_reloading_server_returns_true_for_live_listener() {
     let temp = tempfile::tempdir().expect("tempdir");
     let socket_path = temp.path().join("iagent.sock");
     let _env = set_socket_test_env(&socket_path, temp.path());
-    let _listener = crate::transport::Listener::bind(&socket_path).expect("bind listener");
+    let mut listener = crate::transport::Listener::bind(&socket_path).expect("bind listener");
+    let accept_task = tokio::spawn(async move {
+        loop {
+            let Ok((_stream, _addr)) = listener.accept().await else {
+                break;
+            };
+        }
+    });
 
     assert!(wait_for_reloading_server().await);
+    accept_task.abort();
 }
 
 fn isolated_launcher_env() -> (
@@ -243,9 +251,17 @@ fn isolated_launcher_env() -> (
 ) {
     let lock = lock_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let env = EnvVarGuard::capture(&["JCODE_INSTALL_DIR", "JCODE_HOME", "HOME", "USERPROFILE"]);
+    let env = EnvVarGuard::capture(&[
+        "JCODE_INSTALL_DIR",
+        "JCODE_HOME",
+        "HOME",
+        "USERPROFILE",
+        "LOCALAPPDATA",
+    ]);
     crate::env::set_var("HOME", temp.path());
     crate::env::set_var("USERPROFILE", temp.path());
+    #[cfg(windows)]
+    crate::env::set_var("LOCALAPPDATA", temp.path().join("AppData").join("Local"));
     crate::env::remove_var("JCODE_INSTALL_DIR");
     crate::env::remove_var("JCODE_HOME");
     (lock, env, temp)
@@ -281,7 +297,10 @@ fn test_launcher_dir_ignores_blank_overrides_and_uses_home_default() {
 
 fn default_launcher_dir(home: &Path) -> PathBuf {
     if cfg!(windows) {
-        home.join("AppData").join("Local").join("jcode").join("bin")
+        home.join("AppData")
+            .join("Local")
+            .join("iAgent")
+            .join("bin")
     } else {
         home.join(".local").join("bin")
     }
