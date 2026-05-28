@@ -50,6 +50,7 @@ impl MultiProvider {
             .clone()
     }
 
+    #[cfg(feature = "bedrock")]
     pub(super) fn bedrock_provider(&self) -> Option<Arc<bedrock::BedrockProvider>> {
         self.bedrock
             .read()

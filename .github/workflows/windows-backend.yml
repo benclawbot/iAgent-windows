@@ -60,7 +60,7 @@ jobs:
 
       - name: Cargo check (headless explicit)
         shell: pwsh
-        run: cargo check --workspace --all-targets --no-default-features --features pdf --target x86_64-pc-windows-msvc
+        run: cargo check --workspace --all-targets --no-default-features --features pdf,bedrock --target x86_64-pc-windows-msvc
 
   check-terminal-ui:
     name: Check terminal-ui build
