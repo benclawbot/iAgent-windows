@@ -80,30 +80,30 @@ def test_config_rejects_invalid_hotkey(tmp_path: Path) -> None:
         Config.from_path(cfg_path)
 
 
-def test_config_accepts_jcode_path_file(tmp_path: Path) -> None:
+def test_config_accepts_iagent_path_file(tmp_path: Path) -> None:
     cfg_path = tmp_path / "config.toml"
-    jcode_bin = tmp_path / "jcode.exe"
-    jcode_bin.write_text("", encoding="utf-8")
+    iagent_bin = tmp_path / "iagent.exe"
+    iagent_bin.write_text("", encoding="utf-8")
     _write_config(
         cfg_path,
         'minimax_api_key = "x"\n'
-        f'jcode_path = "{jcode_bin.as_posix()}"\n',
+        f'iagent_path = "{iagent_bin.as_posix()}"\n',
     )
 
     cfg = Config.from_path(cfg_path)
-    assert cfg.jcode_path == jcode_bin.resolve()
+    assert cfg.iagent_path == iagent_bin.resolve()
 
 
-def test_config_rejects_invalid_jcode_path(tmp_path: Path) -> None:
+def test_config_rejects_invalid_iagent_path(tmp_path: Path) -> None:
     cfg_path = tmp_path / "config.toml"
-    missing = (tmp_path / "missing-jcode.exe").as_posix()
+    missing = (tmp_path / "missing-iagent.exe").as_posix()
     _write_config(
         cfg_path,
         'minimax_api_key = "x"\n'
-        f'jcode_path = "{missing}"\n',
+        f'iagent_path = "{missing}"\n',
     )
 
-    with pytest.raises(ConfigError, match="jcode_path must point to a jcode executable file"):
+    with pytest.raises(ConfigError, match="iagent_path must point to an iagent executable file"):
         Config.from_path(cfg_path)
 
 

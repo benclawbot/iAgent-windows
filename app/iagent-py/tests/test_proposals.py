@@ -24,9 +24,9 @@ def test_proposals_from_actions_builds_command_and_jcode_cards() -> None:
             press_enter=False,
         ),
         ActionProposal(
-            proposal_id="jcode:c6d59092d7f0",
-            kind="jcode",
-            title="Delegate To JCode",
+            proposal_id="iagent:c6d59092d7f0",
+            kind="iagent",
+            title="Delegate To iAgent",
             body="update the README and run tests",
             payload="update the README and run tests",
             press_enter=False,

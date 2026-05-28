@@ -6,7 +6,7 @@ from typing import Literal
 
 from iagent.response_actions import ResponseActions
 
-ProposalKind = Literal["command", "jcode", "type"]
+ProposalKind = Literal["command", "iagent", "type"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,13 +44,13 @@ def proposals_from_actions(actions: ResponseActions) -> list[ActionProposal]:
                 payload=actions.cli_command,
             )
         )
-    if actions.jcode_goal:
+    if actions.iagent_goal:
         proposals.append(
             _proposal(
-                kind="jcode",
-                title="Delegate To JCode",
-                body=actions.jcode_goal,
-                payload=actions.jcode_goal,
+                kind="iagent",
+                title="Delegate To iAgent",
+                body=actions.iagent_goal,
+                payload=actions.iagent_goal,
             )
         )
     return proposals

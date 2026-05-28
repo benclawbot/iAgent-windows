@@ -58,17 +58,17 @@ if (-not $AppDir) {
     $AppDir = Join-Path $env:LOCALAPPDATA "iAgent\app"
 }
 
-$JcodeHome = if ($env:JCODE_HOME) {
-    $env:JCODE_HOME
+$IagentHome = if ($env:IAGENT_HOME) {
+    $env:IAGENT_HOME
 } elseif ($env:USERPROFILE) {
-    Join-Path $env:USERPROFILE ".jcode"
+    Join-Path $env:USERPROFILE ".iagent"
 } else {
-    Join-Path ([Environment]::GetFolderPath("UserProfile")) ".jcode"
+    Join-Path ([Environment]::GetFolderPath("UserProfile")) ".iagent"
 }
 
-$HotkeyDir = Join-Path $JcodeHome "hotkey"
-$PersonalDaemonDir = Join-Path $JcodeHome "personal-daemon"
-$SetupHintsPath = Join-Path $JcodeHome "setup_hints.json"
+$HotkeyDir = Join-Path $IagentHome "hotkey"
+$PersonalDaemonDir = Join-Path $IagentHome "personal-daemon"
+$SetupHintsPath = Join-Path $IagentHome "setup_hints.json"
 
 function Write-Info($msg) { Write-Host $msg -ForegroundColor Blue }
 function Write-Err($msg) { Write-Host "error: $msg" -ForegroundColor Red; exit 1 }
@@ -308,7 +308,7 @@ function Stop-IagentHotkeyListeners {
 }
 
 function Set-SetupHintsState([bool]$AlacrittyConfigured, [bool]$HotkeyConfigured) {
-    New-Item -ItemType Directory -Path $JcodeHome -Force | Out-Null
+    New-Item -ItemType Directory -Path $IagentHome -Force | Out-Null
 
     $state = @{
         launch_count = 0
@@ -780,7 +780,7 @@ function New-IagentDockLauncher([string]$IagentExePath, [string]$TargetAppDir, [
 
     $ps1Content = @(
         '$ErrorActionPreference = "Stop"',
-        ('$env:IAGENT_JCODE_BIN = ''{0}''' -f $escapedIagentExe),
+        ('$env:IAGENT_BIN = ''{0}''' -f $escapedIagentExe),
         ('$appDir = ''{0}''' -f $escapedAppDir),
         ('$logDir = ''{0}''' -f $escapedLogDir),
         'New-Item -ItemType Directory -Path $logDir -Force | Out-Null',

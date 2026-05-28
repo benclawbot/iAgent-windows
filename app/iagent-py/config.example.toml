@@ -48,12 +48,12 @@ log_level = "INFO"
 # [TYPE:...] actions are captured as drafts and shown via tray notification only.
 allow_foreground_typing = false
 
-# OPTIONAL: absolute path to jcode executable.
+# OPTIONAL: absolute path to iAgent executable.
 # If omitted, iAgent resolves in this order:
-# 1) IAGENT_JCODE_BIN env var
-# 2) jcode on PATH
-# 3) backend/jcode/target/(release|debug)/jcode(.exe) from this repo
-# jcode_path = "C:\\Users\\YourName\\iagent\\backend\\jcode\\target\\release\\jcode.exe"
+# 1) IAGENT_BIN env var
+# 2) iagent on PATH
+# 3) backend/iagent/target/(release|debug)/iagent(.exe) from this repo
+# iagent_path = "C:\\Users\\YourName\\iagent\\backend\\iagent\\target\\release\\iagent.exe"
 
 # =============================================================================
 # KNOWLEDGE BASE (optional)

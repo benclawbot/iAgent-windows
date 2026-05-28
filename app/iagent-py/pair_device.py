@@ -12,8 +12,8 @@ import sys
 import urllib.request
 import json
 
-CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".jcode", "config.toml")
-DEVICES_PATH = os.path.join(os.path.expanduser("~"), ".jcode", "devices.json")
+CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".iagent", "config.toml")
+DEVICES_PATH = os.path.join(os.path.expanduser("~"), ".iagent", "devices.json")
 
 
 def get_config_value(key: str) -> str:

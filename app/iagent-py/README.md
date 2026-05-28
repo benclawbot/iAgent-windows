@@ -5,7 +5,7 @@
 It is designed for ambient help:
 - stay in your current app
 - get short actionable guidance in a compact dock
-- offload heavier tasks to backend `jcode` without blocking your workflow
+- offload heavier tasks to backend `iagent` without blocking your workflow
 
 ## Operating modes
 
@@ -20,25 +20,25 @@ It is designed for ambient help:
 - review output/status in the task inbox
 
 3. Proposal popup mode
-- AI-suggested `TYPE`, `CMD`, and `JCODE` actions appear as system-wide floating cards
+- AI-suggested `TYPE`, `CMD`, and `IAGENT` actions appear as system-wide floating cards
 - choose Validate to execute through the existing safe action path
 - choose Refuse to dismiss without running the proposed action
 
-## Relationship with `jcode`
+## Relationship with `iagent`
 
-iAgent is the frontend orchestrator. `jcode` is the backend executor.
+iAgent is the frontend orchestrator. `iagent` is the backend executor.
 
-Delegated goals (`[JCODE:...]`) run as:
+Delegated goals (`[IAGENT:...]`) run as:
 
 ```bash
-jcode run --json --quiet "<goal>"
+iagent run --json --quiet "<goal>"
 ```
 
-`jcode` resolution order inside iAgent:
-1. `IAGENT_JCODE_BIN` environment variable
-2. `jcode_path` in `%APPDATA%\\iAgent\\config.toml`
-3. `jcode` on system `PATH`
-4. bundled repo build output: `backend/jcode/target/(release|debug)/jcode(.exe)`
+`iagent` resolution order inside iAgent:
+1. `IAGENT_BIN` environment variable
+2. `iagent_path` in `%APPDATA%\\iAgent\\config.toml`
+3. `iagent` on system `PATH`
+4. bundled repo build output: `backend/iagent/target/(release|debug)/iagent(.exe)`
 
 When ambient mode is started from the tray, backend overlay IPC can be tuned in
 the backend ambient config via `[ambient.desktop_overlay]`.
@@ -52,15 +52,15 @@ Primary modules:
 - `iagent/proposals.py`: proposal records for user-approved actions
 - `iagent/ui/proposal_popup.py`: topmost Validate/Refuse popup cards
 - `iagent/ui/task_inbox.py`: badge + inbox details
-- `iagent/response_actions.py`: action parser (`POINT`, `TYPE`, `CMD`, `JCODE`)
+- `iagent/response_actions.py`: action parser (`POINT`, `TYPE`, `CMD`, `IAGENT`)
 - `iagent/config.py`: config schema/validation
 
 Execution pipeline:
 1. Input capture (voice/hotkey or text)
 2. Context capture (screen + app state)
 3. Immediate concise response
-4. Proposal popup for mutating actions (`TYPE`, `CMD`, `JCODE`)
-5. Optional delegated background execution through `jcode`
+4. Proposal popup for mutating actions (`TYPE`, `CMD`, `IAGENT`)
+5. Optional delegated background execution through `iagent`
 6. Inbox/badge update on completion or failure
 
 ## Requirements
@@ -116,7 +116,7 @@ minimax_api_key = "your-key"
 Optional explicit backend path:
 
 ```toml
-jcode_path = "C:\\Users\\YourName\\iAgent-windows\\target\\release\\iagent.exe"
+iagent_path = "C:\\Users\\YourName\\iAgent-windows\\target\\release\\iagent.exe"
 ```
 
 ### 5) Run
@@ -135,7 +135,7 @@ uv run iagent
 - system-wide proposal popups for AI-suggested mutating actions
 - guarded command execution (`rm` requires approval)
 - foreground typing disabled by default (`allow_foreground_typing=false`)
-- tray controls to start/stop backend ambient mode (`jcode ambient desktop --headless`)
+- tray controls to start/stop backend ambient mode (`iagent ambient desktop --headless`)
 
 ## Action tags
 
@@ -144,7 +144,7 @@ uv run iagent
 - `[TYPE:...]`: proposal to draft (or active typing when enabled)
 - `[ENTER]`: submit typed content
 - `[CMD:...]`: propose a background shell command
-- `[JCODE:...]`: propose a delegated backend goal
+- `[IAGENT:...]`: propose a delegated backend goal
 
 ## Config reference
 
@@ -162,7 +162,7 @@ Edit `%APPDATA%\\iAgent\\config.toml`.
 | `log_level` | no | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 | `knowledge_dir` | no | `%APPDATA%\\iAgent\\knowledge\\` if present | Knowledge root |
 | `allow_foreground_typing` | no | `false` | Enables real foreground typing |
-| `jcode_path` | no | empty | Explicit backend executable path |
+| `iagent_path` | no | empty | Explicit backend executable path |
 
 ## Build and test
 

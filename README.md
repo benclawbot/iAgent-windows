@@ -640,6 +640,7 @@ If issues persist:
 |---|---|
 | `app-integrations` | Browser, form-fill, OfficeCLI, and Office workflow integrations |
 | `desktop-monitor` | Active desktop context, window state, and safe file operations |
+| `iagent-ipc-types` | Typed IPC request/response types for shell ↔ backend communication |
 | `iagent-settings` | Shared desktop/runtime settings |
 | `jcode-agent-runtime` | Runtime orchestration |
 | `jcode-ambient-types` | Ambient workflow data contracts |

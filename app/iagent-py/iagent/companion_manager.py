@@ -75,7 +75,7 @@ class CompanionManager(QObject):
     proposal_requested = Signal(object)
     proposal_decided = Signal(object, bool)
     background_command_requested = Signal(str)
-    jcode_goal_requested = Signal(str)
+    iagent_goal_requested = Signal(str)
     typing_action_blocked = Signal(str, bool)
     error = Signal(str)
 
@@ -154,8 +154,8 @@ class CompanionManager(QObject):
         """Execute a user-validated proposal through existing action paths."""
         if proposal.kind == "command":
             self.background_command_requested.emit(proposal.payload)
-        elif proposal.kind == "jcode":
-            self.jcode_goal_requested.emit(proposal.payload)
+        elif proposal.kind == "iagent":
+            self.iagent_goal_requested.emit(proposal.payload)
         elif proposal.kind == "type":
             if self._allow_foreground_typing:
                 asyncio.ensure_future(
@@ -458,8 +458,8 @@ class CompanionManager(QObject):
                     action_notes: list[str] = []
                     if actions.cli_command:
                         action_notes.append("queued a background command")
-                    if actions.jcode_goal:
-                        action_notes.append("queued a jcode workflow")
+                    if actions.iagent_goal:
+                        action_notes.append("queued an iagent workflow")
                     if actions.type_text:
                         if self._allow_foreground_typing:
                             action_notes.append("typed into the active app")

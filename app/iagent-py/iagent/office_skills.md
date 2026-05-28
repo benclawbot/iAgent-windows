@@ -1,6 +1,6 @@
 # iAgent Office Skills
 
-These deterministic builders are used instead of generic `jcode run` flows when the user asks to create Office files.
+These deterministic builders are used instead of generic `iagent run` flows when the user asks to create Office files.
 
 ## `powerpoint_builder`
 - Script: `iagent/create_powerpoint_from_goal.ps1`

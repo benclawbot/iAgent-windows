@@ -22,10 +22,10 @@ def test_parse_response_actions_handles_empty_cmd_as_none() -> None:
     assert actions.jcode_goal is None
 
 
-def test_parse_response_actions_extracts_jcode_goal() -> None:
+def test_parse_response_actions_extracts_iagent_goal() -> None:
     actions = parse_response_actions(
-        "delegating this now. [POINT:none][JCODE:build a site with tests and a cron workflow]"
+        "delegating this now. [POINT:none][IAGENT:build a site with tests and a cron workflow]"
     )
 
     assert actions.spoken_text == "delegating this now."
-    assert actions.jcode_goal == "build a site with tests and a cron workflow"
+    assert actions.iagent_goal == "build a site with tests and a cron workflow"

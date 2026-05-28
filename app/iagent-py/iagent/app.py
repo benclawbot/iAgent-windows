@@ -84,36 +84,31 @@ def _project_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _candidate_submodule_jcode_paths() -> list[Path]:
-    backend_dir = _project_root() / "backend" / "jcode"
+def _candidate_submodule_iagent_paths() -> list[Path]:
+    backend_dir = _project_root() / "backend" / "iagent"
     return [
         backend_dir / "target" / "release" / "iagent.exe",
         backend_dir / "target" / "release" / "iagent",
         backend_dir / "target" / "debug" / "iagent.exe",
         backend_dir / "target" / "debug" / "iagent",
-        # Fallback: jcode as the binary name
-        backend_dir / "target" / "release" / "jcode.exe",
-        backend_dir / "target" / "release" / "jcode",
-        backend_dir / "target" / "debug" / "jcode.exe",
-        backend_dir / "target" / "debug" / "jcode",
     ]
 
 
-def _resolve_jcode_executable(config: Config | None) -> Path | None:
-    env_override = os.environ.get("IAGENT_JCODE_BIN", "").strip()
+def _resolve_iagent_executable(config: Config | None) -> Path | None:
+    env_override = os.environ.get("IAGENT_BIN", "").strip()
     if env_override:
         env_path = Path(env_override).expanduser()
         if env_path.is_file():
             return env_path.resolve()
 
-    if config is not None and config.jcode_path is not None and config.jcode_path.is_file():
-        return config.jcode_path
+    if config is not None and config.iagent_path is not None and config.iagent_path.is_file():
+        return config.iagent_path
 
-    in_path = shutil.which("jcode")
+    in_path = shutil.which("iagent")
     if in_path:
         return Path(in_path).resolve()
 
-    for candidate in _candidate_submodule_jcode_paths():
+    for candidate in _candidate_submodule_iagent_paths():
         if candidate.is_file():
             return candidate.resolve()
     return None
@@ -234,16 +229,16 @@ def run() -> int:
         if _ambient_is_running():
             tray_icon.notify("iAgent Ambient", "Ambient mode is already running.")
             return
-        jcode_bin = _resolve_jcode_executable(result.config)
-        if jcode_bin is None:
+        iagent_bin = _resolve_iagent_executable(result.config)
+        if iagent_bin is None:
             tray_icon.notify(
                 "iAgent Ambient",
-                "jcode not found. Build backend/jcode or set jcode_path.",
+                "iAgent not found. Build backend/iagent or set iagent_path.",
             )
             return
         try:
             ambient_process = subprocess.Popen(
-                [str(jcode_bin), "ambient", "desktop", "--headless"],
+                [str(iagent_bin), "ambient", "desktop", "--headless"],
                 cwd=Path.home(),
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
@@ -467,22 +462,22 @@ def run() -> int:
             office_task_id = _queue_office_goal(goal_clean, source_label=source_label)
         if office_task_id is not None:
             return office_task_id
-        jcode_bin = _resolve_jcode_executable(result.config)
-        if jcode_bin is None:
+        iagent_bin = _resolve_iagent_executable(result.config)
+        if iagent_bin is None:
             tray_icon.notify(
                 "iAgent Task Error",
-                "jcode not found. Build backend/jcode or set jcode_path.",
+                "iAgent not found. Build backend/iagent or set iagent_path.",
             )
             logger.warning(
-                "jcode executable not found via PATH, IAGENT_JCODE_BIN, "
-                "config.jcode_path, or backend/jcode/target"
+                "iAgent executable not found via PATH, IAGENT_BIN, "
+                "config.iagent_path, or backend/iagent/target"
             )
             return None
         display = f"iagent run --json <goal: {goal_clean[:80]}>"
         try:
             task_id = command_runner.enqueue_exec(
                 [
-                    str(jcode_bin),
+                    str(iagent_bin),
                     "run",
                     "--json",
                     "--quiet",
@@ -494,7 +489,7 @@ def run() -> int:
         except ValueError as exc:
             tray_icon.notify("iAgent Task Error", str(exc))
             return None
-        tray_icon.notify("iAgent", f"Queued {source_label} jcode task {task_id}.")
+        tray_icon.notify("iAgent", f"Queued {source_label} iagent task {task_id}.")
         return task_id
 
     def _on_run_command_requested() -> None:

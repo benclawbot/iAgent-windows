@@ -8,7 +8,7 @@ from iagent.point_parser import PointTag, parse_point_tag
 _ENTER_RE = re.compile(r"\[ENTER\]\s*$", re.IGNORECASE)
 _TYPE_RE = re.compile(r"\[TYPE:([^\]]*)\]\s*$", re.IGNORECASE)
 _CMD_RE = re.compile(r"\[CMD:([^\]]+)\]\s*$", re.IGNORECASE)
-_JCODE_RE = re.compile(r"\[JCODE:([^\]]+)\]\s*$", re.IGNORECASE)
+_IAGENT_RE = re.compile(r"\[IAGENT:([^\]]+)\]\s*$", re.IGNORECASE)
 _THINK_BLOCK_RE = re.compile(r"<think>[\s\S]*?</think>", re.IGNORECASE)
 _THINK_UNCLOSED_RE = re.compile(r"<think>[\s\S]*$", re.IGNORECASE)
 
@@ -20,7 +20,7 @@ class ResponseActions:
     type_text: str | None
     press_enter: bool
     cli_command: str | None
-    jcode_goal: str | None
+    iagent_goal: str | None
 
 
 def strip_reasoning_text(text: str) -> str:
@@ -38,14 +38,14 @@ def parse_response_actions(response: str) -> ResponseActions:
     - [TYPE:some text]
     - [ENTER]
     - [CMD:some shell command]
-    - [JCODE:high level goal for jcode run]
+    - [IAGENT:high level goal for iagent run]
     """
     working = strip_reasoning_text(response).strip()
     point_tag: PointTag | None = None
     type_text: str | None = None
     press_enter = False
     cli_command: str | None = None
-    jcode_goal: str | None = None
+    iagent_goal: str | None = None
 
     while True:
         prev = working
@@ -75,11 +75,11 @@ def parse_response_actions(response: str) -> ResponseActions:
             working = working[: m_cmd.start()].rstrip()
             continue
 
-        m_jcode = _JCODE_RE.search(working)
-        if m_jcode:
-            parsed_goal = m_jcode.group(1).strip()
-            jcode_goal = parsed_goal or None
-            working = working[: m_jcode.start()].rstrip()
+        m_iagent = _IAGENT_RE.search(working)
+        if m_iagent:
+            parsed_goal = m_iagent.group(1).strip()
+            iagent_goal = parsed_goal or None
+            working = working[: m_iagent.start()].rstrip()
             continue
 
         if working == prev:

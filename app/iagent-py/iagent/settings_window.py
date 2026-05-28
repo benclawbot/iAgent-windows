@@ -236,7 +236,7 @@ class SettingsWindow(QDialog):
         self.accept()
 
     def _iagent_command(self):
-        for key in ("IAGENT_BIN", "JCODE_BIN", "IAGENT_JCODE_BIN"):
+        for key in ("IAGENT_BIN",):
             value = os.environ.get(key)
             if value:
                 path = Path(value)
@@ -244,7 +244,7 @@ class SettingsWindow(QDialog):
                     return str(path)
                 return value
 
-        for name in ("iagent", "jcode"):
+        for name in ("iagent",):
             resolved = shutil.which(name)
             if resolved:
                 return resolved
@@ -316,7 +316,7 @@ class SettingsWindow(QDialog):
             QMessageBox.warning(self, "Personal", str(exc))
 
     def _open_personal_folder(self):
-        folder = Path(os.environ.get("JCODE_HOME", str(Path.home() / ".jcode"))) / "personal"
+        folder = Path(os.environ.get("IAGENT_HOME", str(Path.home() / ".iagent"))) / "personal"
         folder.mkdir(parents=True, exist_ok=True)
         try:
             if os.name == "nt":

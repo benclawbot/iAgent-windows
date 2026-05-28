@@ -125,11 +125,11 @@ class ExecutionMemory:
                 "a previous shell command failed because the command name was not recognized; choose commands that exist on windows."
             )
 
-        if cmd.startswith("jcode run") and exit_code == 0:
+        if cmd.startswith("iagent run") and exit_code == 0:
             stdout_l = (stdout_text or "").lower()
             if "unable to open" in stdout_l or "cannot open" in stdout_l:
                 self._add_lesson(
-                    "a previous jcode workflow reported it could not open an app; for local app launch requests, prefer an explicit windows [CMD:...] action."
+                    "a previous iagent workflow reported it could not open an app; for local app launch requests, prefer an explicit windows [CMD:...] action."
                 )
 
     def record_command_crash(self, *, command: str, error_text: str) -> None:

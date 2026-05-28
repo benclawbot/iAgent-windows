@@ -1,4 +1,4 @@
-# Contributing to jcode
+# Contributing to iAgent Windows
 
 Thanks for contributing.
 

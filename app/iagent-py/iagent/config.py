@@ -32,7 +32,7 @@ class Config:
     log_level: str
     knowledge_dir: Path | None
     allow_foreground_typing: bool
-    jcode_path: Path | None
+    iagent_path: Path | None
 
     @classmethod
     def from_path(cls, path: Path) -> Config:
@@ -90,23 +90,23 @@ class Config:
             )
         allow_foreground_typing = allow_foreground_typing_raw
 
-        jcode_path_raw = data.get("jcode_path")
-        jcode_path: Path | None = None
-        if isinstance(jcode_path_raw, str) and jcode_path_raw.strip():
-            candidate = Path(jcode_path_raw.strip()).expanduser()
+        iagent_path_raw = data.get("iagent_path")
+        iagent_path: Path | None = None
+        if isinstance(iagent_path_raw, str) and iagent_path_raw.strip():
+            candidate = Path(iagent_path_raw.strip()).expanduser()
             if candidate.is_dir():
-                exe_candidate = candidate / "jcode.exe"
-                bin_candidate = candidate / "jcode"
+                exe_candidate = candidate / "iagent.exe"
+                bin_candidate = candidate / "iagent"
                 if exe_candidate.is_file():
                     candidate = exe_candidate
                 elif bin_candidate.is_file():
                     candidate = bin_candidate
             if not candidate.is_file():
                 raise ConfigError(
-                    "jcode_path must point to a jcode executable file "
-                    "(or a directory containing jcode.exe)"
+                    "iagent_path must point to an iagent executable file "
+                    "(or a directory containing iagent.exe)"
                 )
-            jcode_path = candidate.resolve()
+            iagent_path = candidate.resolve()
 
         knowledge_dir_raw = data.get("knowledge_dir")
         if isinstance(knowledge_dir_raw, str) and knowledge_dir_raw.strip():
@@ -128,7 +128,7 @@ class Config:
             log_level=log_level,
             knowledge_dir=knowledge_dir,
             allow_foreground_typing=allow_foreground_typing,
-            jcode_path=jcode_path,
+            iagent_path=iagent_path,
         )
 
     @staticmethod

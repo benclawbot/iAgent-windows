@@ -14,7 +14,7 @@ import websockets
 
 # Path to the iagent binary - prefer the local build over system PATH
 def find_iagent_binary() -> Optional[Path]:
-    local = Path(__file__).parent.parent.parent / "backend" / "jcode" / "target" / "release" / "iagent.exe"
+    local = Path(__file__).parent.parent.parent / "backend" / "iagent" / "target" / "release" / "iagent.exe"
     if local.exists():
         return local
     # Try PATH
