@@ -86,6 +86,27 @@ jobs:
         shell: pwsh
         run: cargo check --workspace --all-targets --features terminal-ui --target x86_64-pc-windows-msvc
 
+  build-bedrock:
+    name: Build with Bedrock feature
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: bedrock
+
+      - name: Cargo build (Bedrock enabled)
+        env:
+          AWS_ACCESS_KEY_ID: dummy
+          AWS_SECRET_ACCESS_KEY: dummy
+          AWS_DEFAULT_REGION: us-east-1
+        run: cargo build --features bedrock --bin iagent
+
   test-unit:
     name: Unit tests
     runs-on: ubuntu-latest
@@ -170,9 +191,9 @@ jobs:
         with:
           key: windows-backend-office-tests
 
-      - name: Run app-integrations tests (includes office workflow fixtures)
+      - name: Run iagent-app-integrations tests (includes office workflow fixtures)
         shell: pwsh
-        run: cargo test -p app-integrations --target x86_64-pc-windows-msvc
+        run: cargo test -p iagent-app-integrations --target x86_64-pc-windows-msvc
 
   coverage:
     name: Test coverage
@@ -182,6 +203,7 @@ jobs:
       - check-headless
       - check-headless-explicit
       - check-terminal-ui
+      - build-bedrock
       - test-unit
       - lint
       - format
