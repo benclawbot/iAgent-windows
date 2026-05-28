@@ -271,7 +271,10 @@ impl Tool for AppTool {
                 "selector": { "type": "string" },
                 "script": { "type": "string" },
                 "text": { "type": "string" },
-                "fields": { "type": "array" },
+                "fields": {
+                    "type": "array",
+                    "items": { "type": "object" }
+                },
                 // skill_script params
                 "skill": { "type": "string" },
                 "script": { "type": "string" },

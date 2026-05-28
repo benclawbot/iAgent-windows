@@ -457,7 +457,7 @@ async fn handle_http(
         ("GET", "/health") => {
             let body = serde_json::json!({
                 "status": "ok",
-                "version": env!("JCODE_VERSION"),
+                "version": env!("IAGENT_VERSION"),
                 "gateway": true,
             });
             http_response(200, "OK", &body.to_string())
@@ -500,7 +500,7 @@ async fn handle_http(
 
             let body = serde_json::json!({
                 "status": "running",
-                "version": env!("JCODE_VERSION"),
+                "version": env!("IAGENT_VERSION"),
                 "gateway": true,
                 "backend": "iAgent",
                 "uptime_seconds": uptime_secs,
@@ -602,7 +602,7 @@ async fn handle_pair_request(
     let body = serde_json::json!({
         "token": token,
         "server_name": "jcode",
-        "server_version": env!("JCODE_VERSION"),
+        "server_version": env!("IAGENT_VERSION"),
     });
     http_response(200, "OK", &body.to_string())
 }

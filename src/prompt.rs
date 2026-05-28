@@ -372,8 +372,8 @@ pub fn build_session_context(working_dir: Option<&Path>) -> String {
     lines.push(format!("Architecture: {}", std::env::consts::ARCH));
     lines.push(format!(
         "Jcode version: {} ({})",
-        env!("JCODE_VERSION"),
-        env!("JCODE_GIT_HASH")
+        env!("IAGENT_VERSION"),
+        env!("IAGENT_GIT_HASH")
     ));
 
     if let Some(hardware) = hardware_context() {

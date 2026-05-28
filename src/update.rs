@@ -58,11 +58,11 @@ fn unicode_display_width(s: &str) -> usize {
 }
 
 pub fn is_release_build() -> bool {
-    option_env!("JCODE_RELEASE_BUILD").is_some()
+    option_env!("IAGENT_RELEASE_BUILD").is_some()
 }
 
 fn current_update_semver() -> &'static str {
-    env!("JCODE_UPDATE_SEMVER")
+    env!("IAGENT_UPDATE_SEMVER")
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -320,7 +320,7 @@ fn install_main_source_update_blocking(latest_sha: &str) -> Result<PathBuf> {
 }
 
 fn prepare_stable_update_blocking() -> Result<PreparedUpdate> {
-    let current_version = env!("JCODE_VERSION");
+    let current_version = env!("IAGENT_VERSION");
     let current_update_version = current_update_semver();
     let release = fetch_latest_release_blocking()?;
     let release_version = release.tag_name.trim_start_matches('v');
@@ -364,11 +364,11 @@ fn prepare_stable_update_blocking() -> Result<PreparedUpdate> {
 }
 
 fn prepare_main_update_blocking() -> Result<PreparedUpdate> {
-    let current_hash = env!("JCODE_GIT_HASH");
+    let current_hash = env!("IAGENT_GIT_HASH");
     if current_hash.is_empty() || current_hash == "unknown" {
         crate::logging::info("Main channel: no git hash in binary, skipping update check");
         return Ok(PreparedUpdate::None {
-            current: env!("JCODE_VERSION").to_string(),
+            current: env!("IAGENT_VERSION").to_string(),
         });
     }
 
@@ -575,7 +575,7 @@ fn check_for_stable_update_blocking() -> Result<Option<GitHubRelease>> {
 ///   - Tries to build from source if cargo is available
 ///   - Falls back to latest GitHub Release if not
 fn check_for_main_update_blocking() -> Result<Option<GitHubRelease>> {
-    let current_hash = env!("JCODE_GIT_HASH");
+    let current_hash = env!("IAGENT_GIT_HASH");
     if current_hash.is_empty() || current_hash == "unknown" {
         crate::logging::info("Main channel: no git hash in binary, skipping update check");
         return Ok(None);
@@ -920,7 +920,7 @@ pub fn check_and_maybe_update(auto_install: bool) -> UpdateCheckResult {
 
     match check_for_update_blocking() {
         Ok(Some(release)) => {
-            let current = env!("JCODE_VERSION").to_string();
+            let current = env!("IAGENT_VERSION").to_string();
             let latest = release.tag_name.clone();
 
             Bus::global().publish(BusEvent::UpdateStatus(UpdateStatus::Available {

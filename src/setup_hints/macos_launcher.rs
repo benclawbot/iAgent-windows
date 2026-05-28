@@ -67,7 +67,7 @@ pub(super) fn install_macos_app_launcher() -> Result<(PathBuf, MacTerminalKind)>
 </dict>
 </plist>
 "#,
-        version = env!("JCODE_VERSION")
+        version = env!("IAGENT_VERSION")
     );
     std::fs::write(contents_dir.join("Info.plist"), info_plist)?;
 

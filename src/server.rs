@@ -450,8 +450,8 @@ impl Server {
             id,
             name,
             icon,
-            git_hash: env!("JCODE_GIT_HASH").to_string(),
-            version: env!("JCODE_VERSION").to_string(),
+            git_hash: env!("IAGENT_GIT_HASH").to_string(),
+            version: env!("IAGENT_VERSION").to_string(),
         };
         crate::process_title::set_server_title(&identity.name);
 
@@ -1351,7 +1351,7 @@ impl Server {
         let registry_identity = self.identity.display_name();
         tokio::spawn(async move {
             let hash_path = format!("{}.hash", registry_info.socket.display());
-            let _ = std::fs::write(&hash_path, env!("JCODE_GIT_HASH"));
+            let _ = std::fs::write(&hash_path, env!("IAGENT_GIT_HASH"));
 
             let mut registry = crate::registry::ServerRegistry::load()
                 .await

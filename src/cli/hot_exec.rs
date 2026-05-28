@@ -309,7 +309,7 @@ pub fn hot_update(session_id: &str) -> Result<()> {
 
     match update::check_for_update_blocking() {
         Ok(Some(release)) => {
-            let current = env!("JCODE_VERSION");
+            let current = env!("IAGENT_VERSION");
             update::print_centered(&format!(
                 "Update available: {} -> {}",
                 current, release.tag_name
@@ -353,7 +353,7 @@ pub fn hot_update(session_id: &str) -> Result<()> {
             }
         }
         Ok(None) => {
-            update::print_centered(&format!("Already up to date ({})", env!("JCODE_VERSION")));
+            update::print_centered(&format!("Already up to date ({})", env!("IAGENT_VERSION")));
         }
         Err(e) => {
             update::print_centered(&format!("✗ Update check failed: {}", e));
@@ -460,7 +460,7 @@ pub fn run_update() -> Result<()> {
             Ok(Some(release)) => {
                 update::print_centered(&format!(
                     "Downloading {} \u{2192} {}...",
-                    env!("JCODE_VERSION"),
+                    env!("IAGENT_VERSION"),
                     release.tag_name
                 ));
                 let _path =
@@ -475,7 +475,7 @@ pub fn run_update() -> Result<()> {
                 update::print_centered("Restart jcode to use the new version.");
             }
             Ok(None) => {
-                update::print_centered(&format!("Already up to date ({})", env!("JCODE_VERSION")));
+                update::print_centered(&format!("Already up to date ({})", env!("IAGENT_VERSION")));
             }
             Err(e) => {
                 anyhow::bail!("Update check failed: {}", e);

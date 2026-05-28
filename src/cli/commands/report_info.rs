@@ -414,16 +414,16 @@ pub(super) async fn run_provider_current_command(
 
 pub(super) fn run_version_command(emit_json: bool) -> Result<()> {
     let report = VersionReport {
-        version: env!("JCODE_VERSION").to_string(),
-        semver: env!("JCODE_SEMVER").to_string(),
-        base_semver: env!("JCODE_BASE_SEMVER").to_string(),
-        update_semver: env!("JCODE_UPDATE_SEMVER").to_string(),
-        git_hash: env!("JCODE_GIT_HASH").to_string(),
-        git_tag: env!("JCODE_GIT_TAG").to_string(),
+        version: env!("IAGENT_VERSION").to_string(),
+        semver: env!("IAGENT_SEMVER").to_string(),
+        base_semver: env!("IAGENT_BASE_SEMVER").to_string(),
+        update_semver: env!("IAGENT_UPDATE_SEMVER").to_string(),
+        git_hash: env!("IAGENT_GIT_HASH").to_string(),
+        git_tag: env!("IAGENT_GIT_TAG").to_string(),
         build_time: crate::build::current_binary_build_time_string()
             .unwrap_or_else(|| "unknown".to_string()),
-        git_date: env!("JCODE_GIT_DATE").to_string(),
-        release_build: option_env!("JCODE_RELEASE_BUILD").is_some(),
+        git_date: env!("IAGENT_GIT_DATE").to_string(),
+        release_build: option_env!("IAGENT_RELEASE_BUILD").is_some(),
     };
 
     if emit_json {

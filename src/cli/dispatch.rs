@@ -442,18 +442,14 @@ async fn run_default_command(args: Args) -> Result<()> {
 
     if !server_running {
         maybe_prompt_server_bootstrap_login(&args.provider).await?;
-        spawn_server(
-            &args.provider,
-            args.model.as_deref(),
-            args.provider_profile.as_deref(),
-        )
-        .await?;
+        // For default command (no subcommand), run server in foreground
+        let provider =
+            provider_init::init_provider(&args.provider, args.model.as_deref()).await?;
+        let server = server::Server::new(provider);
+        server.run().await?;
     }
 
-    let _ = (server_running, startup_hints);
-    anyhow::bail!(
-        "interactive terminal UI has been retired; use `iagent run <message>`, `iagent serve`, or the Python frontend"
-    )
+    Ok(())
 }
 
 pub(crate) async fn server_is_running() -> bool {
