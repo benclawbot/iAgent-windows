@@ -231,14 +231,10 @@ async fn test_wait_for_reloading_server_returns_true_for_live_listener() {
     let temp = tempfile::tempdir().expect("tempdir");
     let socket_path = temp.path().join("iagent.sock");
     let _env = set_socket_test_env(&socket_path, temp.path());
+    #[allow(unused_mut)]
     let mut listener = crate::transport::Listener::bind(&socket_path).expect("bind listener");
-    let accept_task = tokio::spawn(async move {
-        loop {
-            let Ok((_stream, _addr)) = listener.accept().await else {
-                break;
-            };
-        }
-    });
+    let accept_task =
+        tokio::spawn(async move { while let Ok((_stream, _addr)) = listener.accept().await {} });
 
     assert!(wait_for_reloading_server().await);
     accept_task.abort();

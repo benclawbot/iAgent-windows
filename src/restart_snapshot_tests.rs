@@ -41,10 +41,10 @@ impl Drop for TestEnvGuard {
 fn spawn_exited_child() -> std::process::Child {
     #[cfg(windows)]
     {
-        return std::process::Command::new("cmd")
+        std::process::Command::new("cmd")
             .args(["/C", "exit 0"])
             .spawn()
-            .expect("spawn child");
+            .expect("spawn child")
     }
 
     #[cfg(not(windows))]
