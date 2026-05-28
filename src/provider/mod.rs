@@ -3,6 +3,7 @@ mod account_failover;
 pub mod activation;
 pub mod anthropic;
 pub mod antigravity;
+#[cfg(feature = "bedrock")]
 pub mod bedrock;
 pub mod claude;
 pub mod copilot;

@@ -19,7 +19,14 @@ fn generic_credential_paths_for_provider(
             vec![config_dir.join(crate::auth::azure::ENV_FILE)]
         }
         crate::provider_catalog::LoginProviderTarget::Bedrock => {
-            vec![config_dir.join(crate::provider::bedrock::ENV_FILE)]
+            #[cfg(feature = "bedrock")]
+            {
+                vec![config_dir.join(crate::provider::bedrock::ENV_FILE)]
+            }
+            #[cfg(not(feature = "bedrock"))]
+            {
+                Vec::new()
+            }
         }
         crate::provider_catalog::LoginProviderTarget::OpenAiCompatible(profile) => {
             let resolved = crate::provider_catalog::resolve_openai_compatible_profile(profile);

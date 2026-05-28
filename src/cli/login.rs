@@ -285,7 +285,14 @@ pub async fn run_login_provider(
                 login_openrouter_flow().map(|_| LoginFlowOutcome::Completed)
             }
             LoginProviderTarget::Bedrock => {
-                login_bedrock_flow().map(|_| LoginFlowOutcome::Completed)
+                #[cfg(feature = "bedrock")]
+                {
+                    login_bedrock_flow().map(|_| LoginFlowOutcome::Completed)
+                }
+                #[cfg(not(feature = "bedrock"))]
+                {
+                    Err(anyhow::anyhow!("Bedrock provider requires --features bedrock"))
+                }
             }
             LoginProviderTarget::Azure => login_azure_flow().map(|_| LoginFlowOutcome::Completed),
             LoginProviderTarget::OpenAiCompatible(profile) => {
@@ -608,6 +615,7 @@ fn login_openrouter_flow() -> Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "bedrock")]
 fn login_bedrock_flow() -> Result<()> {
     eprintln!("Setting up AWS Bedrock...");
     eprintln!(
