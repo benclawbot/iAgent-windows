@@ -373,7 +373,7 @@ mod tests {
     #[test]
     fn checksum_verification_rejects_mismatch() {
         let sums = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  iagent-linux-x86_64\n";
-        let err = verify_asset_checksum_text(&sums, "iagent-linux-x86_64", b"hello")
+        let err = verify_asset_checksum_text(sums, "iagent-linux-x86_64", b"hello")
             .unwrap_err()
             .to_string();
         assert!(err.contains("Checksum mismatch"));
@@ -382,7 +382,7 @@ mod tests {
     #[test]
     fn checksum_verification_requires_asset_entry() {
         let sums = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  other\n";
-        let err = verify_asset_checksum_text(&sums, "iagent-linux-x86_64", b"hello")
+        let err = verify_asset_checksum_text(sums, "iagent-linux-x86_64", b"hello")
             .unwrap_err()
             .to_string();
         assert!(err.contains("does not list"));
