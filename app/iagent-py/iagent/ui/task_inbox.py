@@ -426,6 +426,7 @@ class AssistantPromptDock(QWidget):
         self._move_timer.start()
         self._install_outside_click_filter()
         self.activateWindow()
+        self._input.setFocus()
         QTimer.singleShot(250, self._auto_hide_timer.start)
 
     def hideEvent(self, event) -> None:  # noqa: ANN001

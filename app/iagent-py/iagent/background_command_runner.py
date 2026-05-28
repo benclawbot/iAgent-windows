@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from pathlib import Path
 from uuid import uuid4
@@ -49,6 +50,7 @@ class BackgroundCommandRunner(QObject):
         *,
         cwd: Path | None = None,
         display_command: str | None = None,
+        env: dict[str, str] | None = None,
     ) -> str:
         """Queue a non-shell command with explicit argv."""
         if not argv or not argv[0].strip():
@@ -56,7 +58,7 @@ class BackgroundCommandRunner(QObject):
         task_id = uuid4().hex[:8]
         shown = display_command or " ".join(argv)
         self.command_started.emit(task_id, shown)
-        asyncio.ensure_future(self._run_exec(task_id, argv, shown, cwd))
+        asyncio.ensure_future(self._run_exec(task_id, argv, shown, cwd, env))
         return task_id
 
     async def _run(self, task_id: str, command: str, cwd: Path | None) -> None:
@@ -101,15 +103,20 @@ class BackgroundCommandRunner(QObject):
         argv: list[str],
         shown_command: str,
         cwd: Path | None,
+        extra_env: dict[str, str] | None,
     ) -> None:
         workdir = str(cwd or self._default_cwd or Path.home())
         started_at = time.perf_counter()
+        env = None
+        if extra_env is not None:
+            env = {**os.environ, **extra_env}
         try:
             process = await asyncio.create_subprocess_exec(
                 *argv,
                 cwd=workdir,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                env=env,
             )
             self.command_running.emit(task_id, shown_command)
             stdout_b, stderr_b = await process.communicate()

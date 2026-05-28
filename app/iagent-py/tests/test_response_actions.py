@@ -11,7 +11,7 @@ def test_parse_response_actions_extracts_cmd_and_type_tags() -> None:
     assert actions.type_text == "hello world"
     assert actions.press_enter is True
     assert actions.cli_command == "git status"
-    assert actions.jcode_goal is None
+    assert actions.iagent_goal is None
 
 
 def test_parse_response_actions_handles_empty_cmd_as_none() -> None:
@@ -19,7 +19,7 @@ def test_parse_response_actions_handles_empty_cmd_as_none() -> None:
 
     assert actions.spoken_text == "nothing to run"
     assert actions.cli_command is None
-    assert actions.jcode_goal is None
+    assert actions.iagent_goal is None
 
 
 def test_parse_response_actions_extracts_iagent_goal() -> None:

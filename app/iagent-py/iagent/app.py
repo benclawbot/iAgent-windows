@@ -249,6 +249,7 @@ def run() -> int:
 
     def _stop_related_processes() -> None:
         """Best-effort stop of sibling iAgent/worker processes started externally."""
+        import subprocess
         worker_dir = str(Path(__file__).resolve().parent.parent.parent / "worker")
         script = (
             f"$workerDir='{worker_dir}'; "
@@ -268,28 +269,33 @@ def run() -> int:
             "} | "
             "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
         )
+        # Launch async without waiting - Fire-and-forget
         try:
-            subprocess.run(
+            subprocess.Popen(
                 ["powershell.exe", "-NoProfile", "-Command", script],
-                check=False,
-                capture_output=True,
-                text=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW,
             )
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("failed to stop related processes: %s", exc)
+        except Exception:
+            pass
 
     def _close_application_requested() -> None:
         nonlocal _close_in_progress
         if _close_in_progress:
             return
         _close_in_progress = True
-        _stop_ambient_mode(notify=False)
+        # Stop ambient mode in a non-blocking way
+        if _ambient_is_running():
+            assert ambient_process is not None
+            try:
+                ambient_process.terminate()
+            except Exception:
+                pass
+            ambient_process = None
         _stop_related_processes()
-        app = QApplication.instance()
-        if app is not None:
-            app.exit(0)
-            app.quit()
-            QTimer.singleShot(400, lambda: os._exit(0))
+        # Exit immediately without waiting
+        QTimer.singleShot(50, lambda: os._exit(0))
     task_inbox.close_all_requested.connect(_close_application_requested)
     tray_icon.quit_requested.connect(_close_application_requested)
 
@@ -474,6 +480,7 @@ def run() -> int:
             )
             return None
         display = f"iagent run --json <goal: {goal_clean[:80]}>"
+        iagent_env = {"OPENAI_API_KEY": result.config.minimax_api_key}
         try:
             task_id = command_runner.enqueue_exec(
                 [
@@ -485,6 +492,7 @@ def run() -> int:
                 ],
                 cwd=Path.home(),
                 display_command=display,
+                env=iagent_env,
             )
         except ValueError as exc:
             tray_icon.notify("iAgent Task Error", str(exc))
