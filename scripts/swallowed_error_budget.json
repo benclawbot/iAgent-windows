@@ -11,152 +11,152 @@
       "let_underscore": 5,
       "unwrap_or_default": 0
     },
-    "crates/jcode-build-support/src/lib.rs": {
+    "crates/iagent-build-support/src/lib.rs": {
       "dot_ok": 0,
       "let_underscore": 5,
       "unwrap_or_default": 6
     },
-    "crates/jcode-build-support/src/paths.rs": {
+    "crates/iagent-build-support/src/paths.rs": {
       "dot_ok": 9,
       "let_underscore": 0,
       "unwrap_or_default": 0
     },
-    "crates/jcode-build-support/src/platform_support.rs": {
+    "crates/iagent-build-support/src/platform_support.rs": {
       "dot_ok": 0,
       "let_underscore": 4,
       "unwrap_or_default": 0
     },
-    "crates/jcode-build-support/src/source_state.rs": {
+    "crates/iagent-build-support/src/source_state.rs": {
       "dot_ok": 1,
       "let_underscore": 0,
       "unwrap_or_default": 0
     },
-    "crates/jcode-build-support/src/storage_helpers.rs": {
+    "crates/iagent-build-support/src/storage_helpers.rs": {
       "dot_ok": 2,
       "let_underscore": 0,
       "unwrap_or_default": 0
     },
-    "crates/jcode-core/src/fs.rs": {
+    "crates/iagent-core/src/fs.rs": {
       "dot_ok": 0,
       "let_underscore": 2,
       "unwrap_or_default": 0
     },
-    "crates/jcode-core/src/stdin_detect.rs": {
+    "crates/iagent-core/src/stdin_detect.rs": {
       "dot_ok": 3,
       "let_underscore": 0,
       "unwrap_or_default": 0
     },
-    "crates/jcode-core/src/util.rs": {
+    "crates/iagent-core/src/util.rs": {
       "dot_ok": 2,
       "let_underscore": 0,
       "unwrap_or_default": 1
     },
-    "crates/jcode-import-core/src/lib.rs": {
+    "crates/iagent-import-core/src/lib.rs": {
       "dot_ok": 9,
       "let_underscore": 0,
       "unwrap_or_default": 11
     },
-    "crates/jcode-memory-types/src/graph.rs": {
+    "crates/iagent-memory-types/src/graph.rs": {
       "dot_ok": 0,
       "let_underscore": 0,
       "unwrap_or_default": 2
     },
-    "crates/jcode-mobile-core/src/visual.rs": {
+    "crates/iagent-mobile-core/src/visual.rs": {
       "dot_ok": 0,
       "let_underscore": 0,
       "unwrap_or_default": 1
     },
-    "crates/jcode-mobile-sim/src/gpu_preview.rs": {
+    "crates/iagent-mobile-sim/src/gpu_preview.rs": {
       "dot_ok": 7,
       "let_underscore": 0,
       "unwrap_or_default": 0
     },
-    "crates/jcode-mobile-sim/src/lib.rs": {
+    "crates/iagent-mobile-sim/src/lib.rs": {
       "dot_ok": 0,
       "let_underscore": 2,
       "unwrap_or_default": 4
     },
-    "crates/jcode-mobile-sim/src/main.rs": {
+    "crates/iagent-mobile-sim/src/main.rs": {
       "dot_ok": 0,
       "let_underscore": 0,
       "unwrap_or_default": 1
     },
-    "crates/jcode-notify-email/src/lib.rs": {
+    "crates/iagent-notify-email/src/lib.rs": {
       "dot_ok": 0,
       "let_underscore": 0,
       "unwrap_or_default": 1
     },
-    "crates/jcode-overnight-core/src/lib.rs": {
+    "crates/iagent-overnight-core/src/lib.rs": {
       "dot_ok": 1,
       "let_underscore": 0,
       "unwrap_or_default": 3
     },
-    "crates/jcode-protocol/src/lib.rs": {
+    "crates/iagent-protocol/src/lib.rs": {
       "dot_ok": 0,
       "let_underscore": 0,
       "unwrap_or_default": 1
     },
-    "crates/jcode-provider-core/src/failover.rs": {
+    "crates/iagent-provider-core/src/failover.rs": {
       "dot_ok": 1,
       "let_underscore": 0,
       "unwrap_or_default": 0
     },
-    "crates/jcode-provider-core/src/openai_schema.rs": {
+    "crates/iagent-provider-core/src/openai_schema.rs": {
       "dot_ok": 0,
       "let_underscore": 0,
       "unwrap_or_default": 1
     },
-    "crates/jcode-provider-core/src/pricing.rs": {
+    "crates/iagent-provider-core/src/pricing.rs": {
       "dot_ok": 1,
       "let_underscore": 0,
       "unwrap_or_default": 0
     },
-    "crates/jcode-provider-gemini/src/lib.rs": {
+    "crates/iagent-provider-gemini/src/lib.rs": {
       "dot_ok": 2,
       "let_underscore": 0,
       "unwrap_or_default": 1
     },
-    "crates/jcode-provider-metadata/src/lib.rs": {
+    "crates/iagent-provider-metadata/src/lib.rs": {
       "dot_ok": 1,
       "let_underscore": 0,
       "unwrap_or_default": 0
     },
-    "crates/jcode-provider-openai/src/request.rs": {
+    "crates/iagent-provider-openai/src/request.rs": {
       "dot_ok": 0,
       "let_underscore": 0,
       "unwrap_or_default": 1
     },
-    "crates/jcode-provider-openrouter/src/lib.rs": {
+    "crates/iagent-provider-openrouter/src/lib.rs": {
       "dot_ok": 14,
       "let_underscore": 4,
       "unwrap_or_default": 0
     },
-    "crates/jcode-session-types/src/lib.rs": {
+    "crates/iagent-session-types/src/lib.rs": {
       "dot_ok": 0,
       "let_underscore": 0,
       "unwrap_or_default": 1
     },
-    "crates/jcode-storage/src/lib.rs": {
+    "crates/iagent-storage/src/lib.rs": {
       "dot_ok": 0,
       "let_underscore": 10,
       "unwrap_or_default": 1
     },
-    "crates/jcode-swarm-core/src/lib.rs": {
+    "crates/iagent-swarm-core/src/lib.rs": {
       "dot_ok": 0,
       "let_underscore": 0,
       "unwrap_or_default": 1
     },
-    "crates/jcode-terminal-launch/src/lib.rs": {
+    "crates/iagent-terminal-launch/src/lib.rs": {
       "dot_ok": 2,
       "let_underscore": 0,
       "unwrap_or_default": 0
     },
-    "crates/jcode-update-core/src/lib.rs": {
+    "crates/iagent-update-core/src/lib.rs": {
       "dot_ok": 3,
       "let_underscore": 0,
       "unwrap_or_default": 0
     },
-    "crates/jcode-usage-types/src/lib.rs": {
+    "crates/iagent-usage-types/src/lib.rs": {
       "dot_ok": 0,
       "let_underscore": 1,
       "unwrap_or_default": 0

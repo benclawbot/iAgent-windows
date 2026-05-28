@@ -1,5 +1,5 @@
 use anyhow::Result;
-use jcode_provider_core::{ActiveProvider, provider_key};
+use iagent_provider_core::{ActiveProvider, provider_key};
 
 /// Stable product/runtime identity selected by login or provider initialization.
 ///
@@ -148,7 +148,7 @@ impl ProviderActivation {
         }
     }
 
-    pub fn jcode_subscription(model: impl Into<String>) -> Self {
+    pub fn iagent_subscription(model: impl Into<String>) -> Self {
         Self::locked(RuntimeProviderId::Jcode, ActiveProvider::OpenRouter)
             .with_model_hint("JCODE_OPENROUTER_MODEL", model)
     }

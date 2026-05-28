@@ -589,7 +589,7 @@ async fn test_full_ambient_cycle_simulation() -> Result<()> {
     registry.register_ambient_tools().await;
 
     let mut agent = Agent::new(provider.clone(), registry);
-    agent.set_system_prompt("You are the jcode ambient maintenance agent.");
+    agent.set_system_prompt("You are the iagent ambient maintenance agent.");
 
     let response = agent.run_once_capture("Begin your ambient cycle.").await?;
 

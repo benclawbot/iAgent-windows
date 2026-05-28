@@ -10,12 +10,12 @@ use std::sync::Mutex;
 static TRACKER: Mutex<Option<CopilotUsageTracker>> = Mutex::new(None);
 
 fn usage_path() -> PathBuf {
-    crate::storage::jcode_dir()
+    crate::storage::iagent_dir()
         .unwrap_or_else(|_| PathBuf::from(".").join(".jcode"))
         .join("copilot_usage.json")
 }
 
-pub use jcode_usage_types::{AllTimeUsage, CopilotUsageTracker, DayUsage, MonthUsage};
+pub use iagent_usage_types::{AllTimeUsage, CopilotUsageTracker, DayUsage, MonthUsage};
 
 fn roll_if_needed(tracker: &mut CopilotUsageTracker) {
     let now = Utc::now();
@@ -147,7 +147,7 @@ mod tests {
     }
 
     #[test]
-    fn usage_path_respects_jcode_home() {
+    fn usage_path_respects_iagent_home() {
         let _env_lock = lock_env();
         clear_tracker();
         let temp = tempfile::tempdir().expect("tempdir");
@@ -157,7 +157,7 @@ mod tests {
     }
 
     #[test]
-    fn save_and_load_roundtrip_under_jcode_home() {
+    fn save_and_load_roundtrip_under_iagent_home() {
         let _env_lock = lock_env();
         clear_tracker();
         let temp = tempfile::tempdir().expect("tempdir");

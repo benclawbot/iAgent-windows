@@ -9,7 +9,7 @@ use crate::provider::{EventStream, Provider};
 use crate::tool::Registry;
 use anyhow::Result;
 use async_trait::async_trait;
-use jcode_agent_runtime::SoftInterruptSource;
+use iagent_agent_runtime::SoftInterruptSource;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};

@@ -1,6 +1,6 @@
 use super::*;
 use crate::provider_catalog::{LoginProviderDescriptor, LoginProviderTarget};
-pub(super) use jcode_provider_core::{ActiveProvider, ProviderAvailability};
+pub(super) use iagent_provider_core::{ActiveProvider, ProviderAvailability};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum ConfigProviderSelection {
@@ -44,11 +44,11 @@ pub struct DefaultModelSelection {
 
 impl MultiProvider {
     pub(super) fn auto_default_provider(availability: ProviderAvailability) -> ActiveProvider {
-        jcode_provider_core::auto_default_provider(availability)
+        iagent_provider_core::auto_default_provider(availability)
     }
 
     pub(super) fn parse_provider_hint(value: &str) -> Option<ActiveProvider> {
-        jcode_provider_core::parse_provider_hint(value)
+        iagent_provider_core::parse_provider_hint(value)
     }
 
     pub(super) fn forced_provider_from_env() -> Option<ActiveProvider> {
@@ -66,11 +66,11 @@ impl MultiProvider {
     }
 
     pub(super) fn provider_label(provider: ActiveProvider) -> &'static str {
-        jcode_provider_core::provider_label(provider)
+        iagent_provider_core::provider_label(provider)
     }
 
     pub(super) fn provider_key(provider: ActiveProvider) -> &'static str {
-        jcode_provider_core::provider_key(provider)
+        iagent_provider_core::provider_key(provider)
     }
 
     pub(super) fn set_active_provider(&self, provider: ActiveProvider) {

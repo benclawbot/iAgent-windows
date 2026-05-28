@@ -1,9 +1,9 @@
 {
   "threshold_loc": 1200,
   "tracked_files": {
-    "crates/jcode-overnight-core/src/lib.rs": 1459,
-    "crates/jcode-protocol/src/lib.rs": 2106,
-    "crates/jcode-provider-metadata/src/lib.rs": 1573,
+    "crates/iagent-overnight-core/src/lib.rs": 1459,
+    "crates/iagent-protocol/src/lib.rs": 2106,
+    "crates/iagent-provider-metadata/src/lib.rs": 1573,
     "src/auth/lifecycle_driver.rs": 1302,
     "src/auth/mod.rs": 1328,
     "src/auth/oauth.rs": 1436,

@@ -6,7 +6,7 @@ use super::{
 };
 use crate::agent::Agent;
 use anyhow::Result;
-use jcode_agent_runtime::InterruptSignal;
+use iagent_agent_runtime::InterruptSignal;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;

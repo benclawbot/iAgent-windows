@@ -131,7 +131,7 @@ pub fn type_text(text: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn focused_jcode_session() -> Result<Option<String>> {
+pub fn focused_iagent_session() -> Result<Option<String>> {
     let Some(window) = focused_window_niri()? else {
         return Ok(None);
     };
@@ -368,7 +368,7 @@ fn shell_command(command: &str) -> tokio::process::Command {
 }
 
 fn last_focused_session_path() -> Result<std::path::PathBuf> {
-    Ok(crate::storage::jcode_dir()?.join("last_focused_client_session"))
+    Ok(crate::storage::iagent_dir()?.join("last_focused_client_session"))
 }
 
 #[cfg(test)]

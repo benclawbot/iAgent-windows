@@ -3,7 +3,7 @@ use super::{
     persist_reload_recovery_intents, receive_reload_signal,
 };
 use crate::server::{ReloadSignal, SwarmEvent, SwarmEventType, SwarmMember};
-use jcode_agent_runtime::InterruptSignal;
+use iagent_agent_runtime::InterruptSignal;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;

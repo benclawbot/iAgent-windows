@@ -26,7 +26,7 @@ impl JcodeProvider {
     }
 
     fn apply_runtime_profile() {
-        let _ = crate::provider::activation::ProviderActivation::jcode_subscription(
+        let _ = crate::provider::activation::ProviderActivation::iagent_subscription(
             crate::subscription_catalog::default_model().id,
         )
         .apply_env();
@@ -199,8 +199,8 @@ impl Provider for JcodeProvider {
         self.inner.supports_compaction()
     }
 
-    fn uses_jcode_compaction(&self) -> bool {
-        self.inner.uses_jcode_compaction()
+    fn uses_iagent_compaction(&self) -> bool {
+        self.inner.uses_iagent_compaction()
     }
 
     async fn native_compact(
@@ -249,7 +249,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn jcode_provider_enables_subscription_runtime_mode() {
+    fn iagent_provider_enables_subscription_runtime_mode() {
         let _guard = crate::storage::lock_test_env();
         crate::subscription_catalog::clear_runtime_env();
         let runtime = tokio::runtime::Runtime::new().expect("tokio runtime");
@@ -269,7 +269,7 @@ mod tests {
     }
 
     #[test]
-    fn jcode_provider_name_and_default_model_are_curated() {
+    fn iagent_provider_name_and_default_model_are_curated() {
         let _guard = crate::storage::lock_test_env();
         crate::subscription_catalog::clear_runtime_env();
         let runtime = tokio::runtime::Runtime::new().expect("tokio runtime");

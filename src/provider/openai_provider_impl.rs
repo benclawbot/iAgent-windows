@@ -550,7 +550,7 @@ impl Provider for OpenAIProvider {
         true
     }
 
-    fn uses_jcode_compaction(&self) -> bool {
+    fn uses_iagent_compaction(&self) -> bool {
         self.native_compaction_mode != OpenAINativeCompactionMode::Auto
     }
 

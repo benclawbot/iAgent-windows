@@ -1,5 +1,5 @@
 use super::*;
-pub use jcode_selfdev_types::ReloadRecoveryDirective;
+pub use iagent_selfdev_types::ReloadRecoveryDirective;
 
 impl ReloadContext {
     fn sanitize_session_id(session_id: &str) -> String {
@@ -17,11 +17,11 @@ impl ReloadContext {
 
     pub fn path_for_session(session_id: &str) -> Result<std::path::PathBuf> {
         let sanitized = Self::sanitize_session_id(session_id);
-        Ok(storage::jcode_dir()?.join(format!("reload-context-{}.json", sanitized)))
+        Ok(storage::iagent_dir()?.join(format!("reload-context-{}.json", sanitized)))
     }
 
     fn legacy_path() -> Result<std::path::PathBuf> {
-        Ok(storage::jcode_dir()?.join("reload-context.json"))
+        Ok(storage::iagent_dir()?.join("reload-context.json"))
     }
 
     pub fn save(&self) -> Result<()> {

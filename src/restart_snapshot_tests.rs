@@ -163,7 +163,7 @@ fn arm_auto_restore_from_recent_crashes_ignores_old_crashes() {
     crashed.status = crate::session::SessionStatus::Active;
     crashed.last_pid = Some(dead_pid);
     crashed.save().expect("save stale active session");
-    let active_dir = crate::storage::jcode_dir()
+    let active_dir = crate::storage::iagent_dir()
         .expect("jcode dir")
         .join("active_pids");
     std::fs::create_dir_all(&active_dir).expect("create active pid dir");

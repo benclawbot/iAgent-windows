@@ -1,6 +1,6 @@
 use super::*;
 
-fn with_temp_jcode_home(test: impl FnOnce()) {
+fn with_temp_iagent_home(test: impl FnOnce()) {
     let _guard = crate::storage::lock_test_env();
     let prev_home = std::env::var_os("JCODE_HOME");
     let temp = tempfile::TempDir::new().expect("create temp dir");
@@ -34,7 +34,7 @@ fn test_is_browser_command() {
 
 #[test]
 fn test_rewrite_command_with_full_path() {
-    with_temp_jcode_home(|| {
+    with_temp_iagent_home(|| {
         let cmd = "browser ping";
         std::fs::create_dir_all(browser_dir()).expect("create browser dir");
         std::fs::write(browser_binary_path(), "browser").expect("write browser binary");
@@ -50,7 +50,7 @@ fn test_rewrite_command_with_full_path() {
 
 #[test]
 fn test_paths() {
-    with_temp_jcode_home(|| {
+    with_temp_iagent_home(|| {
         let bdir = browser_dir();
         assert!(bdir.to_string_lossy().ends_with("browser"));
 

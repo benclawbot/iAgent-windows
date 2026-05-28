@@ -82,8 +82,8 @@ use crate::runtime_memory_log::{
 use crate::tool::selfdev::ReloadContext;
 use crate::transport::Listener;
 use anyhow::Result;
-use jcode_agent_runtime::{InterruptSignal, SoftInterruptSource};
-use jcode_swarm_core::{
+use iagent_agent_runtime::{InterruptSignal, SoftInterruptSource};
+use iagent_swarm_core::{
     append_swarm_completion_report_instructions, format_structured_completion_report,
     summarize_plan_items, truncate_detail,
 };

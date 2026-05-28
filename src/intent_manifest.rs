@@ -125,7 +125,7 @@ pub struct IntentPlanStep {
 
 impl IntentManifestStore {
     pub fn load() -> Result<Self> {
-        let dir = crate::storage::jcode_dir()?.join("intent_manifests");
+        let dir = crate::storage::iagent_dir()?.join("intent_manifests");
         std::fs::create_dir_all(&dir)?;
         Ok(Self {
             path: dir.join("imported.json"),

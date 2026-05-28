@@ -4,7 +4,7 @@ use crate::message::{ConnectionPhase, Message, Role, StreamEvent, ToolDefinition
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::Utc;
-pub use jcode_provider_gemini::{
+pub use iagent_provider_gemini::{
     AVAILABLE_MODELS, CODE_ASSIST_API_VERSION, CODE_ASSIST_ENDPOINT, ClientMetadata,
     CodeAssistGenerateRequest, CodeAssistGenerateResponse, DEFAULT_MODEL, GeminiCandidate,
     GeminiContent, GeminiFunctionCall, GeminiFunctionCallingConfig, GeminiFunctionDeclaration,

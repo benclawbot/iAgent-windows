@@ -1,21 +1,21 @@
 #![cfg_attr(test, allow(clippy::items_after_test_module))]
 
-pub use jcode_storage::*;
+pub use iagent_storage::*;
 
 use anyhow::Result;
 use serde::de::DeserializeOwned;
 use std::path::Path;
 
 pub fn read_json<T: DeserializeOwned>(path: &Path) -> Result<T> {
-    jcode_storage::read_json_with_recovery_handler(path, |event| match event {
-        jcode_storage::StorageRecoveryEvent::CorruptPrimary { path, error } => {
+    iagent_storage::read_json_with_recovery_handler(path, |event| match event {
+        iagent_storage::StorageRecoveryEvent::CorruptPrimary { path, error } => {
             log_warn!((
                 "Corrupt JSON at {}, trying backup: {}",
                 path.display(),
                 error
             ));
         }
-        jcode_storage::StorageRecoveryEvent::RecoveredFromBackup { backup_path } => {
+        iagent_storage::StorageRecoveryEvent::RecoveredFromBackup { backup_path } => {
             log_info!(("Recovered from backup: {}", backup_path.display()));
         }
     })

@@ -107,7 +107,7 @@ fn has_cursor_api_key_from_env() {
 }
 
 #[test]
-fn cursor_vscdb_paths_respect_jcode_home() {
+fn cursor_vscdb_paths_respect_iagent_home() {
     let _guard = crate::storage::lock_test_env();
     let prev_home = std::env::var_os("JCODE_HOME");
     let temp = TempDir::new().unwrap();

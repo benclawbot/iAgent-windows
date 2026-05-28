@@ -178,15 +178,15 @@ fn opencode_path() -> Result<PathBuf> {
     crate::storage::user_home_path(".local/share/opencode/auth.json")
 }
 
-pub fn jcode_path() -> Result<PathBuf> {
-    Ok(crate::storage::jcode_dir()?.join("auth.json"))
+pub fn iagent_path() -> Result<PathBuf> {
+    Ok(crate::storage::iagent_dir()?.join("auth.json"))
 }
 
 // ---- Multi-account helpers ----
 
 /// Read the jcode auth file, auto-migrating from legacy format if needed.
 pub fn load_auth_file() -> Result<JcodeAuthFile> {
-    let path = jcode_path()?;
+    let path = iagent_path()?;
     if !path.exists() {
         return Ok(JcodeAuthFile::default());
     }
@@ -226,7 +226,7 @@ pub fn load_auth_file() -> Result<JcodeAuthFile> {
 
 /// Write the jcode auth file (multi-account format).
 pub fn save_auth_file(auth: &JcodeAuthFile) -> Result<()> {
-    let auth_path = jcode_path()?;
+    let auth_path = iagent_path()?;
 
     let clean = JcodeAuthFile {
         anthropic_accounts: auth.anthropic_accounts.clone(),
@@ -434,7 +434,7 @@ pub fn load_credentials() -> Result<ClaudeCredentials> {
         expired_candidates.push(("claude", creds));
     }
 
-    if let Ok(creds) = load_jcode_credentials() {
+    if let Ok(creds) = load_iagent_credentials() {
         if creds.expires_at > now_ms {
             return Ok(creds);
         }
@@ -487,7 +487,7 @@ pub fn load_credentials_for_account(label: &str) -> Result<ClaudeCredentials> {
 }
 
 /// Load credentials from the active jcode account (multi-account aware).
-fn load_jcode_credentials() -> Result<ClaudeCredentials> {
+fn load_iagent_credentials() -> Result<ClaudeCredentials> {
     let auth = load_auth_file()?;
     if auth.anthropic_accounts.is_empty() {
         anyhow::bail!("No anthropic accounts configured in jcode auth.json");

@@ -7,7 +7,7 @@ use crate::message::{
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::Utc;
-pub use jcode_provider_core::PremiumMode;
+pub use iagent_provider_core::PremiumMode;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::sync::{Arc, RwLock};

@@ -8,42 +8,42 @@ autobins = false
 [workspace]
 members = [
     ".",
-    "crates/jcode-agent-runtime",
-    "crates/jcode-ambient-types",
-    "crates/jcode-auth-types",
-    "crates/jcode-embedding",
-    "crates/jcode-gateway-types",
-    "crates/jcode-import-core",
-    "crates/jcode-pdf",
-    "crates/jcode-background-types",
-    "crates/jcode-batch-types",
-    "crates/jcode-build-support",
-    "crates/jcode-compaction-core",
-    "crates/jcode-config-types",
-    "crates/jcode-core",
-    "crates/jcode-memory-types",
-    "crates/jcode-message-types",
-    "crates/jcode-overnight-core",
-    "crates/jcode-plan",
-    "crates/jcode-swarm-core",
-    "crates/jcode-protocol",
-    "crates/jcode-selfdev-types",
-    "crates/jcode-session-types",
-    "crates/jcode-storage",
-    "crates/jcode-side-panel-types",
-    "crates/jcode-azure-auth",
-    "crates/jcode-notify-email",
-    "crates/jcode-provider-metadata",
-    "crates/jcode-provider-core",
-    "crates/jcode-provider-openrouter",
-    "crates/jcode-provider-openai",
-    "crates/jcode-provider-gemini",
-    "crates/jcode-usage-types",
-    "crates/jcode-task-types",
-    "crates/jcode-tool-core",
-    "crates/jcode-tool-types",
-    "crates/jcode-update-core",
-    "crates/jcode-terminal-launch",
+    "crates/iagent-agent-runtime",
+    "crates/iagent-ambient-types",
+    "crates/iagent-auth-types",
+    "crates/iagent-embedding",
+    "crates/iagent-gateway-types",
+    "crates/iagent-import-core",
+    "crates/iagent-pdf",
+    "crates/iagent-background-types",
+    "crates/iagent-batch-types",
+    "crates/iagent-build-support",
+    "crates/iagent-compaction-core",
+    "crates/iagent-config-types",
+    "crates/iagent-core",
+    "crates/iagent-memory-types",
+    "crates/iagent-message-types",
+    "crates/iagent-overnight-core",
+    "crates/iagent-plan",
+    "crates/iagent-swarm-core",
+    "crates/iagent-protocol",
+    "crates/iagent-selfdev-types",
+    "crates/iagent-session-types",
+    "crates/iagent-storage",
+    "crates/iagent-side-panel-types",
+    "crates/iagent-azure-auth",
+    "crates/iagent-notify-email",
+    "crates/iagent-provider-metadata",
+    "crates/iagent-provider-core",
+    "crates/iagent-provider-openrouter",
+    "crates/iagent-provider-openai",
+    "crates/iagent-provider-gemini",
+    "crates/iagent-usage-types",
+    "crates/iagent-task-types",
+    "crates/iagent-tool-core",
+    "crates/iagent-tool-types",
+    "crates/iagent-update-core",
+    "crates/iagent-terminal-launch",
     "crates/desktop-monitor",
     "crates/suggestion-engine",
     "crates/overlay-ui",
@@ -119,9 +119,9 @@ uuid = { version = "1", features = ["v4", "v5"] }
 proctitle = "0.1"
 
 # Embeddings (local inference) - behind feature flag (163 crates, slow to compile)
-jcode-embedding = { path = "crates/jcode-embedding", optional = true }
-jcode-gateway-types = { path = "crates/jcode-gateway-types" }
-jcode-import-core = { path = "crates/jcode-import-core" }
+iagent-embedding = { path = "crates/iagent-embedding", optional = true }
+iagent-gateway-types = { path = "crates/iagent-gateway-types" }
+iagent-import-core = { path = "crates/iagent-import-core" }
 
 # OAuth
 base64 = "0.22"
@@ -130,16 +130,16 @@ rand = "0.9.3"
 hex = "0.4"
 url = "2"
 open = "5"               # Open URLs in browser
-jcode-auth-types = { path = "crates/jcode-auth-types" }
-jcode-azure-auth = { path = "crates/jcode-azure-auth" }
-jcode-agent-runtime = { path = "crates/jcode-agent-runtime" }
-jcode-ambient-types = { path = "crates/jcode-ambient-types" }
-jcode-notify-email = { path = "crates/jcode-notify-email" }
-jcode-provider-metadata = { path = "crates/jcode-provider-metadata" }
-jcode-provider-core = { path = "crates/jcode-provider-core" }
-jcode-provider-openai = { path = "crates/jcode-provider-openai" }
-jcode-provider-openrouter = { path = "crates/jcode-provider-openrouter" }
-jcode-provider-gemini = { path = "crates/jcode-provider-gemini" }
+iagent-auth-types = { path = "crates/iagent-auth-types" }
+iagent-azure-auth = { path = "crates/iagent-azure-auth" }
+iagent-agent-runtime = { path = "crates/iagent-agent-runtime" }
+iagent-ambient-types = { path = "crates/iagent-ambient-types" }
+iagent-notify-email = { path = "crates/iagent-notify-email" }
+iagent-provider-metadata = { path = "crates/iagent-provider-metadata" }
+iagent-provider-core = { path = "crates/iagent-provider-core" }
+iagent-provider-openai = { path = "crates/iagent-provider-openai" }
+iagent-provider-openrouter = { path = "crates/iagent-provider-openrouter" }
+iagent-provider-gemini = { path = "crates/iagent-provider-gemini" }
 iagent-settings = { path = "crates/iagent-settings" }
 
 arboard = "3"
@@ -147,9 +147,9 @@ desktop-monitor = { path = "crates/desktop-monitor" }
 suggestion-engine = { path = "crates/suggestion-engine" }
 overlay-ui = { path = "crates/overlay-ui" }
 app-integrations = { path = "crates/app-integrations" }
-jcode-update-core = { path = "crates/jcode-update-core" }
-jcode-terminal-launch = { path = "crates/jcode-terminal-launch" }
-jcode-usage-types = { path = "crates/jcode-usage-types" }
+iagent-update-core = { path = "crates/iagent-update-core" }
+iagent-terminal-launch = { path = "crates/iagent-terminal-launch" }
+iagent-usage-types = { path = "crates/iagent-usage-types" }
 
 # Streaming
 tokio-stream = "0.1"
@@ -160,26 +160,26 @@ image = { version = "0.25", default-features = false, features = ["png", "jpeg"]
 unicode-width = "0.2"
 
 # PDF parsing (behind feature flag)
-jcode-pdf = { path = "crates/jcode-pdf", optional = true }
-jcode-background-types = { path = "crates/jcode-background-types" }
-jcode-batch-types = { path = "crates/jcode-batch-types" }
-jcode-build-support = { path = "crates/jcode-build-support" }
-jcode-compaction-core = { path = "crates/jcode-compaction-core" }
-jcode-config-types = { path = "crates/jcode-config-types" }
-jcode-core = { path = "crates/jcode-core" }
-jcode-memory-types = { path = "crates/jcode-memory-types" }
-jcode-message-types = { path = "crates/jcode-message-types" }
-jcode-overnight-core = { path = "crates/jcode-overnight-core" }
-jcode-plan = { path = "crates/jcode-plan" }
-jcode-swarm-core = { path = "crates/jcode-swarm-core" }
-jcode-protocol = { path = "crates/jcode-protocol" }
-jcode-selfdev-types = { path = "crates/jcode-selfdev-types" }
-jcode-session-types = { path = "crates/jcode-session-types" }
-jcode-storage = { path = "crates/jcode-storage" }
-jcode-task-types = { path = "crates/jcode-task-types" }
-jcode-tool-core = { path = "crates/jcode-tool-core" }
-jcode-tool-types = { path = "crates/jcode-tool-types" }
-jcode-side-panel-types = { path = "crates/jcode-side-panel-types" }
+iagent-pdf = { path = "crates/iagent-pdf", optional = true }
+iagent-background-types = { path = "crates/iagent-background-types" }
+iagent-batch-types = { path = "crates/iagent-batch-types" }
+iagent-build-support = { path = "crates/iagent-build-support" }
+iagent-compaction-core = { path = "crates/iagent-compaction-core" }
+iagent-config-types = { path = "crates/iagent-config-types" }
+iagent-core = { path = "crates/iagent-core" }
+iagent-memory-types = { path = "crates/iagent-memory-types" }
+iagent-message-types = { path = "crates/iagent-message-types" }
+iagent-overnight-core = { path = "crates/iagent-overnight-core" }
+iagent-plan = { path = "crates/iagent-plan" }
+iagent-swarm-core = { path = "crates/iagent-swarm-core" }
+iagent-protocol = { path = "crates/iagent-protocol" }
+iagent-selfdev-types = { path = "crates/iagent-selfdev-types" }
+iagent-session-types = { path = "crates/iagent-session-types" }
+iagent-storage = { path = "crates/iagent-storage" }
+iagent-task-types = { path = "crates/iagent-task-types" }
+iagent-tool-core = { path = "crates/iagent-tool-core" }
+iagent-tool-types = { path = "crates/iagent-tool-types" }
+iagent-side-panel-types = { path = "crates/iagent-side-panel-types" }
 
 # Archive extraction (for auto-update)
 flate2 = "1"
@@ -215,7 +215,7 @@ jemalloc-prof = [
     "tikv-jemallocator/profiling",
     "tikv-jemalloc-ctl/profiling",
 ]
-embeddings = ["dep:jcode-embedding"]
+embeddings = ["dep:iagent-embedding"]
 bedrock = [
     "dep:aws-config",
     "dep:aws-sdk-bedrockruntime",
@@ -225,7 +225,7 @@ bedrock = [
     "dep:aws-smithy-types",
     "dep:aws-credential-types",
 ]
-pdf = ["dep:jcode-pdf"]
+pdf = ["dep:iagent-pdf"]
 # Compatibility no-op for existing CI and callers; the Rust TUI implementation
 # has been removed from the workspace.
 terminal-ui = []

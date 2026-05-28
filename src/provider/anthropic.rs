@@ -10,7 +10,7 @@ use crate::message::{ContentBlock, Message, Role, StreamEvent, ToolDefinition};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use futures::StreamExt;
-use jcode_provider_core::{
+use iagent_provider_core::{
     ANTHROPIC_OAUTH_BETA_HEADERS, anthropic_effectively_1m, anthropic_is_1m_model as is_1m_model,
     anthropic_map_tool_name_for_oauth as map_tool_name_for_oauth,
     anthropic_map_tool_name_from_oauth as map_tool_name_from_oauth, anthropic_oauth_beta_headers,
@@ -54,7 +54,7 @@ pub(crate) const OAUTH_BILLING_HEADER: &str =
 
 pub(crate) const OAUTH_BETA_HEADERS: &str = ANTHROPIC_OAUTH_BETA_HEADERS;
 #[cfg(test)]
-pub(crate) const OAUTH_BETA_HEADERS_1M: &str = jcode_provider_core::ANTHROPIC_OAUTH_BETA_HEADERS_1M;
+pub(crate) const OAUTH_BETA_HEADERS_1M: &str = iagent_provider_core::ANTHROPIC_OAUTH_BETA_HEADERS_1M;
 
 pub fn effectively_1m(model: &str) -> bool {
     anthropic_effectively_1m(model)

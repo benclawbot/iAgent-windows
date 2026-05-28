@@ -2,7 +2,7 @@ use crate::storage;
 mod lifecycle;
 mod state_support;
 use chrono::{DateTime, NaiveDate, Utc};
-use jcode_usage_types::{
+use iagent_usage_types::{
     AuthEvent, ErrorCounts, FeedbackEvent, InstallEvent, OnboardingStepEvent,
     SessionLifecycleEvent, SessionStartEvent, TelemetryProjectProfile as ProjectProfile,
     TelemetryToolCategory as ToolCategory, TelemetryWorkflowCounts, TurnEndEvent, UpgradeEvent,
@@ -11,7 +11,7 @@ use jcode_usage_types::{
     mcp_telemetry_server_name as mcp_server_name, sanitize_feedback_text, sanitize_telemetry_label,
     telemetry_workflow_flags_from_counts,
 };
-pub use jcode_usage_types::{ErrorCategory, SessionEndReason};
+pub use iagent_usage_types::{ErrorCategory, SessionEndReason};
 use lifecycle::emit_lifecycle_event;
 use serde_json::Value;
 use state_support::*;
@@ -257,7 +257,7 @@ pub fn is_enabled() -> bool {
     if std::env::var("JCODE_NO_TELEMETRY").is_ok() || std::env::var("DO_NOT_TRACK").is_ok() {
         return false;
     }
-    if let Ok(dir) = storage::jcode_dir()
+    if let Ok(dir) = storage::iagent_dir()
         && dir.join("no_telemetry").exists()
     {
         return false;
@@ -436,7 +436,7 @@ fn detect_project_profile() -> ProjectProfile {
     let Some(root) = cwd.as_deref() else {
         return profile;
     };
-    profile.repo_present = root.join(".git").exists() || crate::build::is_jcode_repo(root);
+    profile.repo_present = root.join(".git").exists() || crate::build::is_iagent_repo(root);
     let mut scanned_files = 0usize;
     for entry in walkdir::WalkDir::new(root)
         .max_depth(3)

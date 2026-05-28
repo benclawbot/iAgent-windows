@@ -25,14 +25,14 @@ impl Drop for EnvVarGuard {
 }
 
 #[test]
-fn jcode_auth_file_default_is_empty() {
+fn iagent_auth_file_default_is_empty() {
     let auth = JcodeAuthFile::default();
     assert!(auth.anthropic_accounts.is_empty());
     assert!(auth.active_anthropic_account.is_none());
 }
 
 #[test]
-fn jcode_auth_file_roundtrip() {
+fn iagent_auth_file_roundtrip() {
     let auth = JcodeAuthFile {
         anthropic_accounts: vec![AnthropicAccount {
             label: "work".to_string(),
@@ -57,12 +57,12 @@ fn jcode_auth_file_roundtrip() {
 }
 
 #[test]
-fn jcode_path_respects_jcode_home() {
+fn iagent_path_respects_iagent_home() {
     let _lock = crate::storage::lock_test_env();
     let temp = tempfile::TempDir::new().unwrap();
     let _home = EnvVarGuard::set("JCODE_HOME", temp.path());
 
-    assert_eq!(jcode_path().unwrap(), temp.path().join("auth.json"));
+    assert_eq!(iagent_path().unwrap(), temp.path().join("auth.json"));
     assert_eq!(
         claude_code_path().unwrap(),
         temp.path()
@@ -123,7 +123,7 @@ fn load_auth_file_renames_existing_labels_to_numbered_scheme() {
 }
 
 #[test]
-fn jcode_auth_file_multi_account() {
+fn iagent_auth_file_multi_account() {
     let auth = JcodeAuthFile {
         anthropic_accounts: vec![
             AnthropicAccount {
@@ -156,7 +156,7 @@ fn jcode_auth_file_multi_account() {
 }
 
 #[test]
-fn jcode_auth_file_legacy_migration_format() {
+fn iagent_auth_file_legacy_migration_format() {
     let legacy_json = r#"{
         "anthropic": {
             "access": "legacy_acc",

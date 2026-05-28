@@ -1,0 +1,17 @@
+[package]
+name = "iagent-tool-core"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "iagent_tool_core"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1"
+async-trait = "0.1"
+iagent-agent-runtime = { path = "../iagent-agent-runtime" }
+iagent-message-types = { path = "../iagent-message-types" }
+iagent-tool-types = { path = "../iagent-tool-types" }
+serde_json = "1"
+tokio = { version = "1", features = ["sync"] }

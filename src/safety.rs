@@ -844,7 +844,7 @@ impl SafetySystem {
 
     /// Persist a transcript to ~/.jcode/ambient/transcripts/{timestamp}.json
     pub fn save_transcript(&self, transcript: &AmbientTranscript) -> Result<()> {
-        let dir = storage::jcode_dir()?.join("ambient").join("transcripts");
+        let dir = storage::iagent_dir()?.join("ambient").join("transcripts");
         storage::ensure_dir(&dir)?;
 
         let filename = transcript.started_at.format("%Y-%m-%d-%H%M%S").to_string();
@@ -902,19 +902,19 @@ impl Default for SafetySystem {
 // ---------------------------------------------------------------------------
 
 fn queue_path() -> Result<std::path::PathBuf> {
-    Ok(storage::jcode_dir()?.join("safety").join("queue.json"))
+    Ok(storage::iagent_dir()?.join("safety").join("queue.json"))
 }
 
 fn history_path() -> Result<std::path::PathBuf> {
-    Ok(storage::jcode_dir()?.join("safety").join("history.json"))
+    Ok(storage::iagent_dir()?.join("safety").join("history.json"))
 }
 
 fn audit_path() -> Result<std::path::PathBuf> {
-    Ok(storage::jcode_dir()?.join("safety").join("audit.json"))
+    Ok(storage::iagent_dir()?.join("safety").join("audit.json"))
 }
 
 fn never_again_path() -> Result<std::path::PathBuf> {
-    Ok(storage::jcode_dir()?
+    Ok(storage::iagent_dir()?
         .join("safety")
         .join("never_again.json"))
 }

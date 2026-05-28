@@ -11,10 +11,10 @@ use crate::config::{SafetyConfig, config};
 use crate::logging;
 use crate::safety::AmbientTranscript;
 
-use jcode_notify_email::{
+use iagent_notify_email::{
     ReplyAction, SendEmailRequest, build_permission_email_html, poll_imap_once, send_email,
 };
-pub use jcode_notify_email::{extract_permission_id, parse_permission_reply};
+pub use iagent_notify_email::{extract_permission_id, parse_permission_reply};
 
 /// Notification priority levels (maps to ntfy priority header).
 #[derive(Debug, Clone, Copy)]

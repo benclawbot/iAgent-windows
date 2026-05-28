@@ -16,7 +16,7 @@ fn make_ctx(stdin_tx: Option<mpsc::UnboundedSender<StdinInputRequest>>) -> ToolC
     }
 }
 
-fn make_agent_ctx(signal: jcode_agent_runtime::InterruptSignal) -> ToolContext {
+fn make_agent_ctx(signal: iagent_agent_runtime::InterruptSignal) -> ToolContext {
     ToolContext {
         session_id: "test-session".to_string(),
         message_id: "test-msg".to_string(),
@@ -184,7 +184,7 @@ async fn test_command_timeout_with_stdin_channel() {
 #[tokio::test]
 async fn test_reload_persistable_bash_continues_in_background() {
     let tool = BashTool::new();
-    let signal = jcode_agent_runtime::InterruptSignal::new();
+    let signal = iagent_agent_runtime::InterruptSignal::new();
     let ctx = make_agent_ctx(signal.clone());
 
     let signal_task = tokio::spawn(async move {

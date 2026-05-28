@@ -200,7 +200,7 @@ async fn test_selfdev_session_and_registry() {
     assert!(result.is_ok(), "selfdev tool should execute successfully");
 
     let _ = std::fs::remove_file(
-        storage::jcode_dir()
+        storage::iagent_dir()
             .unwrap()
             .join("sessions")
             .join(format!("{}.json", session_id)),
@@ -256,15 +256,15 @@ fn set_var<T: AsRef<OsStr>>(name: &str, value: T) {
 }
 
 #[test]
-fn test_launcher_dir_uses_trimmed_install_dir_before_jcode_home() {
+fn test_launcher_dir_uses_trimmed_install_dir_before_iagent_home() {
     let (_lock, _env, temp) = isolated_launcher_env();
     let install_dir = temp.path().join("install bin");
-    let jcode_home = temp.path().join("jcode-home");
+    let iagent_home = temp.path().join("jcode-home");
     set_var(
         "JCODE_INSTALL_DIR",
         format!("  {}  ", install_dir.display()),
     );
-    set_var("JCODE_HOME", &jcode_home);
+    set_var("JCODE_HOME", &iagent_home);
 
     assert_eq!(build::launcher_dir().expect("launcher dir"), install_dir);
 }

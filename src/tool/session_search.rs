@@ -13,12 +13,12 @@ use crate::storage;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
-use jcode_import_core::{
+use iagent_import_core::{
     ExternalMessageRecord, ExternalSessionRecord, ImportCoreResult, collect_recent_files_recursive,
     load_claude_external_messages, load_codex_external_session, load_opencode_external_session,
     load_pi_external_session,
 };
-use jcode_session_types::{
+use iagent_session_types::{
     SessionSearchContextLine as ResultContextLine, SessionSearchQueryProfile as QueryProfile,
     SessionSearchRenderOptions, SessionSearchReport as SearchReport,
     SessionSearchResult as SearchResult, SessionSearchResultKind as SearchResultKind,
@@ -406,7 +406,7 @@ impl Tool for SessionSearchTool {
             .with_title("session_search"));
         }
 
-        let sessions_dir = storage::jcode_dir()?.join("sessions");
+        let sessions_dir = storage::iagent_dir()?.join("sessions");
 
         let options = SearchOptions {
             current_session_id: ctx.session_id.clone(),
@@ -541,7 +541,7 @@ fn search_sessions_blocking(
                 files.truncate(options.max_scan_sessions);
                 report.truncated = true;
             }
-            report.scanned_jcode_sessions = files.len();
+            report.scanned_iagent_sessions = files.len();
 
             if !options.include_current {
                 files.retain(|candidate| candidate.session_id_hint != options.current_session_id);
@@ -558,7 +558,7 @@ fn search_sessions_blocking(
                     .flat_map(|outcome| outcome.candidates)
                     .collect();
                 candidates.sort_unstable_by(|a, b| b.mtime.cmp(&a.mtime));
-                report.candidate_jcode_sessions = candidates.len();
+                report.candidate_iagent_sessions = candidates.len();
                 if candidates.len() > MAX_DESERIALIZE {
                     candidates.truncate(MAX_DESERIALIZE);
                     report.truncated = true;
@@ -1018,7 +1018,7 @@ fn append_session_results(
     if !options.include_current && session.id == options.current_session_id {
         return;
     }
-    if !jcode_session_matches_filters(session, options) {
+    if !iagent_session_matches_filters(session, options) {
         return;
     }
 
@@ -1107,7 +1107,7 @@ fn append_session_results(
             score,
             matched_terms: match_score.matched_terms,
             exact_match: match_score.exact_match,
-            context: build_jcode_context(&session.messages, message_index, options),
+            context: build_iagent_context(&session.messages, message_index, options),
         });
     }
 }
@@ -1155,7 +1155,7 @@ fn source_matches_filter(source: &str, options: &SearchOptions) -> bool {
         .unwrap_or(true)
 }
 
-fn jcode_session_matches_filters(session: &Session, options: &SearchOptions) -> bool {
+fn iagent_session_matches_filters(session: &Session, options: &SearchOptions) -> bool {
     if !source_matches_filter("jcode", options) {
         return false;
     }
@@ -1244,7 +1244,7 @@ fn role_filter_allows_external_message(role: &str, options: &SearchOptions) -> b
     }
 }
 
-fn build_jcode_context(
+fn build_iagent_context(
     messages: &[StoredMessage],
     hit_index: usize,
     options: &SearchOptions,

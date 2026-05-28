@@ -65,7 +65,7 @@ impl AuthTestSandbox {
         let path = self.env_file_path(file_name);
         std::fs::create_dir_all(self.config_dir())?;
         std::fs::write(&path, format!("{}={}\n", env_key, value))?;
-        jcode_core::fs::set_permissions_owner_only(&path)?;
+        iagent_core::fs::set_permissions_owner_only(&path)?;
         reset_global_auth_state();
         Ok(path)
     }
@@ -159,7 +159,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn sandbox_isolates_jcode_home_and_config_dir() {
+    fn sandbox_isolates_iagent_home_and_config_dir() {
         let sandbox = AuthTestSandbox::new().expect("sandbox");
 
         assert_eq!(

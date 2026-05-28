@@ -33,12 +33,12 @@ use account_failover::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use jcode_message_types::StreamEvent;
+use iagent_message_types::StreamEvent;
 #[cfg(test)]
-use jcode_provider_core::FailoverDecision;
+use iagent_provider_core::FailoverDecision;
 use std::sync::{Arc, RwLock};
 
-pub use jcode_provider_core::{
+pub use iagent_provider_core::{
     ALL_CLAUDE_MODELS, ALL_OPENAI_MODELS, CHEAPNESS_REFERENCE_INPUT_TOKENS,
     CHEAPNESS_REFERENCE_OUTPUT_TOKENS, DEFAULT_CONTEXT_LIMIT, EventStream, JCODE_USER_AGENT,
     ModelCapabilities, ModelCatalogRefreshSummary, ModelRoute, NativeCompactionResult,
@@ -1672,7 +1672,7 @@ impl Provider for MultiProvider {
                 .unwrap_or(false),
             ActiveProvider::Bedrock => self
                 .bedrock_provider()
-                .map(|o| o.uses_jcode_compaction())
+                .map(|o| o.uses_iagent_compaction())
                 .unwrap_or(false),
             ActiveProvider::OpenRouter => self
                 .openrouter_provider()
@@ -1681,41 +1681,41 @@ impl Provider for MultiProvider {
         }
     }
 
-    fn uses_jcode_compaction(&self) -> bool {
+    fn uses_iagent_compaction(&self) -> bool {
         match self.active_provider() {
             ActiveProvider::Claude => {
                 if self.anthropic_provider().is_some() {
                     true
                 } else {
                     self.claude_provider()
-                        .map(|c| c.uses_jcode_compaction())
+                        .map(|c| c.uses_iagent_compaction())
                         .unwrap_or(false)
                 }
             }
             ActiveProvider::OpenAI => self
                 .openai_provider()
-                .map(|o| o.uses_jcode_compaction())
+                .map(|o| o.uses_iagent_compaction())
                 .unwrap_or(false),
             ActiveProvider::Copilot => self
                 .copilot_provider()
-                .map(|o| o.uses_jcode_compaction())
+                .map(|o| o.uses_iagent_compaction())
                 .unwrap_or(false),
             ActiveProvider::Antigravity => self
                 .antigravity_provider()
-                .map(|o| o.uses_jcode_compaction())
+                .map(|o| o.uses_iagent_compaction())
                 .unwrap_or(false),
             ActiveProvider::Gemini => self
                 .gemini_provider()
-                .map(|o| o.uses_jcode_compaction())
+                .map(|o| o.uses_iagent_compaction())
                 .unwrap_or(false),
             ActiveProvider::Cursor => self
                 .cursor_provider()
-                .map(|o| o.uses_jcode_compaction())
+                .map(|o| o.uses_iagent_compaction())
                 .unwrap_or(false),
             ActiveProvider::Bedrock => false,
             ActiveProvider::OpenRouter => self
                 .openrouter_provider()
-                .map(|o| o.uses_jcode_compaction())
+                .map(|o| o.uses_iagent_compaction())
                 .unwrap_or(false),
         }
     }

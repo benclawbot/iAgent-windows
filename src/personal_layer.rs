@@ -485,7 +485,7 @@ pub struct SensitiveContextFirewallStatus {
 
 impl PersonalStore {
     pub fn load() -> Result<Self> {
-        let dir = crate::storage::jcode_dir()?.join("personal");
+        let dir = crate::storage::iagent_dir()?.join("personal");
         fs::create_dir_all(&dir)?;
         Ok(Self {
             path: dir.join("personal_layer.json"),

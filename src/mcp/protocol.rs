@@ -216,12 +216,12 @@ impl McpConfig {
         reason = "Import logic keeps source-specific MCP config handling explicit"
     )]
     fn import_from_external() {
-        let jcode_mcp = match crate::storage::jcode_dir() {
+        let iagent_mcp = match crate::storage::iagent_dir() {
             Ok(dir) => dir.join("mcp.json"),
             Err(_) => return,
         };
 
-        if jcode_mcp.exists() {
+        if iagent_mcp.exists() {
             return; // Not first run
         }
 
@@ -256,7 +256,7 @@ impl McpConfig {
         }
 
         if !imported.servers.is_empty() {
-            if let Err(e) = imported.save_to_file(&jcode_mcp) {
+            if let Err(e) = imported.save_to_file(&iagent_mcp) {
                 log_error!(("Failed to save imported MCP config: {}", e));
                 return;
             }
@@ -336,10 +336,10 @@ impl McpConfig {
         let mut merged = Self::default();
 
         // Load jcode's own global config (~/.jcode/mcp.json)
-        if let Ok(jcode_dir) = crate::storage::jcode_dir() {
-            let jcode_mcp = jcode_dir.join("mcp.json");
-            if jcode_mcp.exists() {
-                if let Ok(config) = Self::load_from_file(&jcode_mcp) {
+        if let Ok(iagent_dir) = crate::storage::iagent_dir() {
+            let iagent_mcp = iagent_dir.join("mcp.json");
+            if iagent_mcp.exists() {
+                if let Ok(config) = Self::load_from_file(&iagent_mcp) {
                     merged.servers.extend(config.servers);
                 }
             }

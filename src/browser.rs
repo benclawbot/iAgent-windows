@@ -32,8 +32,8 @@ const REQUIRED_BRIDGE_ACTION_PROBES: &[(&str, &str)] = &[
     ),
 ];
 
-fn jcode_dir() -> PathBuf {
-    storage::jcode_dir().unwrap_or_else(|_| {
+fn iagent_dir() -> PathBuf {
+    storage::iagent_dir().unwrap_or_else(|_| {
         dirs::home_dir()
             .unwrap_or_else(|| PathBuf::from("."))
             .join(".jcode")
@@ -41,7 +41,7 @@ fn jcode_dir() -> PathBuf {
 }
 
 fn browser_dir() -> PathBuf {
-    jcode_dir().join("browser")
+    iagent_dir().join("browser")
 }
 
 pub fn browser_binary_path() -> PathBuf {

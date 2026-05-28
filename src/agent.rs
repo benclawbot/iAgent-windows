@@ -49,7 +49,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::{broadcast, mpsc};
 
 use interrupts::{NoToolCallOutcome, PostToolInterruptOutcome};
-pub use jcode_agent_runtime::{
+pub use iagent_agent_runtime::{
     BackgroundToolSignal, GracefulShutdownSignal, InterruptSignal, SoftInterruptMessage,
     SoftInterruptQueue, SoftInterruptSource, StreamError,
 };
@@ -513,7 +513,7 @@ impl Agent {
                         manager.discard_oversized_openai_native_compaction();
                     let messages = {
                         let all_messages = self.session.provider_messages();
-                        if self.provider.uses_jcode_compaction() {
+                        if self.provider.uses_iagent_compaction() {
                             let action =
                                 manager.ensure_context_fits(all_messages, self.provider.clone());
                             match action {
@@ -585,7 +585,7 @@ impl Agent {
         }
 
         let fast_snapshot =
-            if !self.provider.uses_jcode_compaction() && self.session.compaction.is_none() {
+            if !self.provider.uses_iagent_compaction() && self.session.compaction.is_none() {
                 let previous_count = self.cache_tracker.previous_message_count();
                 let prefix_hashes = self.session.provider_message_prefix_hashes();
                 let current_count = prefix_hashes.len();

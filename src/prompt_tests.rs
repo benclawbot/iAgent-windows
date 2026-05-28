@@ -91,7 +91,7 @@ fn test_split_prompt_does_not_inject_session_context_per_turn() {
 }
 
 #[test]
-fn test_prompt_overlay_files_are_loaded_from_project_and_global_jcode_dirs() {
+fn test_prompt_overlay_files_are_loaded_from_project_and_global_iagent_dirs() {
     let _guard = crate::storage::lock_test_env();
     let prev_home = std::env::var_os("JCODE_HOME");
     let temp = tempfile::TempDir::new().unwrap();

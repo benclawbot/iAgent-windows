@@ -1,8 +1,8 @@
 use super::{ALL_OPENAI_MODELS, openrouter};
 use crate::auth;
 use crate::provider::models::provider_for_model;
-use jcode_provider_core::pricing as core_pricing;
-use jcode_provider_core::{RouteCheapnessEstimate, RouteCostConfidence, RouteCostSource};
+use iagent_provider_core::pricing as core_pricing;
+use iagent_provider_core::{RouteCheapnessEstimate, RouteCostConfidence, RouteCostSource};
 
 pub(crate) fn anthropic_api_pricing(model: &str) -> Option<RouteCheapnessEstimate> {
     core_pricing::anthropic_api_pricing(model)
@@ -145,7 +145,7 @@ pub(crate) fn cheapness_for_route(
 mod tests {
     use super::*;
     use crate::env;
-    use jcode_provider_core::{RouteBillingKind, RouteCostConfidence, RouteCostSource};
+    use iagent_provider_core::{RouteBillingKind, RouteCostConfidence, RouteCostSource};
 
     fn with_clean_provider_test_env<T>(f: impl FnOnce() -> T) -> T {
         let _guard = crate::storage::lock_test_env();

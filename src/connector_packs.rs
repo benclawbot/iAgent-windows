@@ -125,7 +125,7 @@ pub struct ConnectorWriteEvidence {
 
 impl ConnectorPackStore {
     pub fn load() -> Result<Self> {
-        let dir = crate::storage::jcode_dir()?.join("connectors");
+        let dir = crate::storage::iagent_dir()?.join("connectors");
         std::fs::create_dir_all(&dir)?;
         Ok(Self {
             path: dir.join("connector_packs.json"),

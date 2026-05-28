@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio::fs;
 
-use crate::storage::jcode_dir;
+use crate::storage::iagent_dir;
 
 /// Information about a running server
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -188,7 +188,7 @@ impl ServerRegistry {
 
 /// Get the path to the registry file
 pub fn registry_path() -> Result<PathBuf> {
-    Ok(jcode_dir()?.join("servers.json"))
+    Ok(iagent_dir()?.join("servers.json"))
 }
 
 /// Get the socket directory path

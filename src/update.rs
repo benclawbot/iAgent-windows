@@ -1,12 +1,12 @@
 use crate::build;
 use crate::storage;
 use anyhow::{Context, Result};
-use jcode_update_core::{
+use iagent_update_core::{
     BACKGROUND_UPDATE_THRESHOLD, estimate_release_update_duration, estimate_source_update_duration,
     format_duration_estimate, get_asset_name, summarize_git_pull_failure, update_estimate,
     verify_asset_checksum_text, version_is_newer,
 };
-pub use jcode_update_core::{
+pub use iagent_update_core::{
     DownloadProgress, GitHubAsset, GitHubRelease, PreparedUpdate, UpdateCheckResult,
     UpdateEstimate, format_download_progress_bar,
 };
@@ -118,11 +118,11 @@ impl UpdateMetadata {
 }
 
 fn metadata_path() -> Result<PathBuf> {
-    Ok(storage::jcode_dir()?.join("update_metadata.json"))
+    Ok(storage::iagent_dir()?.join("update_metadata.json"))
 }
 
 fn source_build_root() -> Result<PathBuf> {
-    Ok(storage::jcode_dir()?.join("builds").join("source"))
+    Ok(storage::iagent_dir()?.join("builds").join("source"))
 }
 
 fn source_build_repo_dir() -> Result<PathBuf> {
@@ -973,7 +973,7 @@ pub fn check_and_maybe_update(auto_install: bool) -> UpdateCheckResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jcode_update_core::parse_sha256sums;
+    use iagent_update_core::parse_sha256sums;
     use sha2::{Digest, Sha256};
 
     #[test]

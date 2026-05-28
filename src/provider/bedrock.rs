@@ -1322,7 +1322,7 @@ impl Provider for BedrockProvider {
         true
     }
 
-    fn uses_jcode_compaction(&self) -> bool {
+    fn uses_iagent_compaction(&self) -> bool {
         true
     }
 

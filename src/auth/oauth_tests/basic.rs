@@ -84,7 +84,7 @@ fn oauth_tokens_without_id_token() -> Result<()> {
 }
 
 #[test]
-fn save_openai_tokens_uses_jcode_home_sandbox() -> Result<()> {
+fn save_openai_tokens_uses_iagent_home_sandbox() -> Result<()> {
     let _lock = crate::storage::lock_test_env();
     let temp = tempfile::TempDir::new().map_err(|e| anyhow!(e))?;
     let _home = EnvVarGuard::set("JCODE_HOME", temp.path());

@@ -642,21 +642,21 @@ If issues persist:
 | `desktop-monitor` | Active desktop context, window state, and safe file operations |
 | `iagent-ipc-types` | Typed IPC request/response types for shell ↔ backend communication |
 | `iagent-settings` | Shared desktop/runtime settings |
-| `jcode-agent-runtime` | Runtime orchestration |
-| `jcode-ambient-types` | Ambient workflow data contracts |
-| `jcode-auth-types` | Authentication data contracts |
-| `jcode-compaction-core` | Conversation/context compaction support |
-| `jcode-memory-types` | Memory structures |
-| `jcode-plan` | Planning engine |
-| `jcode-protocol` | Runtime protocol and transport types |
-| `jcode-provider-core` | Provider abstraction layer |
-| `jcode-provider-openai` | OpenAI integration |
-| `jcode-provider-openrouter` | OpenRouter integration |
-| `jcode-provider-gemini` | Gemini integration |
-| `jcode-session-types` | Session state contracts |
-| `jcode-storage` | Persistence layer |
-| `jcode-tool-core` | Shared tool traits and execution contracts |
-| `jcode-tool-types` | Shared tool input/output types |
+| `iagent-agent-runtime` | Runtime orchestration |
+| `iagent-ambient-types` | Ambient workflow data contracts |
+| `iagent-auth-types` | Authentication data contracts |
+| `iagent-compaction-core` | Conversation/context compaction support |
+| `iagent-memory-types` | Memory structures |
+| `iagent-plan` | Planning engine |
+| `iagent-protocol` | Runtime protocol and transport types |
+| `iagent-provider-core` | Provider abstraction layer |
+| `iagent-provider-openai` | OpenAI integration |
+| `iagent-provider-openrouter` | OpenRouter integration |
+| `iagent-provider-gemini` | Gemini integration |
+| `iagent-session-types` | Session state contracts |
+| `iagent-storage` | Persistence layer |
+| `iagent-tool-core` | Shared tool traits and execution contracts |
+| `iagent-tool-types` | Shared tool input/output types |
 | `overlay-ui` | Overlay runtime |
 | `suggestion-engine` | Suggestion systems |
 

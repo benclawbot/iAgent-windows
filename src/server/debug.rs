@@ -27,7 +27,7 @@ use crate::protocol::{Request, ServerEvent, TranscriptMode, decode_request, enco
 use crate::provider::Provider;
 use crate::transport::Stream;
 use anyhow::Result;
-use jcode_agent_runtime::InterruptSignal;
+use iagent_agent_runtime::InterruptSignal;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -171,7 +171,7 @@ async fn resolve_transcript_target_session(
         return Ok(session_id);
     }
 
-    if let Ok(Some(session_id)) = crate::dictation::focused_jcode_session()
+    if let Ok(Some(session_id)) = crate::dictation::focused_iagent_session()
         && live_sessions.contains(&session_id)
     {
         return Ok(session_id);

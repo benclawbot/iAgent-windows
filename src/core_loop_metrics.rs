@@ -13,7 +13,7 @@ struct CoreLoopMetricEvent {
 }
 
 fn metrics_path() -> anyhow::Result<std::path::PathBuf> {
-    Ok(crate::storage::jcode_dir()?
+    Ok(crate::storage::iagent_dir()?
         .join("telemetry")
         .join("core_loop_metrics.jsonl"))
 }

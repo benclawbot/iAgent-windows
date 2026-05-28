@@ -83,7 +83,7 @@ pub struct ProcessingDeletionRequest {
 
 impl ProcessingReportStore {
     pub fn load() -> Result<Self> {
-        let dir = crate::storage::jcode_dir()?.join("processing_report");
+        let dir = crate::storage::iagent_dir()?.join("processing_report");
         std::fs::create_dir_all(&dir)?;
         Ok(Self {
             path: dir.join("records.json"),

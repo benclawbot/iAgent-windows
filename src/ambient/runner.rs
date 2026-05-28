@@ -22,7 +22,7 @@ use crate::session::Session;
 use crate::tool;
 use crate::tool::ambient as ambient_tools;
 use chrono::Utc;
-use jcode_agent_runtime::{SoftInterruptMessage, SoftInterruptQueue, SoftInterruptSource};
+use iagent_agent_runtime::{SoftInterruptMessage, SoftInterruptQueue, SoftInterruptSource};
 use std::sync::Arc;
 use tokio::sync::{Notify, RwLock};
 
@@ -320,7 +320,7 @@ impl AmbientRunnerHandle {
 
     /// Get recent transcript log summaries.
     pub async fn log_json(&self) -> String {
-        let transcripts_dir = match crate::storage::jcode_dir() {
+        let transcripts_dir = match crate::storage::iagent_dir() {
             Ok(d) => d.join("ambient").join("transcripts"),
             Err(e) => return format!("{{\"error\": \"{}\"}}", e),
         };
@@ -997,7 +997,7 @@ impl AmbientRunnerHandle {
         }
 
         // Find the jcode binary
-        let jcode_bin =
+        let iagent_bin =
             std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("iagent"));
 
         // Spawn kitty with `jcode ambient run-visible`
@@ -1007,7 +1007,7 @@ impl AmbientRunnerHandle {
                 "--title",
                 "🤖 jcode ambient cycle",
                 "-e",
-                &jcode_bin.to_string_lossy(),
+                &iagent_bin.to_string_lossy(),
                 "ambient",
                 "run-visible",
             ])

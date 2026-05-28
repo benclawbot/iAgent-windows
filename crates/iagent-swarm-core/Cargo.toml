@@ -1,0 +1,9 @@
+[package]
+name = "iagent-swarm-core"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+iagent-plan = { path = "../iagent-plan" }
+serde = { version = "1", features = ["derive"] }

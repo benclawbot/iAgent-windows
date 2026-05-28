@@ -35,7 +35,7 @@ use auth::{WsAuth, WsAuthSource, extract_ws_auth, ws_error_response};
 #[cfg(test)]
 pub(crate) use auth::{is_valid_hex_token, parse_bearer_token, parse_query_token};
 use chrono::Utc;
-pub use jcode_gateway_types::{PairedDevice, PairingCode};
+pub use iagent_gateway_types::{PairedDevice, PairingCode};
 pub use registry::DeviceRegistry;
 
 /// Default gateway port ("jc" on phone keypad = 52, but we use 7643)
@@ -480,7 +480,7 @@ async fn handle_http(
             // Collect session counts
             let active_sessions = crate::session::active_session_ids().len();
             let total_sessions = std::fs::read_dir(
-                storage::jcode_dir()
+                storage::iagent_dir()
                     .map(|d| d.join("sessions"))
                     .unwrap_or_default(),
             )

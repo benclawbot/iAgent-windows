@@ -202,7 +202,7 @@ fn save_github_token_creates_config_dir() -> Result<()> {
     let _guard = crate::storage::lock_test_env();
     let dir = TempDir::new().map_err(|e| anyhow!(e))?;
     let config_dir = dir.path().join("github-copilot");
-    let prev_jcode_home = std::env::var_os("JCODE_HOME");
+    let prev_iagent_home = std::env::var_os("JCODE_HOME");
     let prev_xdg_config_home = std::env::var_os("XDG_CONFIG_HOME");
 
     crate::env::remove_var("JCODE_HOME");
@@ -222,7 +222,7 @@ fn save_github_token_creates_config_dir() -> Result<()> {
     let loaded = load_token_from_json(&hosts_path)?;
     assert_eq!(loaded, "gho_newtoken");
 
-    if let Some(prev) = prev_jcode_home {
+    if let Some(prev) = prev_iagent_home {
         crate::env::set_var("JCODE_HOME", prev);
     } else {
         crate::env::remove_var("JCODE_HOME");
@@ -237,7 +237,7 @@ fn save_github_token_creates_config_dir() -> Result<()> {
 }
 
 #[test]
-fn legacy_copilot_config_dir_uses_jcode_home_external_dir() -> Result<()> {
+fn legacy_copilot_config_dir_uses_iagent_home_external_dir() -> Result<()> {
     let _guard = crate::storage::lock_test_env();
     let dir = TempDir::new().map_err(|e| anyhow!(e))?;
     let prev = std::env::var_os("JCODE_HOME");
@@ -264,7 +264,7 @@ fn legacy_copilot_config_dir_uses_jcode_home_external_dir() -> Result<()> {
 fn save_github_token_makes_future_loads_available() -> Result<()> {
     let _guard = crate::storage::lock_test_env();
     let dir = TempDir::new().map_err(|e| anyhow!(e))?;
-    let prev_jcode_home = std::env::var_os("JCODE_HOME");
+    let prev_iagent_home = std::env::var_os("JCODE_HOME");
     let prev_xdg_config_home = std::env::var_os("XDG_CONFIG_HOME");
 
     crate::env::set_var("JCODE_HOME", dir.path());
@@ -281,7 +281,7 @@ fn save_github_token_makes_future_loads_available() -> Result<()> {
     );
     assert_eq!(load_github_token()?, "gho_persisted_token");
 
-    if let Some(prev) = prev_jcode_home {
+    if let Some(prev) = prev_iagent_home {
         crate::env::set_var("JCODE_HOME", prev);
     } else {
         crate::env::remove_var("JCODE_HOME");

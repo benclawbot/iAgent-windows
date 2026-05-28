@@ -1,8 +1,8 @@
 {
   "total": 12,
   "tracked_files": {
-    "crates/jcode-protocol/src/lib.rs": 1,
-    "crates/jcode-provider-core/src/lib.rs": 1,
+    "crates/iagent-protocol/src/lib.rs": 1,
+    "crates/iagent-provider-core/src/lib.rs": 1,
     "crates/suggestion-engine/src/lib.rs": 1,
     "src/auth/lifecycle.rs": 1,
     "src/auth/lifecycle_driver.rs": 2,

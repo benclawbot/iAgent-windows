@@ -7,7 +7,7 @@ use crate::message::{ContentBlock, Role};
 use crate::session::{Session, SessionStatus, StoredMessage};
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use jcode_import_core::{
+use iagent_import_core::{
     ClaudeCodeContent, ClaudeCodeContentBlock, ClaudeCodeEntry, ClaudeCodeSessionInfo,
     SessionIndexEntry, SessionsIndex, claude_code_session_info_from_index,
     claude_text_from_content, clean_optional_text, codex_title_candidate, collect_files_recursive,
@@ -15,7 +15,7 @@ use jcode_import_core::{
     ordered_claude_code_message_entries, parse_rfc3339_json, parse_rfc3339_string,
     resolve_claude_session_path, truncate_title,
 };
-pub use jcode_import_core::{
+pub use iagent_import_core::{
     imported_claude_code_session_id, imported_codex_session_id, imported_opencode_session_id,
     imported_pi_session_id,
 };
@@ -466,8 +466,8 @@ pub fn import_session_from_file(path: &Path, session_id: &str) -> Result<Session
         });
 
     // Create jcode session
-    let jcode_session_id = imported_claude_code_session_id(session_id);
-    let mut session = Session::create_with_id(jcode_session_id, None, title);
+    let iagent_session_id = imported_claude_code_session_id(session_id);
+    let mut session = Session::create_with_id(iagent_session_id, None, title);
     session.provider_session_id = Some(session_id.to_string());
     session.provider_key = Some("claude-code".to_string());
     session.working_dir = working_dir;

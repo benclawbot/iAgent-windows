@@ -113,7 +113,7 @@ pub fn gather_feedback_memories(memory_manager: &crate::memory::MemoryManager) -
     let mut feedback = Vec::new();
 
     // --- Source 1: Recent ambient transcripts ---
-    let transcripts_dir = match crate::storage::jcode_dir() {
+    let transcripts_dir = match crate::storage::iagent_dir() {
         Ok(d) => d.join("ambient").join("transcripts"),
         Err(_) => return feedback,
     };
@@ -167,7 +167,7 @@ pub fn gather_feedback_memories(memory_manager: &crate::memory::MemoryManager) -
 
 /// Gather recent sessions since a given timestamp.
 pub fn gather_recent_sessions(since: Option<DateTime<Utc>>) -> Vec<RecentSessionInfo> {
-    let sessions_dir = match crate::storage::jcode_dir() {
+    let sessions_dir = match crate::storage::iagent_dir() {
         Ok(d) => d.join("sessions"),
         Err(_) => return Vec::new(),
     };

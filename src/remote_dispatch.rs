@@ -139,7 +139,7 @@ pub struct DispatchEvent {
 
 impl RemoteDispatchStore {
     pub fn load() -> Result<Self> {
-        let dir = crate::storage::jcode_dir()?.join("remote_dispatch");
+        let dir = crate::storage::iagent_dir()?.join("remote_dispatch");
         std::fs::create_dir_all(&dir)?;
         Ok(Self {
             path: dir.join("dispatch.json"),

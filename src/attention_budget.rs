@@ -136,7 +136,7 @@ pub struct AttentionDigest {
 
 impl AttentionStore {
     pub fn load() -> Result<Self> {
-        let dir = crate::storage::jcode_dir()?.join("attention");
+        let dir = crate::storage::iagent_dir()?.join("attention");
         std::fs::create_dir_all(&dir)?;
         Ok(Self {
             path: dir.join("budget.json"),

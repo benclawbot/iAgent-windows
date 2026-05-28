@@ -2266,45 +2266,45 @@ dependencies = [
  "futures",
  "glob",
  "hex",
+ "iagent-agent-runtime",
+ "iagent-ambient-types",
+ "iagent-auth-types",
+ "iagent-azure-auth",
+ "iagent-background-types",
+ "iagent-batch-types",
+ "iagent-build-support",
+ "iagent-compaction-core",
+ "iagent-config-types",
+ "iagent-core",
+ "iagent-embedding",
+ "iagent-gateway-types",
+ "iagent-import-core",
+ "iagent-memory-types",
+ "iagent-message-types",
+ "iagent-notify-email",
+ "iagent-overnight-core",
+ "iagent-pdf",
+ "iagent-plan",
+ "iagent-protocol",
+ "iagent-provider-core",
+ "iagent-provider-gemini",
+ "iagent-provider-metadata",
+ "iagent-provider-openai",
+ "iagent-provider-openrouter",
+ "iagent-selfdev-types",
+ "iagent-session-types",
  "iagent-settings",
+ "iagent-side-panel-types",
+ "iagent-storage",
+ "iagent-swarm-core",
+ "iagent-task-types",
+ "iagent-terminal-launch",
+ "iagent-tool-core",
+ "iagent-tool-types",
+ "iagent-update-core",
+ "iagent-usage-types",
  "ignore",
  "image",
- "jcode-agent-runtime",
- "jcode-ambient-types",
- "jcode-auth-types",
- "jcode-azure-auth",
- "jcode-background-types",
- "jcode-batch-types",
- "jcode-build-support",
- "jcode-compaction-core",
- "jcode-config-types",
- "jcode-core",
- "jcode-embedding",
- "jcode-gateway-types",
- "jcode-import-core",
- "jcode-memory-types",
- "jcode-message-types",
- "jcode-notify-email",
- "jcode-overnight-core",
- "jcode-pdf",
- "jcode-plan",
- "jcode-protocol",
- "jcode-provider-core",
- "jcode-provider-gemini",
- "jcode-provider-metadata",
- "jcode-provider-openai",
- "jcode-provider-openrouter",
- "jcode-selfdev-types",
- "jcode-session-types",
- "jcode-side-panel-types",
- "jcode-storage",
- "jcode-swarm-core",
- "jcode-task-types",
- "jcode-terminal-launch",
- "jcode-tool-core",
- "jcode-tool-types",
- "jcode-update-core",
- "jcode-usage-types",
  "libc",
  "open",
  "overlay-ui",
@@ -2339,12 +2339,268 @@ dependencies = [
 ]
 
 [[package]]
+name = "iagent-agent-runtime"
+version = "0.1.0"
+dependencies = [
+ "thiserror 1.0.69",
+ "tokio",
+]
+
+[[package]]
+name = "iagent-ambient-types"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+]
+
+[[package]]
+name = "iagent-auth-types"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "iagent-azure-auth"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "azure_core",
+ "azure_identity",
+]
+
+[[package]]
+name = "iagent-background-types"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "iagent-batch-types"
+version = "0.1.0"
+dependencies = [
+ "iagent-message-types",
+ "serde",
+]
+
+[[package]]
+name = "iagent-build-support"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "iagent-core",
+ "iagent-selfdev-types",
+ "iagent-storage",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "iagent-compaction-core"
+version = "0.1.0"
+dependencies = [
+ "iagent-message-types",
+ "serde_json",
+]
+
+[[package]]
+name = "iagent-config-types"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "iagent-core"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "libc",
+ "rand 0.9.4",
+ "serde",
+]
+
+[[package]]
+name = "iagent-embedding"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "reqwest",
+ "tokenizers",
+ "tract-hir",
+ "tract-onnx",
+]
+
+[[package]]
+name = "iagent-gateway-types"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "iagent-import-core"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+]
+
+[[package]]
 name = "iagent-ipc-types"
 version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
  "uuid",
+]
+
+[[package]]
+name = "iagent-memory-types"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "rand 0.9.4",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "iagent-message-types"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "iagent-notify-email"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "imap",
+ "lettre",
+ "mail-parser",
+ "native-tls",
+ "pulldown-cmark",
+ "urlencoding",
+]
+
+[[package]]
+name = "iagent-overnight-core"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "iagent-pdf"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "pdf-extract",
+]
+
+[[package]]
+name = "iagent-plan"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "iagent-protocol"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "iagent-batch-types",
+ "iagent-config-types",
+ "iagent-message-types",
+ "iagent-plan",
+ "iagent-provider-core",
+ "iagent-selfdev-types",
+ "iagent-session-types",
+ "iagent-side-panel-types",
+ "rand 0.9.4",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "iagent-provider-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "futures",
+ "iagent-message-types",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "iagent-provider-gemini"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "iagent-provider-metadata"
+version = "0.1.0"
+dependencies = [
+ "url",
+]
+
+[[package]]
+name = "iagent-provider-openai"
+version = "0.1.0"
+dependencies = [
+ "iagent-message-types",
+ "iagent-provider-core",
+ "serde_json",
+]
+
+[[package]]
+name = "iagent-provider-openrouter"
+version = "0.1.0"
+dependencies = [
+ "dirs",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "iagent-selfdev-types"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "serde",
+]
+
+[[package]]
+name = "iagent-session-types"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "iagent-message-types",
+ "serde",
 ]
 
 [[package]]
@@ -2355,6 +2611,88 @@ dependencies = [
  "serde",
  "serde_json",
  "toml 0.8.23",
+]
+
+[[package]]
+name = "iagent-side-panel-types"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "iagent-storage"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dirs",
+ "iagent-core",
+ "libc",
+ "rand 0.9.4",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "iagent-swarm-core"
+version = "0.1.0"
+dependencies = [
+ "iagent-plan",
+ "serde",
+]
+
+[[package]]
+name = "iagent-task-types"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+]
+
+[[package]]
+name = "iagent-terminal-launch"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dirs",
+]
+
+[[package]]
+name = "iagent-tool-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "iagent-agent-runtime",
+ "iagent-message-types",
+ "iagent-tool-types",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "iagent-tool-types"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
+name = "iagent-update-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "sha2 0.10.9",
+]
+
+[[package]]
+name = "iagent-usage-types"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -2638,344 +2976,6 @@ name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
-
-[[package]]
-name = "jcode-agent-runtime"
-version = "0.1.0"
-dependencies = [
- "thiserror 1.0.69",
- "tokio",
-]
-
-[[package]]
-name = "jcode-ambient-types"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
-]
-
-[[package]]
-name = "jcode-auth-types"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "jcode-azure-auth"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "azure_core",
- "azure_identity",
-]
-
-[[package]]
-name = "jcode-background-types"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "jcode-batch-types"
-version = "0.1.0"
-dependencies = [
- "jcode-message-types",
- "serde",
-]
-
-[[package]]
-name = "jcode-build-support"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "jcode-core",
- "jcode-selfdev-types",
- "jcode-storage",
- "serde",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "jcode-compaction-core"
-version = "0.1.0"
-dependencies = [
- "jcode-message-types",
- "serde_json",
-]
-
-[[package]]
-name = "jcode-config-types"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "jcode-core"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "libc",
- "rand 0.9.4",
- "serde",
-]
-
-[[package]]
-name = "jcode-embedding"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "reqwest",
- "tokenizers",
- "tract-hir",
- "tract-onnx",
-]
-
-[[package]]
-name = "jcode-gateway-types"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "jcode-import-core"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "hex",
- "serde",
- "serde_json",
- "sha2 0.10.9",
-]
-
-[[package]]
-name = "jcode-memory-types"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "rand 0.9.4",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "jcode-message-types"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "jcode-notify-email"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "imap",
- "lettre",
- "mail-parser",
- "native-tls",
- "pulldown-cmark",
- "urlencoding",
-]
-
-[[package]]
-name = "jcode-overnight-core"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "jcode-pdf"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "pdf-extract",
-]
-
-[[package]]
-name = "jcode-plan"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "jcode-protocol"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "jcode-batch-types",
- "jcode-config-types",
- "jcode-message-types",
- "jcode-plan",
- "jcode-provider-core",
- "jcode-selfdev-types",
- "jcode-session-types",
- "jcode-side-panel-types",
- "rand 0.9.4",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "jcode-provider-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "futures",
- "jcode-message-types",
- "reqwest",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "jcode-provider-gemini"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "jcode-provider-metadata"
-version = "0.1.0"
-dependencies = [
- "url",
-]
-
-[[package]]
-name = "jcode-provider-openai"
-version = "0.1.0"
-dependencies = [
- "jcode-message-types",
- "jcode-provider-core",
- "serde_json",
-]
-
-[[package]]
-name = "jcode-provider-openrouter"
-version = "0.1.0"
-dependencies = [
- "dirs",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "jcode-selfdev-types"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "serde",
-]
-
-[[package]]
-name = "jcode-session-types"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "jcode-message-types",
- "serde",
-]
-
-[[package]]
-name = "jcode-side-panel-types"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "jcode-storage"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "dirs",
- "jcode-core",
- "libc",
- "rand 0.9.4",
- "serde",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "jcode-swarm-core"
-version = "0.1.0"
-dependencies = [
- "jcode-plan",
- "serde",
-]
-
-[[package]]
-name = "jcode-task-types"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
-]
-
-[[package]]
-name = "jcode-terminal-launch"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "dirs",
-]
-
-[[package]]
-name = "jcode-tool-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "jcode-agent-runtime",
- "jcode-message-types",
- "jcode-tool-types",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "jcode-tool-types"
-version = "0.1.0"
-dependencies = [
- "serde_json",
-]
-
-[[package]]
-name = "jcode-update-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "serde",
- "sha2 0.10.9",
-]
-
-[[package]]
-name = "jcode-usage-types"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "jobserver"

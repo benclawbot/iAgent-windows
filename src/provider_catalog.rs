@@ -1,4 +1,4 @@
-pub use jcode_provider_metadata::*;
+pub use iagent_provider_metadata::*;
 use std::collections::{HashMap, HashSet};
 
 pub const OPENAI_COMPAT_LOCAL_ENABLED_ENV: &str = "JCODE_OPENAI_COMPAT_LOCAL_ENABLED";

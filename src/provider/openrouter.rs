@@ -25,12 +25,12 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
-pub use jcode_provider_openrouter::{
+pub use iagent_provider_openrouter::{
     EndpointInfo, ModelInfo, ModelPricing, ModelTimestampIndex, ProviderRouting,
     all_model_timestamps, load_endpoints_disk_cache_public, load_model_pricing_disk_cache_public,
     load_model_timestamp_index, model_created_timestamp, model_created_timestamp_from_index,
 };
-use jcode_provider_openrouter::{
+use iagent_provider_openrouter::{
     KIMI_FALLBACK_PROVIDERS, ModelCatalogRefreshState, ModelsCache, ParsedProvider, PinSource,
     ProviderPin, current_unix_secs, known_providers, load_disk_cache_entry,
     load_endpoints_disk_cache, parse_model_spec, save_disk_cache_with_source,
@@ -798,7 +798,7 @@ impl OpenRouterProvider {
 
     /// Return true if this model is a Kimi K2/K2.5 variant (Moonshot).
     fn is_kimi_model(model: &str) -> bool {
-        jcode_provider_openrouter::is_kimi_model(model)
+        iagent_provider_openrouter::is_kimi_model(model)
     }
 
     /// Parse thinking override from env. Values: "enabled"/"disabled"/"auto".
@@ -964,7 +964,7 @@ impl OpenRouterProvider {
 
     fn model_disk_cache_source_matches(
         &self,
-        cache_entry: &jcode_provider_openrouter::DiskCache,
+        cache_entry: &iagent_provider_openrouter::DiskCache,
     ) -> bool {
         let Some(source_api_base) = cache_entry
             .source_api_base
@@ -985,7 +985,7 @@ impl OpenRouterProvider {
 
     pub(crate) fn load_usable_model_disk_cache_entry(
         &self,
-    ) -> Option<jcode_provider_openrouter::DiskCache> {
+    ) -> Option<iagent_provider_openrouter::DiskCache> {
         load_disk_cache_entry().filter(|entry| self.model_disk_cache_source_matches(entry))
     }
 
@@ -1215,7 +1215,7 @@ impl OpenRouterProvider {
 
     /// Parse provider routing configuration from environment variables
     fn parse_provider_routing() -> ProviderRouting {
-        jcode_provider_openrouter::parse_provider_routing_from_env()
+        iagent_provider_openrouter::parse_provider_routing_from_env()
     }
 
     fn set_explicit_pin(&self, model: &str, provider: ParsedProvider) {
@@ -1247,7 +1247,7 @@ impl OpenRouterProvider {
     }
 
     fn rank_providers_from_endpoints(endpoints: &[EndpointInfo]) -> Vec<String> {
-        jcode_provider_openrouter::rank_providers_from_endpoints(endpoints)
+        iagent_provider_openrouter::rank_providers_from_endpoints(endpoints)
     }
 
     async fn effective_routing(&self, model: &str) -> ProviderRouting {

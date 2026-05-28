@@ -215,7 +215,7 @@ pub struct PrivacyManager {
 
 impl PrivacyManager {
     pub fn new() -> Self {
-        let export_dir = crate::storage::jcode_dir()
+        let export_dir = crate::storage::iagent_dir()
             .map(|d| d.join("privacy").join("exports"))
             .unwrap_or_else(|_| PathBuf::from("."));
 

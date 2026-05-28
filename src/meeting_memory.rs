@@ -128,7 +128,7 @@ pub struct MeetingTaskConversionRequest {
 
 impl MeetingMemoryStore {
     pub fn load() -> Result<Self> {
-        let dir = crate::storage::jcode_dir()?.join("meetings");
+        let dir = crate::storage::iagent_dir()?.join("meetings");
         std::fs::create_dir_all(&dir)?;
         Ok(Self {
             path: dir.join("meeting_memory.json"),

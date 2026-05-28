@@ -7,7 +7,7 @@ use crate::protocol::{NotificationType, ServerEvent};
 use crate::session::Session;
 use anyhow::Result;
 use futures::future::try_join_all;
-use jcode_swarm_core::{
+use iagent_swarm_core::{
     completion_notification_message, normalize_completion_report, truncate_detail,
 };
 use serde::Deserialize;
@@ -975,7 +975,7 @@ mod tests {
     use crate::plan::PlanItem;
     use crate::protocol::{NotificationType, ServerEvent};
     use crate::server::{SwarmMember, VersionedPlan};
-    use jcode_swarm_core::{
+    use iagent_swarm_core::{
         append_swarm_completion_report_instructions, summarize_plan_items, truncate_detail,
     };
     use std::collections::{HashMap, HashSet};

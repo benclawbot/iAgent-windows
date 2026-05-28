@@ -3,7 +3,7 @@ use crate::auth::{claude as claude_auth, oauth};
 use crate::message::{ContentBlock, Message, Role, StreamEvent, ToolDefinition};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use jcode_provider_core::NativeToolResultSender;
+use iagent_provider_core::NativeToolResultSender;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::HashSet;

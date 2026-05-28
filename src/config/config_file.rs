@@ -1,11 +1,11 @@
 use super::*;
-use crate::storage::jcode_dir;
+use crate::storage::iagent_dir;
 use std::path::PathBuf;
 
 impl Config {
     /// Get the config file path
     pub fn path() -> Option<PathBuf> {
-        jcode_dir().ok().map(|d| d.join("config.toml"))
+        iagent_dir().ok().map(|d| d.join("config.toml"))
     }
 
     /// Load config from file, with environment variable overrides
