@@ -9,7 +9,7 @@ def test_proposals_from_actions_builds_command_and_jcode_cards() -> None:
         type_text=None,
         press_enter=False,
         cli_command="python -m pytest -q",
-        jcode_goal="update the README and run tests",
+        iagent_goal="update the README and run tests",
     )
 
     proposals = proposals_from_actions(actions)
@@ -41,7 +41,7 @@ def test_proposals_from_actions_includes_typing_draft_with_enter_hint() -> None:
         type_text="hello world",
         press_enter=True,
         cli_command=None,
-        jcode_goal=None,
+        iagent_goal=None,
     )
 
     proposals = proposals_from_actions(actions)

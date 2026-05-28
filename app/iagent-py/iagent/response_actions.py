@@ -91,5 +91,5 @@ def parse_response_actions(response: str) -> ResponseActions:
         type_text=type_text,
         press_enter=press_enter,
         cli_command=cli_command,
-        jcode_goal=jcode_goal,
+        iagent_goal=iagent_goal,
     )

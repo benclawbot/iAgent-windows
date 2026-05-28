@@ -667,7 +667,7 @@ def run() -> int:
         manager.background_command_requested.connect(
             lambda cmd: _queue_background_command(cmd, source_label="AI")
         )
-        manager.jcode_goal_requested.connect(
+        manager.iagent_goal_requested.connect(
             lambda goal: _queue_jcode_goal(goal, source_label="AI")
         )
         manager.typing_action_blocked.connect(
