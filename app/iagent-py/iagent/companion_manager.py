@@ -182,7 +182,7 @@ class CompanionManager(QObject):
 
         self._cancel_flag = False
         self._set_state(VoiceState.PROCESSING)
-        self._current_task = asyncio.ensure_future(self._run_turn(cleaned))
+        self._current_task = asyncio.ensure_future(self._run_turn(cleaned, from_user_input=True))
 
     def start_voice_prompt(self) -> None:
         """Start voice capture programmatically (same flow as hotkey press)."""
@@ -297,7 +297,7 @@ class CompanionManager(QObject):
         # press between task assignment and coroutine start cannot
         # have its cancellation silently undone.
         self._cancel_flag = False
-        self._current_task = asyncio.ensure_future(self._run_turn(text))
+        self._current_task = asyncio.ensure_future(self._run_turn(text, from_user_input=False))
 
     # ------------------------------------------------------------------
     # LLM delta relay (only when not cancelled)
@@ -362,11 +362,13 @@ class CompanionManager(QObject):
     # Turn pipeline (async)
     # ------------------------------------------------------------------
 
-    async def _run_turn(self, text: str) -> None:
+    async def _run_turn(self, text: str, *, from_user_input: bool = False) -> None:
         """Execute the full turn: screen capture → LLM request → history.
 
         This coroutine becomes ``_current_task`` and supports cancellation
         via ``_cancel_flag`` (cooperative) and ``task.cancel()`` (hard).
+        ``from_user_input`` flags prompts explicitly typed by the user,
+        which skip proposal popups (user intends action, no need to validate).
         """
         try:
             # Yield control so stop_stream (which is still draining after
@@ -381,33 +383,39 @@ class CompanionManager(QObject):
             if self._execution_memory is not None:
                 self._execution_memory.record_user_feedback(text)
 
-            # Hide the panel so it doesn't appear in the screenshot.
-            # The async sleep lets qasync process the Qt opacity change
-            # AND lets pending asyncio tasks (stop_stream cleanup) settle
-            # — avoids re-entrancy that processEvents() would cause.
-            self._panel_visibility_controller.hide_for_capture()
-            await asyncio.sleep(0.05)
-            try:
-                screenshots = await asyncio.to_thread(self._screen_capture_fn)
-                self._current_screenshots = screenshots
-            finally:
-                self._panel_visibility_controller.restore_after_capture()
+            # Skip screen capture for explicitly typed user requests —
+            # they intend direct action, not visual context analysis.
+            if from_user_input:
+                image_blocks = []
+                self._current_screenshots = []
+            else:
+                # Hide the panel so it doesn't appear in the screenshot.
+                # The async sleep lets qasync process the Qt opacity change
+                # AND lets pending asyncio tasks (stop_stream cleanup) settle
+                # — avoids re-entrancy that processEvents() would cause.
+                self._panel_visibility_controller.hide_for_capture()
+                await asyncio.sleep(0.05)
+                try:
+                    screenshots = await asyncio.to_thread(self._screen_capture_fn)
+                    self._current_screenshots = screenshots
+                finally:
+                    self._panel_visibility_controller.restore_after_capture()
 
-            # Build image content blocks.
-            image_blocks: list[dict[str, Any]] = []
-            for screenshot in screenshots:
-                b64 = base64.b64encode(screenshot.jpeg_bytes).decode("ascii")
-                image_blocks.append({"type": "text", "text": screenshot.label})
-                image_blocks.append(
-                    {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "image/jpeg",
-                            "data": b64,
-                        },
-                    }
-                )
+                # Build image content blocks.
+                image_blocks = []
+                for screenshot in screenshots:
+                    b64 = base64.b64encode(screenshot.jpeg_bytes).decode("ascii")
+                    image_blocks.append({"type": "text", "text": screenshot.label})
+                    image_blocks.append(
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/jpeg",
+                                "data": b64,
+                            },
+                        }
+                    )
 
             # Build messages from conversation history.
             messages = self._history.messages_for_request(
@@ -477,7 +485,6 @@ class CompanionManager(QObject):
 
                 self._history.append(text, visible_text)
                 self.response_complete.emit(visible_text)
-                self.success_turn_completed.emit()
 
                 if actions.point_tag is not None:
                     coords = map_point_to_screen(actions.point_tag, self._current_screenshots)
@@ -489,14 +496,24 @@ class CompanionManager(QObject):
                         )
 
                 for proposal in proposals_from_actions(actions):
-                    self.proposal_requested.emit(proposal)
-                    logger.info(
-                        "proposal requested: %s %s",
-                        proposal.kind,
-                        proposal.proposal_id,
-                    )
+                    if not from_user_input:
+                        self.proposal_requested.emit(proposal)
+                        logger.info(
+                            "proposal requested: %s %s",
+                            proposal.kind,
+                            proposal.proposal_id,
+                        )
+                    else:
+                        # User's own typed requests bypass proposal popup
+                        # and execute immediately via accept_proposal
+                        self.accept_proposal(proposal)
 
-                if self._state == VoiceState.RESPONDING:
+                # Suppress immediate "Task complete" notification when iagent
+                # goals are running as background tasks — task_inbox tracks
+                # their completion via command_finished signal instead.
+                background_iagent = from_user_input and actions.iagent_goal
+
+                if not background_iagent and self._state == VoiceState.RESPONDING:
                     self._set_state(VoiceState.IDLE)
 
         except asyncio.CancelledError:

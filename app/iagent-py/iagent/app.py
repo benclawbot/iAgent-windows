@@ -293,6 +293,8 @@ def run() -> int:
             except Exception:
                 pass
             ambient_process = None
+        # Hide all windows before exiting
+        task_inbox.shutdown()
         _stop_related_processes()
         # Exit immediately without waiting
         QTimer.singleShot(50, lambda: os._exit(0))
