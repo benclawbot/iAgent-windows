@@ -127,39 +127,43 @@ def minimax_key_from_config() -> str | None:
 
 
 def target_word_count(page_count: int) -> int:
-    return max(700, min(11000, page_count * 520))
+    return max(1200, min(22000, page_count * 850))
 
 
 def generation_prompt(goal: str, page_count: int) -> str:
     words = target_word_count(page_count)
-    sections = max(4, min(page_count, 12))
-    return f"""
-Create the final content for a Microsoft Word document.
+    sections = max(5, min(20, page_count * 2))
+    min_paragraphs_per_section = max(4, page_count)
+    return f"""Create a comprehensive, full-length Microsoft Word document.
 
 User request:
 {goal}
 
 Requirements:
-- Write only the final document content, not your reasoning and not instructions to the user.
-- Match the subject, tone, and format requested by the user.
-- Do not mention saving, opening, file paths, formatting instructions, or that the document was generated.
-- Aim for approximately {words} words total for about {page_count} page(s).
-- Use exactly this JSON shape and no markdown fences:
+- Write only the final polished document content. Do not include reasoning, self-correction, or instructions to the user.
+- Match the subject, tone, and format the user requested.
+- Do not mention file paths, saving, opening, formatting instructions, or that the document was generated.
+- The target is approximately {words} words for about {page_count} page(s). Produce a full, substantive document — not a summary or outline.
+- Structure the document with approximately {sections} sections.
+- Each section must contain at least {min_paragraphs_per_section} substantial paragraphs of several sentences each.
+- Each paragraph should be 80-150 words and must contain real content — no bullet points, no placeholders, no vague statements.
+- Include specific details, concrete examples, nuanced analysis, and smooth transitions between paragraphs.
+- Vary paragraph length and content to avoid repetition and maintain reader engagement.
+- Use exactly this JSON structure — no markdown code fences, no additional fields:
 {{
   "title": "Document title",
   "sections": [
-    {{"heading": "Section heading", "paragraphs": ["paragraph one", "paragraph two"]}}
+    {{"heading": "Section heading", "paragraphs": ["paragraph one (80-150 words, substantive)", "paragraph two (80-150 words)", "paragraph three (80-150 words)", "paragraph four (80-150 words)"]}}
   ]
 }}
-- Use about {sections} substantial sections.
-- Each section should contain complete prose with specific details, examples, and transitions.
+- Every paragraph must be independently meaningful and developed. Do not leave any paragraph as a placeholder or stub.
 """.strip()
 
 
 def call_minimax(goal: str, page_count: int, api_key: str) -> str:
     payload = {
         "model": DEFAULT_MODEL,
-        "max_tokens": max(1800, min(16000, page_count * 950)),
+        "max_tokens": max(4000, min(32000, page_count * 2800)),
         "stream": False,
         "reasoning_split": True,
         "messages": [
@@ -490,7 +494,7 @@ def ensure_document_shape(doc: GeneratedDocument, goal: str, page_count: int) ->
     filler = fallback_document(goal, page_count)
     target_words = target_word_count(page_count)
 
-    if len(doc.sections) < max(1, page_count // 2) or document_word_count(doc) < target_words * 0.9:
+    if len(doc.sections) < max(1, page_count // 3) or document_word_count(doc) < target_words * 0.5:
         return filler
 
     existing = {section.heading.lower() for section in doc.sections}
