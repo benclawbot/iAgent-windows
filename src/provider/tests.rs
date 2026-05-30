@@ -25,6 +25,8 @@ fn with_clean_provider_test_env<T>(f: impl FnOnce() -> T) -> T {
         "IAGENT_OPENAI_COMPAT_ENV_FILE",
         "IAGENT_OPENAI_COMPAT_DEFAULT_MODEL",
         "IAGENT_OPENAI_COMPAT_LOCAL_ENABLED",
+        crate::provider::bedrock::API_KEY_ENV,
+        crate::provider::bedrock::REGION_ENV,
         "OPENAI_COMPAT_API_KEY",
         "OPENAI_API_KEY",
         "IAGENT_NAMED_PROVIDER_PROFILE",
@@ -145,6 +147,34 @@ fn assert_openai_compatible_route_available(provider: &MultiProvider, model: &st
         }),
         "configured OpenAI-compatible model should be immediately visible after API-key setup; routes: {routes:?}"
     );
+}
+
+#[test]
+#[cfg(not(feature = "bedrock"))]
+fn bedrock_is_not_available_without_feature() {
+    with_clean_provider_test_env(|| {
+        crate::env::set_var(crate::provider::bedrock::API_KEY_ENV, "test-token");
+        crate::env::set_var(crate::provider::bedrock::REGION_ENV, "us-east-1");
+
+        assert!(!crate::provider::bedrock::BedrockProvider::has_credentials());
+
+        let provider = MultiProvider::new();
+        assert!(!provider.provider_slot_available(ActiveProvider::Bedrock));
+        assert!(
+            provider
+                .model_routes()
+                .iter()
+                .all(|route| route.api_method != "bedrock")
+        );
+
+        let err = provider
+            .set_model_on_provider(
+                ActiveProvider::Bedrock,
+                "anthropic.claude-3-5-sonnet-20241022-v2:0",
+            )
+            .expect_err("Bedrock should require the explicit feature");
+        assert!(err.to_string().contains("--features bedrock"));
+    });
 }
 
 #[test]

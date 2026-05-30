@@ -3,6 +3,10 @@ mod account_failover;
 pub mod activation;
 pub mod anthropic;
 pub mod antigravity;
+#[cfg(feature = "bedrock")]
+pub mod bedrock;
+#[cfg(not(feature = "bedrock"))]
+#[path = "bedrock_disabled.rs"]
 pub mod bedrock;
 pub mod claude;
 pub mod copilot;
@@ -477,14 +481,23 @@ impl MultiProvider {
                 Ok(())
             }
             ActiveProvider::Bedrock => {
-                let Some(bedrock) = self.bedrock_provider() else {
+                #[cfg(not(feature = "bedrock"))]
+                {
                     anyhow::bail!(
-                        "AWS Bedrock credentials not available. Configure AWS credentials and region first."
+                        "AWS Bedrock provider is not compiled into this build. Rebuild with `--features bedrock` to enable it."
                     );
-                };
-                bedrock.set_model(model)?;
-                self.set_active_provider(ActiveProvider::Bedrock);
-                Ok(())
+                }
+                #[cfg(feature = "bedrock")]
+                {
+                    let Some(bedrock) = self.bedrock_provider() else {
+                        anyhow::bail!(
+                            "AWS Bedrock credentials not available. Configure AWS credentials and region first."
+                        );
+                    };
+                    bedrock.set_model(model)?;
+                    self.set_active_provider(ActiveProvider::Bedrock);
+                    Ok(())
+                }
             }
             ActiveProvider::OpenRouter => {
                 let Some(openrouter) = self.openrouter_provider() else {

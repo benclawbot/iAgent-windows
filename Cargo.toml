@@ -199,10 +199,10 @@ aws-sdk-sts = { version = "1.103.0", optional = true }
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
 
 [features]
-# Keep the heavyweight local ONNX/tokenizer embedding stack opt-in. It remains
-# available via `--features embeddings` or `IAGENT_DEV_FEATURE_PROFILE=full`, but
-# ordinary check/build loops should not compile the tract/tokenizers subtree.
-default = ["pdf", "bedrock"]
+# Keep heavyweight optional stacks opt-in. They remain available via explicit
+# features, but ordinary check/build loops should not compile the embedding or
+# AWS Bedrock dependency subtrees.
+default = ["pdf"]
 jemalloc = [
     "dep:tikv-jemallocator",
     "dep:tikv-jemalloc-ctl",

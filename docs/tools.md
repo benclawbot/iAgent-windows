@@ -12,10 +12,8 @@ This document defines what is considered production-ready for `iagent-windows` v
 
 ### Feature-gated / optional
 
-- `bedrock`: AWS provider path. The crate feature exists (`bedrock`), but the
-  current default profile still includes Bedrock dependencies.
-  - Build-time hard gating to make Bedrock fully optional is tracked as a
-    follow-up refactor.
+- `bedrock`: AWS provider path. Build with `--features bedrock` to compile the
+  AWS SDK dependencies and enable the provider. Default builds exclude Bedrock.
 
 ## Canonical Tool Interface
 

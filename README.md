@@ -118,7 +118,7 @@ Shipped and supported:
 
 Optional feature-gated provider path:
 
-- AWS Bedrock (currently enabled in default build profile; targeted for stricter feature-gating in follow-up)
+- AWS Bedrock (`cargo build --features bedrock`)
 
 See `docs/tools.md` for details.
 
