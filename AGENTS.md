@@ -27,8 +27,9 @@
 
 ## Cleanup Direction
 
-- Keep the retired Rust TUI out of the active build surface; the Python app is
-  the user-facing frontend.
-- Remove unused providers and tools only after the iAgent provider/tool matrix
-  is decided.
+- Resolved: keep the retired Rust TUI out of the active build surface; the
+  Python app is the user-facing frontend.
+- Open: finalize the iAgent provider/tool matrix before removing providers or
+  tools. Bedrock, Cursor, Antigravity, and Copilot are wired but still need a
+  product decision before they should be treated as v1 surface area.
 - Prefer adding narrow API boundaries over more global `pub mod` exposure.
