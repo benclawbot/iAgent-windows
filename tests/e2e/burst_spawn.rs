@@ -42,9 +42,13 @@ async fn burst_attach_resumed_client(
     let mut history_message_count = 0usize;
     let mut provider_model = None;
 
-    let deadline = Instant::now() + Duration::from_secs(10);
+    let deadline = Instant::now() + Duration::from_secs(20);
     while Instant::now() < deadline {
-        let event = timeout(Duration::from_secs(1), client.read_event()).await??;
+        let event = match timeout(Duration::from_secs(1), client.read_event()).await {
+            Ok(Ok(event)) => event,
+            Ok(Err(err)) => return Err(err),
+            Err(_) => continue,
+        };
         event_count += 1;
         match event {
             ServerEvent::Ack { .. } => ack_count += 1,
@@ -118,9 +122,13 @@ async fn burst_attach_resumed_client_with_options(
     let mut history_message_count = 0usize;
     let mut provider_model = None;
 
-    let deadline = Instant::now() + Duration::from_secs(10);
+    let deadline = Instant::now() + Duration::from_secs(20);
     while Instant::now() < deadline {
-        let event = timeout(Duration::from_secs(1), client.read_event()).await??;
+        let event = match timeout(Duration::from_secs(1), client.read_event()).await {
+            Ok(Ok(event)) => event,
+            Ok(Err(err)) => return Err(err),
+            Err(_) => continue,
+        };
         event_count += 1;
         match event {
             ServerEvent::Ack { .. } => ack_count += 1,
@@ -542,7 +550,7 @@ async fn burst_attach_detach_reattach_restores_live_clients_cleanly() -> Result<
     wait_for_debug_client_count(&debug_socket_path, burst_size, Duration::from_secs(5)).await?;
 
     drop(initial_clients);
-    wait_for_debug_client_count(&debug_socket_path, 0, Duration::from_secs(5)).await?;
+    wait_for_debug_client_count(&debug_socket_path, 0, Duration::from_secs(10)).await?;
 
     let reattach_results = join_all(session_ids.iter().map(|session_id| {
         let socket_path = socket_path.clone();

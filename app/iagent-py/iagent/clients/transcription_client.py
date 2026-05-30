@@ -26,8 +26,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import AsyncIterator
 
 import httpx
 import websockets
@@ -235,7 +235,7 @@ class TranscriptionClient(QObject):
         if drain_event is not None:
             try:
                 await asyncio.wait_for(drain_event.wait(), timeout=_DRAIN_TIMEOUT_SECONDS)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(
                     "drain timeout after %.1fs — cancelling recv loop",
                     _DRAIN_TIMEOUT_SECONDS,

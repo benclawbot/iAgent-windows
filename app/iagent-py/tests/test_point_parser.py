@@ -1,5 +1,4 @@
-﻿import pytest
-from iagent.point_parser import PointTag, parse_point_tag
+﻿from iagent.point_parser import PointTag, parse_point_tag
 
 
 def test_basic_point_with_label():

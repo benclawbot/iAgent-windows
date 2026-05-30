@@ -54,7 +54,8 @@ pub(crate) const OAUTH_BILLING_HEADER: &str =
 
 pub(crate) const OAUTH_BETA_HEADERS: &str = ANTHROPIC_OAUTH_BETA_HEADERS;
 #[cfg(test)]
-pub(crate) const OAUTH_BETA_HEADERS_1M: &str = iagent_provider_core::ANTHROPIC_OAUTH_BETA_HEADERS_1M;
+pub(crate) const OAUTH_BETA_HEADERS_1M: &str =
+    iagent_provider_core::ANTHROPIC_OAUTH_BETA_HEADERS_1M;
 
 pub fn effectively_1m(model: &str) -> bool {
     anthropic_effectively_1m(model)

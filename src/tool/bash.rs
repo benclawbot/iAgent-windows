@@ -497,7 +497,10 @@ fn expand_allowed_path(raw: &str) -> Option<PathBuf> {
     if trimmed == "~" {
         return dirs::home_dir();
     }
-    let expanded = trimmed.replace("%USERPROFILE%", &std::env::var("USERPROFILE").unwrap_or_default());
+    let expanded = trimmed.replace(
+        "%USERPROFILE%",
+        &std::env::var("USERPROFILE").unwrap_or_default(),
+    );
     Some(PathBuf::from(expanded))
 }
 
@@ -546,7 +549,9 @@ fn validate_shell_policy(command: &str, ctx: &ToolContext) -> Result<()> {
         effective_shell_mode,
         crate::config::ShellExecutionMode::Disabled
     ) {
-        anyhow::bail!("Shell execution is disabled by config ([permissions].shell_execution=disabled)");
+        anyhow::bail!(
+            "Shell execution is disabled by config ([permissions].shell_execution=disabled)"
+        );
     }
 
     if command_has_path_traversal(command) {

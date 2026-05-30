@@ -454,12 +454,12 @@ def fallback_document(goal: str, page_count: int) -> GeneratedDocument:
             )
         if heading.lower().startswith("conclusion"):
             paragraphs.append(
-                (
-                    "{subject} ultimately matters because it gathers feeling, thought, and action "
+
+                    f"{subject_display} ultimately matters because it gathers feeling, thought, and action "
                     "into one human problem: how to live with care. The answer is never complete, "
                     "but the attempt to answer it shapes character, relationships, and the quality "
                     "of everyday life."
-                ).format(subject=subject_display)
+
             )
         sections.append(Section(heading=heading, paragraphs=paragraphs))
     return GeneratedDocument(title=title, sections=sections)

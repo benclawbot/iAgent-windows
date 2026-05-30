@@ -1245,7 +1245,7 @@ async fn init_provider_with_options(
 
     let provider: Arc<dyn provider::Provider> = match choice {
         ProviderChoice::Iagent => {
-            init_notice("Using Iagent subscription provider (provider locked)");
+            init_notice("Using iAgent subscription provider (provider locked)");
             Arc::new(provider::iagent::IagentProvider::new())
         }
         ProviderChoice::Claude => {

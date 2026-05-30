@@ -8,6 +8,7 @@ the resulting Config for downstream components to read.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 import re
@@ -270,17 +271,16 @@ def run() -> int:
             "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
         )
         # Launch async without waiting - Fire-and-forget
-        try:
+        with contextlib.suppress(Exception):
             subprocess.Popen(
                 ["powershell.exe", "-NoProfile", "-Command", script],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 creationflags=subprocess.CREATE_NO_WINDOW,
             )
-        except Exception:
-            pass
 
     def _close_application_requested() -> None:
+        nonlocal ambient_process
         nonlocal _close_in_progress
         if _close_in_progress:
             return
@@ -288,10 +288,8 @@ def run() -> int:
         # Stop ambient mode in a non-blocking way
         if _ambient_is_running():
             assert ambient_process is not None
-            try:
+            with contextlib.suppress(Exception):
                 ambient_process.terminate()
-            except Exception:
-                pass
             ambient_process = None
         # Hide all windows before exiting
         task_inbox.shutdown()

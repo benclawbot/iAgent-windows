@@ -16,7 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Iterator
+from collections.abc import Iterator
 
 import httpx
 from PySide6.QtCore import QObject, Signal

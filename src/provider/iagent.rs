@@ -82,7 +82,7 @@ impl Provider for IagentProvider {
     }
 
     fn name(&self) -> &str {
-        "Iagent Subscription"
+        "iAgent Subscription"
     }
 
     fn model(&self) -> String {
@@ -276,7 +276,7 @@ mod tests {
 
         runtime.block_on(async {
             let provider = IagentProvider::new();
-            assert_eq!(provider.name(), "Iagent Subscription");
+            assert_eq!(provider.name(), "iAgent Subscription");
             let model = provider.model();
             assert!(
                 crate::subscription_catalog::is_curated_model(&model),

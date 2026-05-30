@@ -5,6 +5,7 @@ use super::{
 use crate::session::Session;
 use chrono::Utc;
 use std::ffi::OsString;
+use std::process::Stdio;
 
 struct TestEnvGuard {
     prev_home: Option<OsString>,
@@ -36,6 +37,17 @@ impl Drop for TestEnvGuard {
             crate::env::remove_var("IAGENT_HOME");
         }
     }
+}
+
+fn spawn_short_lived_child() -> std::process::Child {
+    let mut command =
+        std::process::Command::new(std::env::current_exe().expect("current test executable"));
+    command
+        .arg("--help")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .expect("spawn short-lived child")
 }
 
 #[test]
@@ -104,11 +116,7 @@ fn clear_snapshot_removes_saved_file() {
 fn arm_auto_restore_from_recent_crashes_captures_dead_active_sessions() {
     let _guard = TestEnvGuard::new().expect("setup test env");
 
-    let mut child = std::process::Command::new("sh")
-        .arg("-c")
-        .arg("exit 0")
-        .spawn()
-        .expect("spawn child");
+    let mut child = spawn_short_lived_child();
     let dead_pid = child.id();
     let _ = child.wait().expect("wait for child");
 
@@ -144,11 +152,7 @@ fn arm_auto_restore_from_recent_crashes_captures_dead_active_sessions() {
 fn arm_auto_restore_from_recent_crashes_ignores_old_crashes() {
     let _guard = TestEnvGuard::new().expect("setup test env");
 
-    let mut child = std::process::Command::new("sh")
-        .arg("-c")
-        .arg("exit 0")
-        .spawn()
-        .expect("spawn child");
+    let mut child = spawn_short_lived_child();
     let dead_pid = child.id();
     let _ = child.wait().expect("wait for child");
 

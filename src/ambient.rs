@@ -3,20 +3,20 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+pub mod compliance;
 mod directives;
+pub mod initiative;
 mod manager;
+pub mod mcp_toolbus;
+pub mod mem_audit;
 mod paths;
 mod persistence;
+pub mod privacy;
 mod prompt;
-pub mod initiative;
 pub mod runner;
 pub mod scene_graph;
 pub mod scheduler;
-pub mod compliance;
-pub mod mem_audit;
-pub mod privacy;
 pub mod user_identity;
-pub mod mcp_toolbus;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RecordedFrame {

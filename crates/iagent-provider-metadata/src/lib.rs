@@ -546,7 +546,7 @@ pub const AUTO_IMPORT_LOGIN_PROVIDER: LoginProviderDescriptor = LoginProviderDes
 
 pub const IAGENT_LOGIN_PROVIDER: LoginProviderDescriptor = LoginProviderDescriptor {
     id: "iagent",
-    display_name: "Iagent Subscription",
+    display_name: "iAgent Subscription",
     auth_kind: LoginProviderAuthKind::ApiKey,
     auth_state_key: LoginProviderAuthStateKey::Iagent,
     auth_status_method: "API key",

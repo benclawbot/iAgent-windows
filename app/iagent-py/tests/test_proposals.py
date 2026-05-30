@@ -24,7 +24,7 @@ def test_proposals_from_actions_builds_command_and_iagent_cards() -> None:
             press_enter=False,
         ),
         ActionProposal(
-            proposal_id="iagent:c6d59092d7f0",
+            proposal_id="iagent:ba1afe1187f2",
             kind="iagent",
             title="Delegate To iAgent",
             body="update the README and run tests",

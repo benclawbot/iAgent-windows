@@ -13,12 +13,12 @@ use crate::memory::MemoryManager;
 /// The user's communication style preference.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub enum CommunicationStyle {
-    Concise,        // Short, to-the-point responses
-    Detailed,       // Thorough explanations with context
-    Technical,      // Uses jargon, assumes domain knowledge
+    Concise,   // Short, to-the-point responses
+    Detailed,  // Thorough explanations with context
+    Technical, // Uses jargon, assumes domain knowledge
     #[default]
     Conversational, // Casual, friendly tone
-    Formal,         // Professional, structured
+    Formal,    // Professional, structured
 }
 
 /// A working pattern — when and how the user prefers to work.
@@ -52,7 +52,7 @@ impl Default for WorkingPattern {
 pub enum ResponseSpeed {
     Immediate, // Minutes
     #[default]
-    Normal,    // Hours
+    Normal, // Hours
     Relaxed,   // Days
 }
 

@@ -63,7 +63,11 @@ pub(crate) fn maybe_run_first_run_setup(args: &Args) -> Result<()> {
     config.save()?;
 
     if !api_key.trim().is_empty() {
-        super::provider_init::save_named_api_key(provider.env_file, provider.env_key, api_key.trim())?;
+        super::provider_init::save_named_api_key(
+            provider.env_file,
+            provider.env_key,
+            api_key.trim(),
+        )?;
     }
 
     run_self_check(provider, !api_key.trim().is_empty())?;
@@ -124,9 +128,11 @@ fn run_self_check(provider: &ProviderBootstrap, has_key: bool) -> Result<()> {
     );
 
     if has_key {
-        let loaded =
-            crate::provider_catalog::load_api_key_from_env_or_config(provider.env_key, provider.env_file)
-                .is_some();
+        let loaded = crate::provider_catalog::load_api_key_from_env_or_config(
+            provider.env_key,
+            provider.env_file,
+        )
+        .is_some();
         eprintln!(
             "  {}: {}",
             provider.env_key,

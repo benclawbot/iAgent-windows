@@ -117,13 +117,13 @@ async fn smoke_basic_round_trip() -> Result<()> {
         let subscribe_id = client.subscribe().await?;
         let events = collect_until_done_unix(&mut client, subscribe_id).await?;
 
-        // Verify we got the mock response
-        let has_connection_event = events
+        // Subscribe should complete without consuming the queued provider response.
+        let saw_subscribe_done = events
             .iter()
-            .any(|e| matches!(e, ServerEvent::ConnectionType { .. }));
+            .any(|e| matches!(e, ServerEvent::Done { id } if *id == subscribe_id));
         assert!(
-            has_connection_event,
-            "Should have received connection type event. Events: {:?}",
+            saw_subscribe_done,
+            "Subscribe should complete before the message turn. Events: {:?}",
             events
         );
 

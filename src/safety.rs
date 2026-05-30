@@ -724,10 +724,16 @@ impl SafetySystem {
         }
 
         entries.retain(|entry| {
-            if query.risk_level.is_some_and(|risk_level| entry.risk_level != Some(risk_level)) {
+            if query
+                .risk_level
+                .is_some_and(|risk_level| entry.risk_level != Some(risk_level))
+            {
                 return false;
             }
-            if query.disposition.is_some_and(|disposition| entry.disposition != Some(disposition)) {
+            if query
+                .disposition
+                .is_some_and(|disposition| entry.disposition != Some(disposition))
+            {
                 return false;
             }
             if let Some(action_query) = &action_query {

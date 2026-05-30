@@ -534,7 +534,11 @@ impl AuthStatus {
             crate::provider_catalog::LoginProviderTarget::OpenAiApiKey => {
                 let (source, detail) = summarize_sources(vec![
                     env_source("OPENAI_API_KEY"),
-                    config_source("OPENAI_API_KEY", "openai.env", "~/.config/iagent/openai.env"),
+                    config_source(
+                        "OPENAI_API_KEY",
+                        "openai.env",
+                        "~/.config/iagent/openai.env",
+                    ),
                     external_api_key_source("OPENAI_API_KEY"),
                 ]);
                 (
@@ -1241,8 +1245,18 @@ fn cursor_source() -> Option<(AuthCredentialSource, String)> {
             format!("trusted Cursor app state ({})", path.display()),
         ));
     }
-    if config_source("CURSOR_API_KEY", "cursor.env", "~/.config/iagent/cursor.env").is_some() {
-        return config_source("CURSOR_API_KEY", "cursor.env", "~/.config/iagent/cursor.env");
+    if config_source(
+        "CURSOR_API_KEY",
+        "cursor.env",
+        "~/.config/iagent/cursor.env",
+    )
+    .is_some()
+    {
+        return config_source(
+            "CURSOR_API_KEY",
+            "cursor.env",
+            "~/.config/iagent/cursor.env",
+        );
     }
     None
 }

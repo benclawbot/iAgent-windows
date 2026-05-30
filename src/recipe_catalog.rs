@@ -412,7 +412,8 @@ fn recipe(meta: RecipeMetadata<'_>, arrays: RecipeArrays) -> Recipe {
         tags: meta.tags.iter().map(|value| value.to_string()).collect(),
         hotkey: meta.hotkey.map(ToOwned::to_owned),
         approval_policy: meta.approval_policy.to_string(),
-        required_tools: meta.required_tools
+        required_tools: meta
+            .required_tools
             .iter()
             .map(|value| value.to_string())
             .collect(),

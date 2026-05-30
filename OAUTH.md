@@ -1,10 +1,10 @@
 # Auth Notes: OAuth + API-key Providers
 
-This document explains how authentication works in J-Code.
+This document explains how authentication works in iAgent.
 
 ## Overview
 
-J-Code can detect existing local credentials and can also run built-in OAuth and API-key login flows.
+iAgent can detect existing local credentials and can also run built-in OAuth and API-key login flows.
 
 For auth files managed by other tools/CLIs, iagent asks before reading them. If you
 approve a source, iagent remembers that approval for that external auth file path
@@ -12,11 +12,11 @@ for future sessions and still leaves the original file untouched (no move,
 rewrite, or permission mutation). Symlinked external auth files are rejected.
 
 Credentials are stored locally:
-- J-Code Claude OAuth (if logged in via `iagent login --provider claude`): `~/.iagent/auth.json`
+- iAgent Claude OAuth (if logged in via `iagent login --provider claude`): `~/.iagent/auth.json`
 - Claude Code CLI: `~/.claude/.credentials.json`
 - OpenCode (optional provider/OAuth import source): `~/.local/share/opencode/auth.json`
 - pi (optional provider/OAuth import source): `~/.pi/agent/auth.json`
-- J-Code OpenAI/Codex OAuth: `~/.iagent/openai-auth.json`
+- iAgent OpenAI/Codex OAuth: `~/.iagent/openai-auth.json`
 - Codex CLI auth source (read in place only after confirmation): `~/.codex/auth.json`
 - Gemini native OAuth: `~/.iagent/gemini_oauth.json`
 - Gemini CLI import fallback: `~/.gemini/oauth_creds.json`
@@ -123,7 +123,7 @@ reading them. When approved, it remembers that trust decision for future iagent
 sessions and still does not move, delete, or rewrite the Codex file.
 
 ### Request details
-J-Code uses the Responses API. If you have a ChatGPT subscription (refresh
+iAgent uses the Responses API. If you have a ChatGPT subscription (refresh
 token or id_token present), requests go to:
 - `https://chatgpt.com/backend-api/codex/responses`
 with headers:
@@ -141,7 +141,7 @@ Otherwise it uses:
 
 ## Azure OpenAI
 
-This was added after comparing J-Code to OpenCode/Crush. The meaningful auth gap
+This was added after comparing iAgent to OpenCode/Crush. The meaningful auth gap
 was not another browser OAuth flow, but support for **Azure OpenAI** using either:
 - **Microsoft Entra ID** credentials (via Azure's `DefaultAzureCredential` chain), or
 - **Azure OpenAI API keys**.
@@ -168,7 +168,7 @@ The Azure env file may contain:
 - In **Entra ID** mode, iagent obtains bearer tokens using `azure_identity::DefaultAzureCredential` with scope:
   - `https://cognitiveservices.azure.com/.default`
 - In **API key** mode, iagent sends the credential in the Azure-style `api-key` header.
-- The Azure provider currently reuses J-Code's OpenAI-compatible transport layer under the hood.
+- The Azure provider currently reuses iAgent's OpenAI-compatible transport layer under the hood.
 - Model catalog fetching is disabled for Azure by default, so you should configure a deployment/model explicitly.
 
 ### Entra ID credential sources
@@ -234,7 +234,7 @@ For Gmail/Google it verifies credential discovery and token refresh, but skips m
 
 ## OpenAI-compatible API-key providers
 
-J-Code also ships first-class provider presets for many OpenAI-compatible APIs.
+iAgent also ships first-class provider presets for many OpenAI-compatible APIs.
 These providers use the same built-in login flow pattern: `iagent login --provider <name>`.
 
 For arbitrary OpenAI-compatible APIs, especially when an agent is doing setup, prefer the named profile command instead of hand-editing config:
@@ -277,7 +277,7 @@ If iagent finds matching API keys in trusted OpenCode/pi auth files, it can reus
 
 ## Experimental CLI Providers
 
-J-Code also supports experimental CLI-backed providers, plus Antigravity with native OAuth login:
+iAgent also supports experimental CLI-backed providers, plus Antigravity with native OAuth login:
 - `--provider cursor`
 - `--provider copilot`
 - `--provider antigravity`

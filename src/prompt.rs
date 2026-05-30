@@ -625,7 +625,8 @@ fn load_prompt_overlay_files_from_dir(working_dir: Option<&Path>) -> (Option<Str
         contents.push(content);
     }
 
-    if let Ok(global_overlay) = crate::storage::iagent_dir().map(|dir| dir.join("prompt-overlay.md"))
+    if let Ok(global_overlay) =
+        crate::storage::iagent_dir().map(|dir| dir.join("prompt-overlay.md"))
         && let Some((content, size)) = load_file(
             &global_overlay,
             "Global Prompt Overlay (~/.iagent/prompt-overlay.md)",

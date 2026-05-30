@@ -4,6 +4,7 @@ use super::{
 };
 use crate::session::Session;
 use std::ffi::OsString;
+use std::process::Stdio;
 
 struct TestEnvGuard {
     prev_home: Option<OsString>,
@@ -35,6 +36,17 @@ impl Drop for TestEnvGuard {
             crate::env::remove_var("IAGENT_HOME");
         }
     }
+}
+
+fn spawn_short_lived_child() -> std::process::Child {
+    let mut command =
+        std::process::Command::new(std::env::current_exe().expect("current test executable"));
+    command
+        .arg("--help")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .expect("spawn short-lived child")
 }
 
 #[tokio::test]
@@ -70,11 +82,7 @@ async fn pending_restore_returns_false_for_unarmed_snapshot() {
 async fn pending_restore_does_not_auto_restore_recent_crash_without_snapshot() {
     let _guard = TestEnvGuard::new().expect("setup test env");
 
-    let mut child = std::process::Command::new("sh")
-        .arg("-c")
-        .arg("exit 0")
-        .spawn()
-        .expect("spawn child");
+    let mut child = spawn_short_lived_child();
     let dead_pid = child.id();
     let _ = child.wait().expect("wait for child");
 

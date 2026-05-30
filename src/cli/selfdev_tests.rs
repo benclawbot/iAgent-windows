@@ -243,9 +243,16 @@ fn isolated_launcher_env() -> (
 ) {
     let lock = lock_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let env = EnvVarGuard::capture(&["IAGENT_INSTALL_DIR", "IAGENT_HOME", "HOME", "USERPROFILE"]);
+    let env = EnvVarGuard::capture(&[
+        "IAGENT_INSTALL_DIR",
+        "IAGENT_HOME",
+        "HOME",
+        "USERPROFILE",
+        "LOCALAPPDATA",
+    ]);
     crate::env::set_var("HOME", temp.path());
     crate::env::set_var("USERPROFILE", temp.path());
+    crate::env::set_var("LOCALAPPDATA", temp.path().join("AppData").join("Local"));
     crate::env::remove_var("IAGENT_INSTALL_DIR");
     crate::env::remove_var("IAGENT_HOME");
     (lock, env, temp)
@@ -281,7 +288,10 @@ fn test_launcher_dir_ignores_blank_overrides_and_uses_home_default() {
 
 fn default_launcher_dir(home: &Path) -> PathBuf {
     if cfg!(windows) {
-        home.join("AppData").join("Local").join("iagent").join("bin")
+        home.join("AppData")
+            .join("Local")
+            .join("iagent")
+            .join("bin")
     } else {
         home.join(".local").join("bin")
     }

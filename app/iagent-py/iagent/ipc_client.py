@@ -6,14 +6,12 @@ import asyncio
 import json
 import os
 import subprocess
-import threading
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any, AsyncIterator, Optional
 
-import websockets
 
 # Path to the iagent binary - prefer the local build over system PATH
-def find_iagent_binary() -> Optional[Path]:
+def find_iagent_binary() -> Path | None:
     local = Path(__file__).parent.parent.parent / "backend" / "iagent" / "target" / "release" / "iagent.exe"
     if local.exists():
         return local
@@ -42,11 +40,11 @@ def path_to_pipe_name(path: Path) -> str:
 class IagentClient:
     """Client for talking to the iAgent backend via IPC."""
 
-    def __init__(self, binary_path: Optional[Path] = None):
+    def __init__(self, binary_path: Path | None = None):
         self.binary_path = binary_path or find_iagent_binary()
-        self._proc: Optional[subprocess.Popen] = None
+        self._proc: subprocess.Popen | None = None
 
-    def _read_env_api_key(self) -> Optional[str]:
+    def _read_env_api_key(self) -> str | None:
         """Read API key from the settings file."""
         settings_path = get_runtime_dir() / "settings.toml"
         if settings_path.exists():
@@ -93,8 +91,7 @@ class IagentClient:
         
         Yields ServerEvent dicts as they arrive.
         """
-        import hashlib
-        
+
         if os.name == "nt":
             pipe_name = path_to_pipe_name(get_socket_path())
             # Windows named pipe - use asyncio
@@ -105,7 +102,7 @@ class IagentClient:
                 except ConnectionRefusedError:
                     await asyncio.sleep(0.1)
                     continue
-            
+
             async for line in self._read_events_async(reader):
                 yield line
         else:
@@ -115,7 +112,6 @@ class IagentClient:
 
     async def _read_events_async(self, path) -> AsyncIterator[dict]:
         """Read newline-delimited JSON events from a socket/pipe."""
-        import asyncio
         buffer = ""
         try:
             async for data in self._socket_reader(path):

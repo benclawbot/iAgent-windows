@@ -326,10 +326,7 @@ impl InitiativeEngine {
                 } else {
                     mem.content.clone()
                 };
-                goal_memories
-                    .entry(key)
-                    .or_default()
-                    .push(mem.id.clone());
+                goal_memories.entry(key).or_default().push(mem.id.clone());
             }
         }
         for (goal_text, memory_ids) in goal_memories {

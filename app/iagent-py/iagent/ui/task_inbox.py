@@ -7,7 +7,18 @@ from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QObject, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QColor, QFont, QGuiApplication, QIcon, QPainter, QPainterPath, QPen, QPixmap, QRegion
+from PySide6.QtGui import (
+    QAction,
+    QColor,
+    QFont,
+    QGuiApplication,
+    QIcon,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QRegion,
+)
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -16,17 +27,17 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
-    QPushButton,
-    QSplitter,
-    QScrollArea,
+    QMenu,
     QProgressBar,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QSplitter,
     QTabWidget,
     QTextEdit,
     QToolButton,
     QVBoxLayout,
     QWidget,
-    QMenu,
-    QSizePolicy,
 )
 
 from iagent.design_system import DS
@@ -197,72 +208,72 @@ class AssistantPromptDock(QWidget):
         self._outside_filter_installed = False
         self._suspend_auto_hide = False
         self.setStyleSheet(
-            f"""
-            #assistantDock {{
+            """
+            #assistantDock {
                 background-color: #e3eef0;
                 color: #1c2630;
                 border: 1px solid #cfdde0;
                 border-radius: 26px;
-            }}
-            QWidget#dockHeader {{
+            }
+            QWidget#dockHeader {
                 background: #ffffff;
                 border-top-left-radius: 26px;
                 border-top-right-radius: 26px;
                 border-bottom-left-radius: 0px;
                 border-bottom-right-radius: 0px;
-            }}
-            QWidget#dockBody {{
+            }
+            QWidget#dockBody {
                 background: #cfe0e3;
                 border: none;
-            }}
-            QWidget#dockComposer {{
+            }
+            QWidget#dockComposer {
                 background: #ffffff;
                 border-top-left-radius: 0px;
                 border-top-right-radius: 0px;
                 border-bottom-left-radius: 26px;
                 border-bottom-right-radius: 26px;
-            }}
-            QLabel {{
+            }
+            QLabel {
                 background: transparent;
                 border: none;
-            }}
-            QTabWidget::pane {{
+            }
+            QTabWidget::pane {
                 border: none;
                 background: #cfe0e3;
-            }}
-            QTabBar::tab {{
+            }
+            QTabBar::tab {
                 background: #dfe7ea;
                 color: #4f5960;
                 border-radius: 12px;
                 padding: 6px 12px;
                 margin-right: 6px;
                 font: 600 9pt 'Segoe UI';
-            }}
-            QTabBar::tab:selected {{
+            }
+            QTabBar::tab:selected {
                 background: #ffffff;
                 color: #1c2630;
-            }}
-            QScrollArea {{
+            }
+            QScrollArea {
                 border: none;
                 background: #cfe0e3;
-            }}
-            QLineEdit {{
+            }
+            QLineEdit {
                 background-color: #ffffff;
                 color: #1c2630;
                 border: 1px solid #d5dde1;
                 border-radius: 22px;
                 padding: 8px 12px;
                 font: 10pt 'Segoe UI';
-            }}
-            QPushButton {{
+            }
+            QPushButton {
                 background-color: #1e6fcd;
                 color: #ffffff;
                 border: none;
                 border-radius: 14px;
                 padding: 6px 12px;
                 font: 9pt 'Segoe UI';
-            }}
-            QToolButton {{
+            }
+            QToolButton {
                 background-color: #ffffff;
                 color: #5f6a70;
                 border: 1px solid #d5dde1;
@@ -272,8 +283,8 @@ class AssistantPromptDock(QWidget):
                 max-width: 28px;
                 max-height: 28px;
                 padding: 0px;
-            }}
-            QToolButton#micButton, QToolButton#attachButton {{
+            }
+            QToolButton#micButton, QToolButton#attachButton {
                 background: transparent;
                 color: #6b7680;
                 border: none;
@@ -283,19 +294,19 @@ class AssistantPromptDock(QWidget):
                 max-width: 28px;
                 max-height: 28px;
                 padding: 0px;
-            }}
-            QProgressBar {{
+            }
+            QProgressBar {
                 border: 1px solid #dbe4ea;
                 border-radius: 4px;
                 text-align: right;
                 color: #697680;
                 background: #f5f8fa;
                 height: 10px;
-            }}
-            QProgressBar::chunk {{
+            }
+            QProgressBar::chunk {
                 border-radius: 4px;
                 background-color: #1e6fcd;
-            }}
+            }
             """
         )
 
@@ -883,9 +894,7 @@ class TaskInboxWindow(QWidget):
     def _refresh_unread_label(self) -> None:
         unread = 0
         for task in self._tasks.values():
-            if task.status in {"queued", "running"}:
-                unread += 1
-            elif task.status in {"completed", "failed"} and not task.reviewed:
+            if task.status in {"queued", "running"} or task.status in {"completed", "failed"} and not task.reviewed:
                 unread += 1
         self._unread_label.setText(f"Unread: {unread}")
 
@@ -1104,9 +1113,7 @@ class TaskInboxController(QObject):
     def _update_unread_badge(self) -> None:
         unread = 0
         for task in self._tasks.values():
-            if task.status in {"queued", "running"}:
-                unread += 1
-            elif task.status in {"completed", "failed"} and not task.reviewed:
+            if task.status in {"queued", "running"} or task.status in {"completed", "failed"} and not task.reviewed:
                 unread += 1
         self._badge.set_unread_count(unread)
 

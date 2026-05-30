@@ -291,7 +291,9 @@ pub async fn run_login_provider(
                 }
                 #[cfg(not(feature = "bedrock"))]
                 {
-                    Err(anyhow::anyhow!("Bedrock provider requires --features bedrock"))
+                    Err(anyhow::anyhow!(
+                        "Bedrock provider requires --features bedrock"
+                    ))
                 }
             }
             LoginProviderTarget::Azure => login_azure_flow().map(|_| LoginFlowOutcome::Completed),
@@ -460,11 +462,11 @@ async fn notify_running_server_auth_changed_best_effort(provider: Option<&str>) 
 }
 
 fn login_iagent_flow() -> Result<()> {
-    eprintln!("Setting up Iagent subscription access...");
+    eprintln!("Setting up iAgent subscription access...");
     eprintln!(
         "Paste the iagent subscription API key from your account portal. This key is used for your curated iagent router access.\n"
     );
-    eprint!("Paste your Iagent API key: ");
+    eprint!("Paste your iAgent API key: ");
     io::stdout().flush()?;
 
     let key = read_secret_line()?;
@@ -501,7 +503,7 @@ fn login_iagent_flow() -> Result<()> {
         );
     }
 
-    eprintln!("\nSuccessfully saved Iagent subscription credentials!");
+    eprintln!("\nSuccessfully saved iAgent subscription credentials!");
     eprintln!("Stored at {}", file_path.display());
     eprintln!(
         "Curated models available now: {}",

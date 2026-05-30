@@ -1396,7 +1396,10 @@ mod helper_tests {
         }];
         let log = format_log_markdown_from_events(&manifest, &events, 30);
         assert!(log.contains("**note**: hello"));
-        assert!(log.contains("Full log: `/tmp/overnight-run/run.log`"));
+        assert!(log.contains(&format!(
+            "Full log: `{}`",
+            manifest.human_log_path.display()
+        )));
     }
 
     #[test]

@@ -444,8 +444,7 @@ async fn run_default_command(args: Args) -> Result<()> {
     if !server_running {
         maybe_prompt_server_bootstrap_login(&args.provider).await?;
         // For default command (no subcommand), run server in foreground
-        let provider =
-            provider_init::init_provider(&args.provider, args.model.as_deref()).await?;
+        let provider = provider_init::init_provider(&args.provider, args.model.as_deref()).await?;
         let server = server::Server::new(provider);
         server.run().await?;
     }
@@ -535,7 +534,7 @@ pub(crate) async fn wait_for_reloading_server() -> bool {
 }
 
 async fn server_is_running_at(path: &std::path::Path) -> bool {
-    server::is_server_ready(path).await || server::has_live_listener(path).await
+    server::has_live_listener(path).await || server::is_server_ready(path).await
 }
 
 #[cfg(unix)]

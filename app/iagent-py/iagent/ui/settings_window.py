@@ -1,4 +1,4 @@
-"""Settings dialog for iAgent - provider/model/API key configuration.
+r"""Settings dialog for iAgent - provider/model/API key configuration.
 
 Writes to %LOCALAPPDATA%\iAgent\settings.toml which the Rust backend
 reads via iagent-settings crate.
@@ -6,17 +6,15 @@ reads via iagent-settings crate.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import shutil
 import subprocess
 import sys
-import threading
 from pathlib import Path
 
 from platformdirs import user_config_dir
-from PySide6.QtCore import QTimer, Signal, Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -204,6 +202,7 @@ def ensure_server_running() -> tuple[subprocess.Popen | None, Path]:
     try:
         if sys.platform == "win32":
             import asyncio
+
             import nest_asyncio
             nest_asyncio.apply()
 

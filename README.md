@@ -137,7 +137,8 @@ If no config exists, interactive launch triggers a setup wizard that:
 - Tool/provider matrix: `docs/tools.md`
 - Skills authoring/discovery: `docs/skills.md`
 - Memory durability/export/clear: `docs/memory.md`
-- OAuth/auth notes: `OAUTH.md`
+- Product naming conventions: `docs/product-naming.md`
+- OAuth/auth notes: `OAUTH.md` (OpenAI browser login uses `http://localhost:1455/auth/callback` by default)
 - Telemetry/privacy: `TELEMETRY.md`
 
 ## Development

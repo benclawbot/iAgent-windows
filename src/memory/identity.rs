@@ -99,7 +99,9 @@ fn collect_preference_memories(graph: &MemoryGraph) -> Vec<&crate::memory_types:
 }
 
 /// Count occurrences of each tag across Preference memories.
-fn count_preference_tags<'a>(memories: &[&'a crate::memory_types::MemoryEntry]) -> HashMap<&'a str, usize> {
+fn count_preference_tags<'a>(
+    memories: &[&'a crate::memory_types::MemoryEntry],
+) -> HashMap<&'a str, usize> {
     let mut counts: HashMap<&str, usize> = HashMap::new();
     for mem in memories {
         for tag in &mem.tags {
@@ -154,9 +156,27 @@ fn infer_communication_style(memories: &[&crate::memory_types::MemoryEntry]) -> 
     let mut casual_score = 0isize;
     let mut technical_score = 0isize;
 
-    let formal_kw = ["please", "kindly", "would appreciate", "could you", "prefer formal"];
-    let casual_kw = ["no worries", "cheers", "ta", "cheers", "just", "tbh", " TBH", "fyi", "FYI"];
-    let tech_kw = ["api", "cli", "sdk", "async", "token", "endpoint", "curl", "json", "rust", "python"];
+    let formal_kw = [
+        "please",
+        "kindly",
+        "would appreciate",
+        "could you",
+        "prefer formal",
+    ];
+    let casual_kw = [
+        "no worries",
+        "cheers",
+        "ta",
+        "cheers",
+        "just",
+        "tbh",
+        " TBH",
+        "fyi",
+        "FYI",
+    ];
+    let tech_kw = [
+        "api", "cli", "sdk", "async", "token", "endpoint", "curl", "json", "rust", "python",
+    ];
 
     for mem in memories {
         let lower = mem.content.to_lowercase();
@@ -193,7 +213,11 @@ fn extract_top_tags(memories: &[&crate::memory_types::MemoryEntry], n: usize) ->
     let counts = count_preference_tags(memories);
     let mut sorted: Vec<_> = counts.into_iter().collect();
     sorted.sort_by(|a, b| b.1.cmp(&a.1));
-    sorted.into_iter().take(n).map(|(tag, _)| tag.to_string()).collect()
+    sorted
+        .into_iter()
+        .take(n)
+        .map(|(tag, _)| tag.to_string())
+        .collect()
 }
 
 /// Derive recent interests from all high-confidence memories (not just Preferences).
@@ -214,7 +238,11 @@ fn derive_recent_interests(graph: &MemoryGraph, limit: usize) -> Vec<String> {
     }
     let mut sorted: Vec<_> = tag_counts.into_iter().collect();
     sorted.sort_by(|a, b| b.1.cmp(&a.1));
-    sorted.into_iter().take(limit).map(|(t, _)| t.to_string()).collect()
+    sorted
+        .into_iter()
+        .take(limit)
+        .map(|(t, _)| t.to_string())
+        .collect()
 }
 
 /// Estimate interaction frequency from session count per day.
@@ -324,7 +352,14 @@ pub fn build_identity_profile(memory_manager: &MemoryManager) -> UserIdentityPro
             }
             // Look for goal-like phrases: "want to", "need to", "working on", "trying to"
             let lower = mem.content.to_lowercase();
-            let goal_indicators = ["want to", "need to", "working on", "trying to", "goal:", "aim:"];
+            let goal_indicators = [
+                "want to",
+                "need to",
+                "working on",
+                "trying to",
+                "goal:",
+                "aim:",
+            ];
             for indicator in &goal_indicators {
                 if lower.contains(indicator) {
                     // Truncate to first 80 chars as the goal text
@@ -365,8 +400,7 @@ pub fn build_identity_profile(memory_manager: &MemoryManager) -> UserIdentityPro
         let global_tags = extract_top_tags(&prefs, 3);
         // Merge any new tags not already in project preferences
         for tag in global_tags {
-            if !profile.project_preferences.contains(&tag)
-                && profile.project_preferences.len() < 12
+            if !profile.project_preferences.contains(&tag) && profile.project_preferences.len() < 12
             {
                 profile.project_preferences.push(tag);
             }
@@ -384,10 +418,7 @@ pub fn build_identity_prompt_section(identity: &UserIdentityProfile) -> String {
 
     // Working hours
     if let Some((start, end)) = identity.working_hours {
-        lines.push(format!(
-            "- Working hours: {}:00 - {}:00 UTC",
-            start, end
-        ));
+        lines.push(format!("- Working hours: {}:00 - {}:00 UTC", start, end));
     }
 
     // Communication style
@@ -418,7 +449,8 @@ pub fn build_identity_prompt_section(identity: &UserIdentityProfile) -> String {
         for goal in identity.inferred_goals.iter().take(3) {
             lines.push(format!(
                 "  - {} (seen in {} memories)",
-                goal.goal_text, goal.source_memories.len()
+                goal.goal_text,
+                goal.source_memories.len()
             ));
         }
     }

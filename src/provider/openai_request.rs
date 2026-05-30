@@ -9,9 +9,11 @@ use iagent_provider_openai::OpenAiRequestLogLevel;
 use serde_json::Value;
 
 pub(crate) fn build_responses_input(messages: &[ChatMessage]) -> Vec<Value> {
-    iagent_provider_openai::build_responses_input_with_logger(messages, |level, message| match level
-    {
-        OpenAiRequestLogLevel::Info => crate::logging::info(message),
-        OpenAiRequestLogLevel::Warn => crate::logging::warn(message),
-    })
+    iagent_provider_openai::build_responses_input_with_logger(
+        messages,
+        |level, message| match level {
+            OpenAiRequestLogLevel::Info => crate::logging::info(message),
+            OpenAiRequestLogLevel::Warn => crate::logging::warn(message),
+        },
+    )
 }

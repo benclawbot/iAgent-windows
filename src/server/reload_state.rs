@@ -183,7 +183,7 @@ pub async fn inspect_reload_wait_status(
         return status;
     }
 
-    if is_server_ready(socket_path).await || has_live_listener(socket_path).await {
+    if has_live_listener(socket_path).await || is_server_ready(socket_path).await {
         if last_known_pid.is_some() {
             log_info!((
                 "inspect_reload_wait_status: socket {} is ready/live without active marker (last_known_pid={:?}, state={})",

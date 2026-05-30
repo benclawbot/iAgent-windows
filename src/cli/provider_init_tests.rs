@@ -132,7 +132,7 @@ fn test_init_provider_iagent_delegates_runtime_profile_to_wrapper() {
         .block_on(init_provider(&ProviderChoice::Iagent, None))
         .expect("init iagent provider");
 
-    assert_eq!(provider.name(), "Iagent Subscription");
+    assert_eq!(provider.name(), "iAgent Subscription");
     assert!(crate::subscription_catalog::is_runtime_mode_enabled());
     assert_eq!(
         std::env::var("IAGENT_OPENROUTER_MODEL").ok().as_deref(),

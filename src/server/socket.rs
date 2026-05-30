@@ -69,6 +69,12 @@ pub async fn connect_socket(path: &std::path::Path) -> Result<Stream> {
     }
 }
 
+#[cfg(windows)]
+pub(super) async fn socket_has_live_listener(path: &std::path::Path) -> bool {
+    crate::transport::is_socket_path(path)
+}
+
+#[cfg(not(windows))]
 pub(super) async fn socket_has_live_listener(path: &std::path::Path) -> bool {
     crate::transport::is_socket_path(path) && Stream::connect(path).await.is_ok()
 }
@@ -309,7 +315,7 @@ pub(super) fn server_start_matches_existing_server(stderr_output: &str) -> bool 
 pub(super) async fn wait_for_existing_server(path: &std::path::Path, timeout: Duration) -> bool {
     let start = Instant::now();
     while start.elapsed() < timeout {
-        if is_server_ready(path).await || has_live_listener(path).await {
+        if has_live_listener(path).await || is_server_ready(path).await {
             return true;
         }
         tokio::time::sleep(Duration::from_millis(50)).await;

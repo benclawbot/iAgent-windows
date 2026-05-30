@@ -368,7 +368,8 @@ class CompanionManager(QObject):
         This coroutine becomes ``_current_task`` and supports cancellation
         via ``_cancel_flag`` (cooperative) and ``task.cancel()`` (hard).
         ``from_user_input`` flags prompts explicitly typed by the user,
-        which skip proposal popups (user intends action, no need to validate).
+        which skip screen capture but still use the shared proposal flow for
+        mutating actions.
         """
         try:
             # Yield control so stop_stream (which is still draining after
@@ -496,24 +497,14 @@ class CompanionManager(QObject):
                         )
 
                 for proposal in proposals_from_actions(actions):
-                    if not from_user_input:
-                        self.proposal_requested.emit(proposal)
-                        logger.info(
-                            "proposal requested: %s %s",
-                            proposal.kind,
-                            proposal.proposal_id,
-                        )
-                    else:
-                        # User's own typed requests bypass proposal popup
-                        # and execute immediately via accept_proposal
-                        self.accept_proposal(proposal)
+                    self.proposal_requested.emit(proposal)
+                    logger.info(
+                        "proposal requested: %s %s",
+                        proposal.kind,
+                        proposal.proposal_id,
+                    )
 
-                # Suppress immediate "Task complete" notification when iagent
-                # goals are running as background tasks — task_inbox tracks
-                # their completion via command_finished signal instead.
-                background_iagent = from_user_input and actions.iagent_goal
-
-                if not background_iagent and self._state == VoiceState.RESPONDING:
+                if self._state == VoiceState.RESPONDING:
                     self._set_state(VoiceState.IDLE)
 
         except asyncio.CancelledError:

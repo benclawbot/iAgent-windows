@@ -44,7 +44,7 @@ impl RuntimeProviderId {
 
     pub const fn label(self) -> &'static str {
         match self {
-            Self::Iagent => "Iagent Subscription",
+            Self::Iagent => "iAgent Subscription",
             Self::Claude => "Anthropic/Claude",
             Self::OpenAi => "OpenAI",
             Self::OpenAiApiKey => "OpenAI API",

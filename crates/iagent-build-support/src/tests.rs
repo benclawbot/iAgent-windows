@@ -22,6 +22,21 @@ fn with_temp_iagent_home<T>(f: impl FnOnce() -> T) -> T {
     result
 }
 
+fn assert_published_binary_matches(actual: &Path, expected: &Path) {
+    #[cfg(unix)]
+    assert_eq!(
+        std::fs::canonicalize(actual).expect("canonical actual binary"),
+        std::fs::canonicalize(expected).expect("canonical expected binary")
+    );
+
+    #[cfg(windows)]
+    {
+        let actual_bytes = std::fs::read(actual).expect("read actual binary");
+        let expected_bytes = std::fs::read(expected).expect("read expected binary");
+        assert_eq!(actual_bytes, expected_bytes);
+    }
+}
+
 fn create_git_repo_fixture() -> tempfile::TempDir {
     let temp = tempfile::tempdir().expect("tempdir");
     std::fs::create_dir_all(temp.path().join(".git")).expect("create .git dir");
@@ -87,8 +102,9 @@ fn test_binary_version_hash_mismatch_rejects_publish_candidate() {
         git_hash: Some("oldhash".to_string()),
     };
 
-    let error = validate_binary_version_matches_source_report(&report, Path::new("iagent"), &source)
-        .expect_err("mismatched git hash should be rejected");
+    let error =
+        validate_binary_version_matches_source_report(&report, Path::new("iagent"), &source)
+            .expect_err("mismatched git hash should be rejected");
 
     assert!(
         error
@@ -203,10 +219,7 @@ fn test_client_update_candidate_prefers_dev_binary_for_selfdev() {
 
     let candidate = client_update_candidate(true).expect("expected selfdev candidate");
     assert_eq!(candidate.1, "current");
-    assert_eq!(
-        std::fs::canonicalize(candidate.0).expect("canonical candidate"),
-        std::fs::canonicalize(version_binary).expect("canonical version binary")
-    );
+    assert_published_binary_matches(&candidate.0, &version_binary);
 
     if let Some(prev_home) = prev_home {
         iagent_core::env::set_var("IAGENT_HOME", prev_home);
@@ -239,10 +252,7 @@ fn update_launcher_symlink_stays_inside_sandbox_home() {
             .join("bin")
             .join(binary_name());
         assert_eq!(launcher, expected_launcher);
-        assert_eq!(
-            std::fs::canonicalize(&launcher).expect("canonical launcher"),
-            std::fs::canonicalize(version_binary).expect("canonical version binary")
-        );
+        assert_published_binary_matches(&launcher, &version_binary);
     });
 }
 
@@ -348,9 +358,7 @@ fn shared_server_candidate_prefers_approved_channel_over_current() {
         let candidate =
             shared_server_update_candidate(true).expect("expected shared-server candidate");
         assert_eq!(candidate.1, "shared-server");
-        let selected = std::fs::canonicalize(candidate.0).expect("canonical selected");
-        let approved = std::fs::canonicalize(version_binary_path(approved_version).unwrap())
-            .expect("canonical approved");
-        assert_eq!(selected, approved);
+        let approved = version_binary_path(approved_version).unwrap();
+        assert_published_binary_matches(&candidate.0, &approved);
     });
 }
