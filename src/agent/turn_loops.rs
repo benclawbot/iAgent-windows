@@ -630,7 +630,7 @@ impl Agent {
 
             // If provider handles tools internally (like Claude Code CLI), only run native tools locally
             if self.provider.handles_tools_internally() {
-                tool_calls.retain(|tc| JCODE_NATIVE_TOOLS.contains(&tc.name.as_str()));
+                tool_calls.retain(|tc| IAGENT_NATIVE_TOOLS.contains(&tc.name.as_str()));
                 if tool_calls.is_empty() {
                     if !generated_image_contexts.is_empty() {
                         for blocks in generated_image_contexts.drain(..) {
@@ -682,7 +682,7 @@ impl Agent {
 
                 self.validate_tool_allowed(&tc.name)?;
 
-                let is_native_tool = JCODE_NATIVE_TOOLS.contains(&tc.name.as_str());
+                let is_native_tool = IAGENT_NATIVE_TOOLS.contains(&tc.name.as_str());
 
                 // Check if SDK already executed this tool
                 if let Some((sdk_content, sdk_is_error)) = sdk_tool_results.remove(&tc.id) {

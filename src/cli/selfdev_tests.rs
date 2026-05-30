@@ -37,9 +37,9 @@ impl Drop for EnvVarGuard {
 }
 
 fn set_socket_test_env(socket_path: &Path, runtime_dir: &Path) -> EnvVarGuard {
-    let guard = EnvVarGuard::capture(&["JCODE_SOCKET", "JCODE_RUNTIME_DIR"]);
+    let guard = EnvVarGuard::capture(&["IAGENT_SOCKET", "IAGENT_RUNTIME_DIR"]);
     crate::server::set_socket_path(socket_path.to_str().expect("utf8 socket path"));
-    crate::env::set_var("JCODE_RUNTIME_DIR", runtime_dir);
+    crate::env::set_var("IAGENT_RUNTIME_DIR", runtime_dir);
     guard
 }
 
@@ -55,10 +55,10 @@ impl TestEnvGuard {
         let temp_home = tempfile::Builder::new()
             .prefix("iagent-selfdev-test-home-")
             .tempdir()?;
-        let env = EnvVarGuard::capture(&["JCODE_HOME", "JCODE_TEST_SESSION"]);
+        let env = EnvVarGuard::capture(&["IAGENT_HOME", "IAGENT_TEST_SESSION"]);
 
-        crate::env::set_var("JCODE_HOME", temp_home.path());
-        crate::env::set_var("JCODE_TEST_SESSION", "1");
+        crate::env::set_var("IAGENT_HOME", temp_home.path());
+        crate::env::set_var("IAGENT_TEST_SESSION", "1");
 
         Ok(Self {
             _lock: lock,
@@ -243,11 +243,11 @@ fn isolated_launcher_env() -> (
 ) {
     let lock = lock_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let env = EnvVarGuard::capture(&["JCODE_INSTALL_DIR", "JCODE_HOME", "HOME", "USERPROFILE"]);
+    let env = EnvVarGuard::capture(&["IAGENT_INSTALL_DIR", "IAGENT_HOME", "HOME", "USERPROFILE"]);
     crate::env::set_var("HOME", temp.path());
     crate::env::set_var("USERPROFILE", temp.path());
-    crate::env::remove_var("JCODE_INSTALL_DIR");
-    crate::env::remove_var("JCODE_HOME");
+    crate::env::remove_var("IAGENT_INSTALL_DIR");
+    crate::env::remove_var("IAGENT_HOME");
     (lock, env, temp)
 }
 
@@ -259,12 +259,12 @@ fn set_var<T: AsRef<OsStr>>(name: &str, value: T) {
 fn test_launcher_dir_uses_trimmed_install_dir_before_iagent_home() {
     let (_lock, _env, temp) = isolated_launcher_env();
     let install_dir = temp.path().join("install bin");
-    let iagent_home = temp.path().join("jcode-home");
+    let iagent_home = temp.path().join("iagent-home");
     set_var(
-        "JCODE_INSTALL_DIR",
+        "IAGENT_INSTALL_DIR",
         format!("  {}  ", install_dir.display()),
     );
-    set_var("JCODE_HOME", &iagent_home);
+    set_var("IAGENT_HOME", &iagent_home);
 
     assert_eq!(build::launcher_dir().expect("launcher dir"), install_dir);
 }
@@ -272,8 +272,8 @@ fn test_launcher_dir_uses_trimmed_install_dir_before_iagent_home() {
 #[test]
 fn test_launcher_dir_ignores_blank_overrides_and_uses_home_default() {
     let (_lock, _env, temp) = isolated_launcher_env();
-    set_var("JCODE_INSTALL_DIR", "   ");
-    set_var("JCODE_HOME", "\t");
+    set_var("IAGENT_INSTALL_DIR", "   ");
+    set_var("IAGENT_HOME", "\t");
 
     let expected = default_launcher_dir(temp.path());
     assert_eq!(build::launcher_dir().expect("launcher dir"), expected);
@@ -281,7 +281,7 @@ fn test_launcher_dir_ignores_blank_overrides_and_uses_home_default() {
 
 fn default_launcher_dir(home: &Path) -> PathBuf {
     if cfg!(windows) {
-        home.join("AppData").join("Local").join("jcode").join("bin")
+        home.join("AppData").join("Local").join("iagent").join("bin")
     } else {
         home.join(".local").join("bin")
     }
@@ -299,8 +299,8 @@ fn test_selfdev_build_command_prefers_repo_wrapper_when_present() {
     assert_eq!(build.program, "bash");
     assert_eq!(build.args.first().map(String::as_str), Some("-lc"));
     let command = build.args.get(1).expect("shell command");
-    assert!(command.contains("dev_cargo.sh' build --profile selfdev -p jcode --bin jcode"));
-    assert!(build.display.contains("-p jcode --bin jcode"));
+    assert!(command.contains("dev_cargo.sh' build --profile selfdev -p iagent --bin iagent"));
+    assert!(build.display.contains("-p iagent --bin iagent"));
 }
 
 #[test]
@@ -310,7 +310,7 @@ fn test_selfdev_build_command_falls_back_to_cargo_when_wrapper_missing() {
     assert_eq!(build.program, "bash");
     assert_eq!(build.args.first().map(String::as_str), Some("-lc"));
     let command = build.args.get(1).expect("shell command");
-    assert!(command.contains("cargo build --profile selfdev -p jcode --bin jcode"));
+    assert!(command.contains("cargo build --profile selfdev -p iagent --bin iagent"));
 }
 
 #[test]
@@ -318,5 +318,5 @@ fn test_selfdev_build_command_can_target_backend_only() {
     let temp = tempfile::tempdir().expect("tempdir");
     let build =
         build::selfdev_build_command_for_target(temp.path(), build::SelfDevBuildTarget::Backend);
-    assert!(build.display.contains("-p jcode --bin jcode"));
+    assert!(build.display.contains("-p iagent --bin iagent"));
 }

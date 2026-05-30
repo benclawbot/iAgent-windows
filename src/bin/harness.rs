@@ -73,10 +73,10 @@ async fn main() -> Result<()> {
     std::env::set_current_dir(&workspace)?;
     eprintln!("Harness workspace: {}", workspace.display());
 
-    let harness_home = workspace.join(".jcode-harness-home");
+    let harness_home = workspace.join(".iagent-harness-home");
     std::fs::create_dir_all(&harness_home)?;
-    iagent::env::set_var("JCODE_HOME", &harness_home);
-    eprintln!("Harness JCODE_HOME: {}", harness_home.display());
+    iagent::env::set_var("IAGENT_HOME", &harness_home);
+    eprintln!("Harness IAGENT_HOME: {}", harness_home.display());
 
     let provider: Arc<dyn Provider> = Arc::new(NoopProvider);
     let registry = Registry::new(provider).await;
@@ -192,7 +192,7 @@ async fn main() -> Result<()> {
         name: "bash",
         label: "background bash",
         input: json!({
-            "command": "printf '%s\n' 'JCODE_PROGRESS {\"current\":1,\"total\":2,\"unit\":\"steps\",\"message\":\"Harness\"}'; echo background-done",
+            "command": "printf '%s\n' 'IAGENT_PROGRESS {\"current\":1,\"total\":2,\"unit\":\"steps\",\"message\":\"Harness\"}'; echo background-done",
             "run_in_background": true,
             "timeout": 5000,
             "notify": false,

@@ -149,7 +149,7 @@ pub fn harden_secret_file_permissions(path: &Path) {
 
 /// Validate an external auth file managed by another tool before reading it.
 ///
-/// jcode intentionally avoids mutating these files. We also reject obvious risky
+/// iagent intentionally avoids mutating these files. We also reject obvious risky
 /// cases like symlinks so a remembered trust decision stays bound to a real file
 /// path rather than an arbitrary redirect.
 pub fn validate_external_auth_file(path: &Path) -> Result<PathBuf> {

@@ -118,7 +118,7 @@ async fn debug_list_servers() -> Result<()> {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if let Some(name) = path.file_name().and_then(|n| n.to_str())
-                    && name.starts_with("jcode")
+                    && name.starts_with("iagent")
                     && name.ends_with(".sock")
                     && !name.contains("-debug")
                 {

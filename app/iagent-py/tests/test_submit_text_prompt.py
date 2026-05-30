@@ -86,7 +86,7 @@ def _make_config() -> Config:
         log_level="INFO",
         knowledge_dir=None,
         allow_foreground_typing=False,
-        jcode_path=None,
+        iagent_path=None,
     )
 
 

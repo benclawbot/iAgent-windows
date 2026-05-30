@@ -38,7 +38,7 @@ fn test_ambient_state_lifecycle() {
 fn test_ambient_scheduled_queue() {
     use iagent::ambient::{Priority, ScheduledItem, ScheduledQueue};
 
-    let tmp = std::env::temp_dir().join("jcode-test-queue.json");
+    let tmp = std::env::temp_dir().join("iagent-test-queue.json");
     let _ = std::fs::remove_file(&tmp); // Clean up from previous runs
     let mut queue = ScheduledQueue::load(tmp);
     assert!(queue.is_empty());
@@ -519,7 +519,7 @@ fn test_ambient_config_defaults() {
 #[test]
 fn test_ambient_lock() {
     use iagent::ambient::AmbientLock;
-    let _env = setup_test_env().expect("failed to setup isolated JCODE_HOME");
+    let _env = setup_test_env().expect("failed to setup isolated IAGENT_HOME");
 
     // First acquisition should succeed
     let lock1 = AmbientLock::try_acquire();

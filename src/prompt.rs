@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-/// Default system prompt for jcode (embedded at compile time)
+/// Default system prompt for iagent (embedded at compile time)
 pub const DEFAULT_SYSTEM_PROMPT: &str = include_str!("prompt/system_prompt.md");
 const SELFDEV_HINT_PROMPT: &str = include_str!("prompt/selfdev_hint.txt");
 const SELFDEV_MODE_PROMPT: &str = include_str!("prompt/selfdev_mode.txt");
@@ -225,7 +225,7 @@ pub fn build_system_prompt_full(
     info.has_global_agents_md = md_info.has_global_agents_md;
     info.global_agents_md_chars = md_info.global_agents_md_chars;
 
-    // Add optional prompt overlays from ~/.jcode/ and ./.jcode/
+    // Add optional prompt overlays from ~/.iagent/ and ./.iagent/
     let (overlay_content, overlay_chars) = load_prompt_overlay_files_from_dir(working_dir);
     if let Some(content) = overlay_content {
         info.prompt_overlay_chars = overlay_chars;
@@ -299,7 +299,7 @@ pub fn build_system_prompt_split(
     info.has_global_agents_md = md_info.has_global_agents_md;
     info.global_agents_md_chars = md_info.global_agents_md_chars;
 
-    // Add optional prompt overlays from ~/.jcode/ and ./.jcode/
+    // Add optional prompt overlays from ~/.iagent/ and ./.iagent/
     let (overlay_content, overlay_chars) = load_prompt_overlay_files_from_dir(working_dir);
     if let Some(content) = overlay_content {
         info.prompt_overlay_chars = overlay_chars;
@@ -371,7 +371,7 @@ pub fn build_session_context(working_dir: Option<&Path>) -> String {
     lines.push(format!("OS: {}", std::env::consts::OS));
     lines.push(format!("Architecture: {}", std::env::consts::ARCH));
     lines.push(format!(
-        "Jcode version: {} ({})",
+        "Iagent version: {} ({})",
         env!("IAGENT_VERSION"),
         env!("IAGENT_GIT_HASH")
     ));
@@ -599,7 +599,7 @@ pub fn load_agents_md_files_from_dir(working_dir: Option<&Path>) -> (Option<Stri
     }
 }
 
-/// Load optional prompt overlay markdown from ~/.jcode/ and ./.jcode/
+/// Load optional prompt overlay markdown from ~/.iagent/ and ./.iagent/
 fn load_prompt_overlay_files_from_dir(working_dir: Option<&Path>) -> (Option<String>, usize) {
     let mut contents = vec![];
     let mut total_chars = 0usize;
@@ -618,8 +618,8 @@ fn load_prompt_overlay_files_from_dir(working_dir: Option<&Path>) -> (Option<Str
 
     let project_dir = working_dir.unwrap_or(Path::new("."));
     if let Some((content, size)) = load_file(
-        &project_dir.join(".jcode").join("prompt-overlay.md"),
-        "Project Prompt Overlay (.jcode/prompt-overlay.md)",
+        &project_dir.join(".iagent").join("prompt-overlay.md"),
+        "Project Prompt Overlay (.iagent/prompt-overlay.md)",
     ) {
         total_chars += size;
         contents.push(content);
@@ -628,7 +628,7 @@ fn load_prompt_overlay_files_from_dir(working_dir: Option<&Path>) -> (Option<Str
     if let Ok(global_overlay) = crate::storage::iagent_dir().map(|dir| dir.join("prompt-overlay.md"))
         && let Some((content, size)) = load_file(
             &global_overlay,
-            "Global Prompt Overlay (~/.jcode/prompt-overlay.md)",
+            "Global Prompt Overlay (~/.iagent/prompt-overlay.md)",
         )
     {
         total_chars += size;

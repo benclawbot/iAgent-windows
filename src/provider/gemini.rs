@@ -80,7 +80,7 @@ impl GeminiProvider {
     }
 
     pub fn new() -> Self {
-        let model = std::env::var("JCODE_GEMINI_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.into());
+        let model = std::env::var("IAGENT_GEMINI_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.into());
         let provider = Self {
             client: gemini_http_client(),
             model: Arc::new(RwLock::new(model)),
@@ -777,7 +777,7 @@ fn is_vpc_sc_error(err: &anyhow::Error) -> bool {
 
 fn gemini_http_client() -> reqwest::Client {
     reqwest::Client::builder()
-        .user_agent("jcode/1.0 (gemini)")
+        .user_agent("iagent/1.0 (gemini)")
         .http1_only()
         .connect_timeout(Duration::from_secs(20))
         .timeout(Duration::from_secs(90))

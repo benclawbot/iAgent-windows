@@ -239,7 +239,7 @@ async fn register_visible_spawned_member_marks_startup_as_running() {
 fn prepare_visible_spawn_session_persists_startup_before_launch() {
     let _guard = crate::storage::lock_test_env();
     let temp_home = tempfile::TempDir::new().expect("temp home");
-    crate::env::set_var("JCODE_HOME", temp_home.path());
+    crate::env::set_var("IAGENT_HOME", temp_home.path());
 
     let worktree = tempfile::TempDir::new().expect("temp worktree");
     let startup = "Please start by auditing prompt delivery.";
@@ -253,7 +253,7 @@ fn prepare_visible_spawn_session_persists_startup_before_launch() {
         |session_id, _cwd: &std::path::Path, _selfdev, provider_key| {
             assert_eq!(provider_key, None);
             let path = crate::storage::iagent_dir()
-                .expect("jcode dir")
+                .expect("iagent dir")
                 .join(format!("client-input-{}", session_id));
             let data = std::fs::read_to_string(&path).expect("startup file should exist");
             assert!(
@@ -271,21 +271,21 @@ fn prepare_visible_spawn_session_persists_startup_before_launch() {
 
     assert!(launched);
     let path = crate::storage::iagent_dir()
-        .expect("jcode dir")
+        .expect("iagent dir")
         .join(format!("client-input-{}", session_id));
     assert!(
         path.exists(),
         "startup file should remain for launched visible session"
     );
 
-    crate::env::remove_var("JCODE_HOME");
+    crate::env::remove_var("IAGENT_HOME");
 }
 
 #[test]
 fn prepare_visible_spawn_session_cleans_startup_when_launch_not_started() {
     let _guard = crate::storage::lock_test_env();
     let temp_home = tempfile::TempDir::new().expect("temp home");
-    crate::env::set_var("JCODE_HOME", temp_home.path());
+    crate::env::set_var("IAGENT_HOME", temp_home.path());
 
     let worktree = tempfile::TempDir::new().expect("temp worktree");
 
@@ -301,7 +301,7 @@ fn prepare_visible_spawn_session_cleans_startup_when_launch_not_started() {
 
     assert!(!launched);
     let path = crate::storage::iagent_dir()
-        .expect("jcode dir")
+        .expect("iagent dir")
         .join(format!("client-input-{}", session_id));
     assert!(
         !path.exists(),
@@ -312,14 +312,14 @@ fn prepare_visible_spawn_session_cleans_startup_when_launch_not_started() {
         "prepared session should be cleaned up when visible launch does not start"
     );
 
-    crate::env::remove_var("JCODE_HOME");
+    crate::env::remove_var("IAGENT_HOME");
 }
 
 #[test]
 fn prepare_visible_spawn_session_cleans_session_when_launch_errors() {
     let _guard = crate::storage::lock_test_env();
     let temp_home = tempfile::TempDir::new().expect("temp home");
-    crate::env::set_var("JCODE_HOME", temp_home.path());
+    crate::env::set_var("IAGENT_HOME", temp_home.path());
 
     let worktree = tempfile::TempDir::new().expect("temp worktree");
 
@@ -337,7 +337,7 @@ fn prepare_visible_spawn_session_cleans_session_when_launch_errors() {
 
     assert!(error.to_string().contains("launch failed"));
     let sessions_dir = crate::storage::iagent_dir()
-        .expect("jcode dir")
+        .expect("iagent dir")
         .join("sessions");
     let remaining_sessions = std::fs::read_dir(&sessions_dir)
         .map(|entries| entries.count())
@@ -347,14 +347,14 @@ fn prepare_visible_spawn_session_cleans_session_when_launch_errors() {
         "failed visible launch should not leave orphan prepared sessions"
     );
 
-    crate::env::remove_var("JCODE_HOME");
+    crate::env::remove_var("IAGENT_HOME");
 }
 
 #[test]
 fn prepare_visible_spawn_session_persists_and_launches_provider_key_for_openrouter_model() {
     let _guard = crate::storage::lock_test_env();
     let temp_home = tempfile::TempDir::new().expect("temp home");
-    crate::env::set_var("JCODE_HOME", temp_home.path());
+    crate::env::set_var("IAGENT_HOME", temp_home.path());
 
     let worktree = tempfile::TempDir::new().expect("temp worktree");
     let (session_id, launched) = prepare_visible_spawn_session(
@@ -375,14 +375,14 @@ fn prepare_visible_spawn_session_persists_and_launches_provider_key_for_openrout
     assert_eq!(session.model.as_deref(), Some("openai/gpt-5.4@OpenAI"));
     assert_eq!(session.provider_key.as_deref(), Some("openrouter"));
 
-    crate::env::remove_var("JCODE_HOME");
+    crate::env::remove_var("IAGENT_HOME");
 }
 
 #[test]
 fn prepare_visible_spawn_session_prefers_parent_provider_key_over_model_guess() {
     let _guard = crate::storage::lock_test_env();
     let temp_home = tempfile::TempDir::new().expect("temp home");
-    crate::env::set_var("JCODE_HOME", temp_home.path());
+    crate::env::set_var("IAGENT_HOME", temp_home.path());
 
     let worktree = tempfile::TempDir::new().expect("temp worktree");
     let (session_id, launched) = prepare_visible_spawn_session(
@@ -403,7 +403,7 @@ fn prepare_visible_spawn_session_prefers_parent_provider_key_over_model_guess() 
     assert_eq!(session.model.as_deref(), Some("gpt-5.4"));
     assert_eq!(session.provider_key.as_deref(), Some("ollama"));
 
-    crate::env::remove_var("JCODE_HOME");
+    crate::env::remove_var("IAGENT_HOME");
 }
 
 #[tokio::test]

@@ -27,9 +27,9 @@ impl AuthTestSandbox {
             crate::env::remove_var(key);
         }
 
-        std::fs::create_dir_all(temp.path().join("config").join("jcode"))?;
+        std::fs::create_dir_all(temp.path().join("config").join("iagent"))?;
         std::fs::create_dir_all(temp.path().join("external"))?;
-        crate::env::set_var("JCODE_HOME", temp.path());
+        crate::env::set_var("IAGENT_HOME", temp.path());
         crate::provider_catalog::force_apply_openai_compatible_profile_env(None);
         reset_global_auth_state();
 
@@ -101,34 +101,34 @@ fn reset_global_auth_state() {
 
 fn tracked_env_vars() -> Vec<String> {
     let mut keys = [
-        "JCODE_HOME",
+        "IAGENT_HOME",
         "XDG_CONFIG_HOME",
-        "JCODE_OPENROUTER_API_BASE",
-        "JCODE_OPENROUTER_API_KEY_NAME",
-        "JCODE_OPENROUTER_ENV_FILE",
-        "JCODE_OPENROUTER_CACHE_NAMESPACE",
-        "JCODE_OPENROUTER_PROVIDER_FEATURES",
-        "JCODE_OPENROUTER_ALLOW_NO_AUTH",
-        "JCODE_OPENROUTER_PROVIDER",
-        "JCODE_OPENROUTER_NO_FALLBACK",
-        "JCODE_OPENROUTER_MODEL",
-        "JCODE_OPENROUTER_MODEL_CATALOG",
-        "JCODE_OPENROUTER_STATIC_MODELS",
-        "JCODE_OPENROUTER_AUTH_HEADER",
-        "JCODE_OPENROUTER_AUTH_HEADER_NAME",
-        "JCODE_OPENROUTER_DYNAMIC_BEARER_PROVIDER",
-        "JCODE_OPENAI_COMPAT_API_BASE",
-        "JCODE_OPENAI_COMPAT_API_KEY_NAME",
-        "JCODE_OPENAI_COMPAT_ENV_FILE",
-        "JCODE_OPENAI_COMPAT_SETUP_URL",
-        "JCODE_OPENAI_COMPAT_DEFAULT_MODEL",
-        "JCODE_OPENAI_COMPAT_LOCAL_ENABLED",
-        "JCODE_NAMED_PROVIDER_PROFILE",
-        "JCODE_PROVIDER_PROFILE_ACTIVE",
-        "JCODE_PROVIDER_PROFILE_NAME",
-        "JCODE_RUNTIME_PROVIDER",
-        "JCODE_ACTIVE_PROVIDER",
-        "JCODE_FORCE_PROVIDER",
+        "IAGENT_OPENROUTER_API_BASE",
+        "IAGENT_OPENROUTER_API_KEY_NAME",
+        "IAGENT_OPENROUTER_ENV_FILE",
+        "IAGENT_OPENROUTER_CACHE_NAMESPACE",
+        "IAGENT_OPENROUTER_PROVIDER_FEATURES",
+        "IAGENT_OPENROUTER_ALLOW_NO_AUTH",
+        "IAGENT_OPENROUTER_PROVIDER",
+        "IAGENT_OPENROUTER_NO_FALLBACK",
+        "IAGENT_OPENROUTER_MODEL",
+        "IAGENT_OPENROUTER_MODEL_CATALOG",
+        "IAGENT_OPENROUTER_STATIC_MODELS",
+        "IAGENT_OPENROUTER_AUTH_HEADER",
+        "IAGENT_OPENROUTER_AUTH_HEADER_NAME",
+        "IAGENT_OPENROUTER_DYNAMIC_BEARER_PROVIDER",
+        "IAGENT_OPENAI_COMPAT_API_BASE",
+        "IAGENT_OPENAI_COMPAT_API_KEY_NAME",
+        "IAGENT_OPENAI_COMPAT_ENV_FILE",
+        "IAGENT_OPENAI_COMPAT_SETUP_URL",
+        "IAGENT_OPENAI_COMPAT_DEFAULT_MODEL",
+        "IAGENT_OPENAI_COMPAT_LOCAL_ENABLED",
+        "IAGENT_NAMED_PROVIDER_PROFILE",
+        "IAGENT_PROVIDER_PROFILE_ACTIVE",
+        "IAGENT_PROVIDER_PROFILE_NAME",
+        "IAGENT_RUNTIME_PROVIDER",
+        "IAGENT_ACTIVE_PROVIDER",
+        "IAGENT_FORCE_PROVIDER",
         "OPENAI_API_KEY",
         "OPENROUTER_API_KEY",
         "ANTHROPIC_API_KEY",
@@ -163,7 +163,7 @@ mod tests {
         let sandbox = AuthTestSandbox::new().expect("sandbox");
 
         assert_eq!(
-            std::env::var("JCODE_HOME").ok().as_deref(),
+            std::env::var("IAGENT_HOME").ok().as_deref(),
             Some(sandbox.root().to_str().unwrap())
         );
         assert_eq!(

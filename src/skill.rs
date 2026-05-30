@@ -14,6 +14,8 @@ pub struct Skill {
     pub name: String,
     pub description: String,
     pub allowed_tools: Option<Vec<String>>,
+    pub permissions: Vec<String>,
+    pub triggers: Vec<String>,
     pub content: String,
     pub path: PathBuf,
     search_text: String,
@@ -33,6 +35,13 @@ struct SkillFrontmatter {
     platforms: Option<String>,
     #[serde(rename = "scripts")]
     scripts: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Default)]
+#[serde(default)]
+struct SkillManifest {
+    permissions: Vec<String>,
+    triggers: Vec<String>,
 }
 
 /// Registry of available skills
@@ -265,11 +274,20 @@ impl SkillRegistry {
 
             if path.is_dir() {
                 let skill_file = path.join("SKILL.md");
-                if skill_file.exists()
-                    && let Ok(skill) = Self::parse_skill(&skill_file)
-                    && skill.is_available_for_current_platform()
-                {
-                    self.skills.insert(skill.name.clone(), skill);
+                if skill_file.exists() {
+                    match Self::parse_skill(&skill_file) {
+                        Ok(skill) if skill.is_available_for_current_platform() => {
+                            self.skills.insert(skill.name.clone(), skill);
+                        }
+                        Ok(_) => {}
+                        Err(err) => {
+                            log_warn!((
+                                "Skipping malformed skill at {}: {}",
+                                skill_file.display(),
+                                err
+                            ));
+                        }
+                    }
                 }
             }
         }
@@ -291,6 +309,7 @@ impl SkillRegistry {
             platforms,
             scripts,
         } = frontmatter;
+        let manifest = Self::load_skill_manifest(path)?;
 
         let allowed_tools =
             allowed_tools.map(|s| s.split(',').map(|t| t.trim().to_string()).collect());
@@ -306,12 +325,33 @@ impl SkillRegistry {
             name,
             description,
             allowed_tools,
+            permissions: manifest.permissions,
+            triggers: manifest.triggers,
             content: body,
             path: path.to_path_buf(),
             search_text,
             platforms,
             scripts,
         })
+    }
+
+    fn load_skill_manifest(skill_markdown_path: &Path) -> Result<SkillManifest> {
+        let Some(skill_dir) = skill_markdown_path.parent() else {
+            return Ok(SkillManifest::default());
+        };
+        let manifest_path = skill_dir.join("skill.toml");
+        if !manifest_path.exists() {
+            return Ok(SkillManifest::default());
+        }
+        let content = std::fs::read_to_string(&manifest_path)?;
+        let manifest: SkillManifest = toml::from_str(&content).map_err(|err| {
+            anyhow::anyhow!(
+                "Malformed skill manifest at {}: {}",
+                manifest_path.display(),
+                err
+            )
+        })?;
+        Ok(manifest)
     }
 
     /// Parse YAML frontmatter from markdown
@@ -413,11 +453,20 @@ impl SkillRegistry {
 
             if path.is_dir() {
                 let skill_file = path.join("SKILL.md");
-                if skill_file.exists()
-                    && let Ok(skill) = Self::parse_skill(&skill_file)
-                {
-                    self.skills.insert(skill.name.clone(), skill);
-                    count += 1;
+                if skill_file.exists() {
+                    match Self::parse_skill(&skill_file) {
+                        Ok(skill) => {
+                            self.skills.insert(skill.name.clone(), skill);
+                            count += 1;
+                        }
+                        Err(err) => {
+                            log_warn!((
+                                "Skipping malformed skill at {}: {}",
+                                skill_file.display(),
+                                err
+                            ));
+                        }
+                    }
                 }
             }
         }
@@ -546,6 +595,8 @@ mod tests {
             name: name.to_string(),
             description: description.to_string(),
             allowed_tools: None,
+            permissions: Vec::new(),
+            triggers: Vec::new(),
             content: content.to_string(),
             path: PathBuf::from(format!("/tmp/{name}/SKILL.md")),
             search_text: build_skill_search_text(name, description, content),

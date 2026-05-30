@@ -12,7 +12,7 @@ pub(crate) fn debug_control_allowed() -> bool {
     if crate::config::config().display.debug_socket {
         return true;
     }
-    if std::env::var("JCODE_DEBUG_CONTROL")
+    if std::env::var("IAGENT_DEBUG_CONTROL")
         .ok()
         .map(|v| matches!(v.as_str(), "1" | "true" | "yes" | "on"))
         .unwrap_or(false)
@@ -29,7 +29,7 @@ pub(crate) fn debug_control_allowed() -> bool {
 }
 
 pub(crate) fn embedding_idle_unload_secs() -> u64 {
-    std::env::var("JCODE_EMBEDDING_IDLE_UNLOAD_SECS")
+    std::env::var("IAGENT_EMBEDDING_IDLE_UNLOAD_SECS")
         .ok()
         .and_then(|v| v.parse::<u64>().ok())
         .filter(|v| *v > 0)
@@ -92,7 +92,7 @@ pub(crate) fn git_common_dir_for(path: &Path) -> Option<PathBuf> {
 }
 
 pub(crate) fn swarm_id_for_dir(dir: Option<PathBuf>) -> Option<String> {
-    if let Ok(sw_id) = std::env::var("JCODE_SWARM_ID") {
+    if let Ok(sw_id) = std::env::var("IAGENT_SWARM_ID") {
         let trimmed = sw_id.trim();
         if !trimmed.is_empty() {
             return Some(trimmed.to_string());
@@ -160,7 +160,7 @@ impl ServerIdentity {
 }
 
 pub(crate) fn startup_headless_recovery_test_delay() -> Option<std::time::Duration> {
-    let raw = std::env::var("JCODE_TEST_HEADLESS_STARTUP_RECOVERY_DELAY_MS").ok()?;
+    let raw = std::env::var("IAGENT_TEST_HEADLESS_STARTUP_RECOVERY_DELAY_MS").ok()?;
     let delay_ms = raw.trim().parse::<u64>().ok()?;
     (delay_ms > 0).then(|| std::time::Duration::from_millis(delay_ms))
 }

@@ -207,7 +207,7 @@ impl Config {
         }
 
         // The global config snapshot can be initialized before an auth flow saves
-        // a new path-bound trust decision, or before tests switch JCODE_HOME. Fall
+        // a new path-bound trust decision, or before tests switch IAGENT_HOME. Fall
         // back to a fresh load on cache misses so fast auth probes remain correct
         // without penalizing the common already-trusted path.
         Self::load()
@@ -283,20 +283,6 @@ impl Config {
 }
 
 fn apply_iagent_env_aliases() {
-    for (key, value) in std::env::vars_os() {
-        let key = key.to_string_lossy().to_string();
-        if !key.starts_with("IAGENT_") {
-            continue;
-        }
-        let legacy = key.replacen("IAGENT_", "JCODE_", 1);
-        if std::env::var_os(&legacy).is_none() {
-            crate::env::set_var(&legacy, value);
-        }
-    }
-
-    if std::env::var_os("JCODE_HOME").is_none()
-        && let Some(value) = std::env::var_os("IAGENT_HOME")
-    {
-        crate::env::set_var("JCODE_HOME", value);
-    }
+    // All active environment overrides are now iagent-native.
+    // No legacy alias mapping is required.
 }

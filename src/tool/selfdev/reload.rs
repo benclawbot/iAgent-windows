@@ -243,7 +243,7 @@ impl SelfDevTool {
         working_dir: Option<&std::path::Path>,
     ) -> Result<ToolOutput> {
         let repo_dir = resolve_selfdev_reload_repo_dir(working_dir)
-            .ok_or_else(|| anyhow::anyhow!("Could not find jcode repository directory"))?;
+            .ok_or_else(|| anyhow::anyhow!("Could not find iagent repository directory"))?;
 
         let target_binary = build::find_dev_binary(&repo_dir)
             .unwrap_or_else(|| build::release_binary_path(&repo_dir));
@@ -251,7 +251,7 @@ impl SelfDevTool {
             return Ok(ToolOutput::new(
                 format!(
                     "No binary found at {}.\n\
-                     Run 'jcode self-dev --build' first, or build with 'scripts/dev_cargo.sh build --profile selfdev -p jcode --bin jcode' and then try reload again.",
+                     Run 'iagent self-dev --build' first, or build with 'scripts/dev_cargo.sh build --profile selfdev -p iagent --bin iagent' and then try reload again.",
                     target_binary.display()
                 )
                 .to_string(),

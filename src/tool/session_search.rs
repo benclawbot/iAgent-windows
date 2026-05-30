@@ -88,16 +88,16 @@ struct SearchInput {
     /// Restrict to sessions updated/messages at or before this RFC3339 timestamp or YYYY-MM-DD date.
     #[serde(default)]
     before: Option<String>,
-    /// Restrict Jcode sessions by saved/bookmarked flag.
+    /// Restrict Iagent sessions by saved/bookmarked flag.
     #[serde(default)]
     saved: Option<bool>,
-    /// Restrict Jcode sessions by debug flag.
+    /// Restrict Iagent sessions by debug flag.
     #[serde(default)]
     debug: Option<bool>,
-    /// Restrict Jcode sessions by canary flag.
+    /// Restrict Iagent sessions by canary flag.
     #[serde(default)]
     canary: Option<bool>,
-    /// Restrict source: jcode, claude, codex, pi, opencode, or all.
+    /// Restrict source: iagent, claude, codex, pi, opencode, or all.
     #[serde(default)]
     source: Option<String>,
     /// Include external session sources discovered by the session picker. Defaults to true.
@@ -288,19 +288,19 @@ impl Tool for SessionSearchTool {
                 },
                 "saved": {
                     "type": "boolean",
-                    "description": "Restrict Jcode sessions by saved/bookmarked flag."
+                    "description": "Restrict Iagent sessions by saved/bookmarked flag."
                 },
                 "debug": {
                     "type": "boolean",
-                    "description": "Restrict Jcode sessions by debug/test flag."
+                    "description": "Restrict Iagent sessions by debug/test flag."
                 },
                 "canary": {
                     "type": "boolean",
-                    "description": "Restrict Jcode sessions by canary flag."
+                    "description": "Restrict Iagent sessions by canary flag."
                 },
                 "source": {
                     "type": "string",
-                    "enum": ["all", "jcode", "claude", "codex", "pi", "opencode"],
+                    "enum": ["all", "iagent", "claude", "codex", "pi", "opencode"],
                     "description": "Restrict session source. Defaults to all available sources."
                 },
                 "include_external": {
@@ -490,11 +490,11 @@ fn normalize_source_filter(raw: Option<&str>) -> std::result::Result<Option<Stri
     let normalized = source.to_ascii_lowercase();
     match normalized.as_str() {
         "all" => Ok(None),
-        "jcode" | "claude" | "claude-code" | "codex" | "pi" | "opencode" => {
+        "iagent" | "claude" | "claude-code" | "codex" | "pi" | "opencode" => {
             Ok(Some(normalized.replace("claude-code", "claude")))
         }
         _ => Err(format!(
-            "source must be one of all, jcode, claude, codex, pi, or opencode; received {source}."
+            "source must be one of all, iagent, claude, codex, pi, or opencode; received {source}."
         )),
     }
 }
@@ -533,7 +533,7 @@ fn search_sessions_blocking(
         return Ok(report);
     }
 
-    if source_matches_filter("jcode", options) {
+    if source_matches_filter("iagent", options) {
         let mut files = collect_session_files(sessions_dir)?;
         if !files.is_empty() {
             files.sort_unstable_by(|a, b| b.mtime.cmp(&a.mtime));
@@ -1036,7 +1036,7 @@ fn append_session_results(
         && let Some(match_score) = score_message_match(&metadata_text(session), query)
     {
         results.push(SearchResult {
-            source: "jcode".to_string(),
+            source: "iagent".to_string(),
             session_id: session.id.clone(),
             short_name: session.short_name.clone(),
             title: session.display_title().map(ToOwned::to_owned),
@@ -1090,7 +1090,7 @@ fn append_session_results(
         }
 
         results.push(SearchResult {
-            source: "jcode".to_string(),
+            source: "iagent".to_string(),
             session_id: session.id.clone(),
             short_name: session.short_name.clone(),
             title: session.display_title().map(ToOwned::to_owned),
@@ -1156,10 +1156,10 @@ fn source_matches_filter(source: &str, options: &SearchOptions) -> bool {
 }
 
 fn iagent_session_matches_filters(session: &Session, options: &SearchOptions) -> bool {
-    if !source_matches_filter("jcode", options) {
+    if !source_matches_filter("iagent", options) {
         return false;
     }
-    if !provider_matches(session.provider_key.as_deref(), "jcode", options) {
+    if !provider_matches(session.provider_key.as_deref(), "iagent", options) {
         return false;
     }
     if !field_filter_matches(session.model.as_deref(), options.model_filter.as_deref()) {

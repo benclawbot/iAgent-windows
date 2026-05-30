@@ -271,7 +271,7 @@ pub async fn run_login_provider(
                 eprintln!("Imported {} existing auth source(s).", imported);
                 Ok(LoginFlowOutcome::Completed)
             }
-            LoginProviderTarget::Jcode => login_iagent_flow().map(|_| LoginFlowOutcome::Completed),
+            LoginProviderTarget::Iagent => login_iagent_flow().map(|_| LoginFlowOutcome::Completed),
             LoginProviderTarget::Claude => login_claude_flow(account_label, options.no_browser)
                 .await
                 .map(|_| LoginFlowOutcome::Completed),
@@ -460,11 +460,11 @@ async fn notify_running_server_auth_changed_best_effort(provider: Option<&str>) 
 }
 
 fn login_iagent_flow() -> Result<()> {
-    eprintln!("Setting up Jcode subscription access...");
+    eprintln!("Setting up Iagent subscription access...");
     eprintln!(
         "Paste the iagent subscription API key from your account portal. This key is used for your curated iagent router access.\n"
     );
-    eprint!("Paste your Jcode API key: ");
+    eprint!("Paste your Iagent API key: ");
     io::stdout().flush()?;
 
     let key = read_secret_line()?;
@@ -478,30 +478,30 @@ fn login_iagent_flow() -> Result<()> {
 
     let mut content = format!(
         "{}={}\n",
-        crate::subscription_catalog::JCODE_API_KEY_ENV,
+        crate::subscription_catalog::IAGENT_API_KEY_ENV,
         key
     );
     if !api_base.trim().is_empty() {
         content.push_str(&format!(
             "{}={}\n",
-            crate::subscription_catalog::JCODE_API_BASE_ENV,
+            crate::subscription_catalog::IAGENT_API_BASE_ENV,
             api_base.trim()
         ));
     }
 
     let config_dir = crate::storage::app_config_dir()?;
-    let file_path = config_dir.join(crate::subscription_catalog::JCODE_ENV_FILE);
+    let file_path = config_dir.join(crate::subscription_catalog::IAGENT_ENV_FILE);
     crate::storage::write_text_secret(&file_path, &content)?;
 
-    crate::env::set_var(crate::subscription_catalog::JCODE_API_KEY_ENV, key);
+    crate::env::set_var(crate::subscription_catalog::IAGENT_API_KEY_ENV, key);
     if !api_base.trim().is_empty() {
         crate::env::set_var(
-            crate::subscription_catalog::JCODE_API_BASE_ENV,
+            crate::subscription_catalog::IAGENT_API_BASE_ENV,
             api_base.trim(),
         );
     }
 
-    eprintln!("\nSuccessfully saved Jcode subscription credentials!");
+    eprintln!("\nSuccessfully saved Iagent subscription credentials!");
     eprintln!("Stored at {}", file_path.display());
     eprintln!(
         "Curated models available now: {}",
@@ -781,7 +781,7 @@ fn login_openai_compatible_flow(
                     )
                 })?;
             crate::provider_catalog::save_env_value_to_env_file(
-                "JCODE_OPENAI_COMPAT_API_BASE",
+                "IAGENT_OPENAI_COMPAT_API_BASE",
                 crate::provider_catalog::OPENAI_COMPAT_PROFILE.env_file,
                 Some(&normalized),
             )?;
@@ -798,7 +798,7 @@ fn login_openai_compatible_flow(
                 anyhow::bail!("Invalid API key environment variable name: {}", api_key_env);
             }
             crate::provider_catalog::save_env_value_to_env_file(
-                "JCODE_OPENAI_COMPAT_API_KEY_NAME",
+                "IAGENT_OPENAI_COMPAT_API_KEY_NAME",
                 crate::provider_catalog::OPENAI_COMPAT_PROFILE.env_file,
                 Some(api_key_env),
             )?;
@@ -812,7 +812,7 @@ fn login_openai_compatible_flow(
         };
         if !default_model_input.is_empty() {
             crate::provider_catalog::save_env_value_to_env_file(
-                "JCODE_OPENAI_COMPAT_DEFAULT_MODEL",
+                "IAGENT_OPENAI_COMPAT_DEFAULT_MODEL",
                 crate::provider_catalog::OPENAI_COMPAT_PROFILE.env_file,
                 Some(&default_model_input),
             )?;

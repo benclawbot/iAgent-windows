@@ -87,7 +87,7 @@ impl Tool for LspTool {
         }
 
         Ok(ToolOutput::new(format!(
-            "LSP is not integrated in jcode yet. Requested: {} at {}:{}:{}.\nUse grep or read to inspect symbols.",
+            "LSP is not integrated in iagent yet. Requested: {} at {}:{}:{}.\nUse grep or read to inspect symbols.",
             params.operation, params.file_path, params.line, params.character
         )))
     }

@@ -52,7 +52,7 @@ impl MultiProvider {
     }
 
     pub(super) fn forced_provider_from_env() -> Option<ActiveProvider> {
-        let force = std::env::var("JCODE_FORCE_PROVIDER")
+        let force = std::env::var("IAGENT_FORCE_PROVIDER")
             .ok()
             .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes"))
             .unwrap_or(false);
@@ -60,7 +60,7 @@ impl MultiProvider {
             return None;
         }
 
-        std::env::var("JCODE_ACTIVE_PROVIDER")
+        std::env::var("IAGENT_ACTIVE_PROVIDER")
             .ok()
             .and_then(|value| Self::parse_provider_hint(&value))
     }
@@ -94,7 +94,7 @@ impl MultiProvider {
             LoginProviderTarget::Gemini => Some("gemini"),
             LoginProviderTarget::Antigravity => Some("antigravity"),
             LoginProviderTarget::AutoImport
-            | LoginProviderTarget::Jcode
+            | LoginProviderTarget::Iagent
             | LoginProviderTarget::Azure
             | LoginProviderTarget::Google => None,
         }

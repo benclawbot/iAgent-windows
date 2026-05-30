@@ -1,4 +1,4 @@
-﻿"""iAgent QApplication bootstrap.
+"""iAgent QApplication bootstrap.
 
 Resolves the config file path via platformdirs, ensures the file exists
 (creating from config.example.toml on first run), loads it, and holds
@@ -451,7 +451,7 @@ def run() -> int:
         tray_icon.notify("iAgent", f"Queued {source_label} {app_name} task {task_id}.")
         return task_id
 
-    def _queue_jcode_goal(goal: str, *, source_label: str) -> str | None:
+    def _queue_iagent_goal(goal: str, *, source_label: str) -> str | None:
         goal_clean = goal.strip()
         if not goal_clean:
             return None
@@ -597,7 +597,7 @@ def run() -> int:
             f"User feedback:\\n{feedback_text}\\n"
             "Apply the requested changes and return a concise update summary."
         )
-        followup_run_id = _queue_jcode_goal(goal, source_label="Task review")
+        followup_run_id = _queue_iagent_goal(goal, source_label="Task review")
         if followup_run_id is not None:
             task_inbox.bind_followup_run(followup_run_id, task.task_id, feedback_text)
 
@@ -678,7 +678,7 @@ def run() -> int:
             lambda cmd: _queue_background_command(cmd, source_label="AI")
         )
         manager.iagent_goal_requested.connect(
-            lambda goal: _queue_jcode_goal(goal, source_label="AI")
+            lambda goal: _queue_iagent_goal(goal, source_label="AI")
         )
         manager.typing_action_blocked.connect(
             lambda text, press_enter: tray_icon.notify(

@@ -74,6 +74,41 @@ function Write-Info($msg) { Write-Host $msg -ForegroundColor Blue }
 function Write-Err($msg) { Write-Host "error: $msg" -ForegroundColor Red; exit 1 }
 function Write-Warn($msg) { Write-Host "warning: $msg" -ForegroundColor Yellow }
 
+function Get-ExpectedChecksumFromText([string]$ChecksumsText, [string]$AssetName) {
+    foreach ($line in ($ChecksumsText -split "`n")) {
+        $trimmed = $line.Trim()
+        if (-not $trimmed) { continue }
+        if ($trimmed -match '^([A-Fa-f0-9]{64})\s+\*?(.+)$') {
+            $hash = $matches[1].ToLowerInvariant()
+            $name = $matches[2].Trim()
+            if ($name -eq $AssetName) {
+                return $hash
+            }
+        }
+    }
+    return $null
+}
+
+function Verify-DownloadedChecksum([string]$FilePath, [string]$AssetName, [string]$ChecksumsUrl) {
+    Write-Info "Verifying SHA256 for $AssetName..."
+    try {
+        $checksumsText = Invoke-WebRequest -Uri $ChecksumsUrl -UseBasicParsing -TimeoutSec 30 | Select-Object -ExpandProperty Content
+    } catch {
+        Write-Err "Failed to download checksum file: $ChecksumsUrl"
+    }
+
+    $expected = Get-ExpectedChecksumFromText -ChecksumsText $checksumsText -AssetName $AssetName
+    if (-not $expected) {
+        Write-Err "No checksum entry found for $AssetName in checksums.txt"
+    }
+
+    $actual = (Get-FileHash -Algorithm SHA256 -Path $FilePath).Hash.ToLowerInvariant()
+    if ($actual -ne $expected) {
+        Write-Err "Checksum mismatch for $AssetName. Expected $expected, got $actual"
+    }
+    Write-Info "Checksum verified."
+}
+
 function Get-LatestReleaseWithRetry([string]$Repository, [int]$MaxAttempts = 4, [int]$BaseDelaySeconds = 2) {
     $lastError = $null
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
@@ -929,6 +964,7 @@ if (-not $Version) { Write-Err "Failed to determine latest version" }
 $VersionNum = $Version.TrimStart('v')
 $TgzUrl = "https://github.com/$Repo/releases/download/$Version/$Artifact.tar.gz"
 $ExeUrl = "https://github.com/$Repo/releases/download/$Version/$Artifact.exe"
+$ChecksumsUrl = "https://github.com/$Repo/releases/download/$Version/checksums.txt"
 
 $BuildsDir = Join-Path $env:LOCALAPPDATA "iAgent\builds"
 $StableDir = Join-Path $BuildsDir "stable"
@@ -984,6 +1020,12 @@ if ($ResolvedArtifactExePath) {
             $DownloadMode = ""
         }
     }
+}
+
+$shouldVerifyChecksum = (-not $ResolvedArtifactExePath) -and (-not $ResolvedArtifactTgzPath) -and ($Version -ne "main")
+if ($shouldVerifyChecksum -and $DownloadMode) {
+    $assetName = if ($DownloadMode -eq "bin") { "$Artifact.exe" } else { "$Artifact.tar.gz" }
+    Verify-DownloadedChecksum -FilePath $DownloadPath -AssetName $assetName -ChecksumsUrl $ChecksumsUrl
 }
 
 $DestBin = Join-Path $VersionDir "iagent.exe"

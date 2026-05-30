@@ -95,7 +95,7 @@ impl LiveOpenAITestEnv {
         };
 
         let temp = tempfile::Builder::new()
-            .prefix("jcode-openai-live-")
+            .prefix("iagent-openai-live-")
             .tempdir()?;
         let target_auth = temp
             .path()
@@ -109,8 +109,8 @@ impl LiveOpenAITestEnv {
         )?;
         std::fs::copy(source_auth, &target_auth)?;
 
-        let iagent_home = EnvVarGuard::set_path("JCODE_HOME", temp.path());
-        let transport = EnvVarGuard::set("JCODE_OPENAI_TRANSPORT", "https");
+        let iagent_home = EnvVarGuard::set_path("IAGENT_HOME", temp.path());
+        let transport = EnvVarGuard::set("IAGENT_OPENAI_TRANSPORT", "https");
 
         Ok(Some(Self {
             _lock: lock,

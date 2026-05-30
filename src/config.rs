@@ -8,8 +8,9 @@ pub use iagent_config_types::{
     CompactionMode, CrossProviderFailoverMode, DiagramDisplayMode, DiagramPanePosition,
     DiffDisplayMode, DisplayConfig, FeatureConfig, GatewayConfig, KeybindingsConfig,
     MarkdownSpacingMode, NamedProviderAuth, NamedProviderConfig, NamedProviderModelConfig,
-    NamedProviderType, NativeScrollbarConfig, ProviderConfig, SafetyConfig,
-    SessionPickerResumeAction, SwarmSpawnMode, UpdateChannel, WebSearchConfig, WebSearchEngine,
+    NamedProviderType, NativeScrollbarConfig, PermissionsConfig, ProviderConfig, SafetyConfig,
+    SessionPickerResumeAction, ShellExecutionMode, SwarmSpawnMode, UpdateChannel, WebSearchConfig,
+    WebSearchEngine,
 };
 
 use crate::goal_judge;
@@ -103,11 +104,9 @@ fn config_env_fingerprint() -> Vec<(String, String)> {
     let mut values = std::env::vars_os()
         .filter_map(|(key, value)| {
             let key = key.to_string_lossy().to_string();
-            if key == "JCODE_HOME"
-                || key == "IAGENT_HOME"
+            if key == "IAGENT_HOME"
                 || key == "HOME"
                 || key == "XDG_CONFIG_HOME"
-                || key.starts_with("JCODE_")
                 || key.starts_with("IAGENT_")
             {
                 Some((key, value.to_string_lossy().to_string()))
@@ -176,6 +175,9 @@ pub struct Config {
 
     /// Safety / notification configuration
     pub safety: SafetyConfig,
+
+    /// Runtime permission policy
+    pub permissions: PermissionsConfig,
 
     /// WebSocket gateway configuration (for iOS/web clients)
     pub gateway: GatewayConfig,

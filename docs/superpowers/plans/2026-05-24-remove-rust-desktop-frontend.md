@@ -2,16 +2,16 @@
 
 ## Goal
 
-Retire the `jcode-desktop` Rust frontend from the active `iagent-windows` workspace so the Python app can be treated as the single user-facing frontend. Keep backend, ambient monitoring, suggestion, overlay, and app-integration crates in place.
+Retire the `iagent-desktop` Rust frontend from the active `iagent-windows` workspace so the Python app can be treated as the single user-facing frontend. Keep backend, ambient monitoring, suggestion, overlay, and app-integration crates in place.
 
 ## Scope
 
-- Remove `crates/jcode-desktop` from the Cargo workspace.
+- Remove `crates/iagent-desktop` from the Cargo workspace.
 - Remove self-dev build target routing for `iagent-desktop`.
-- Update tests and tool descriptions so builds target the remaining `jcode` binary.
+- Update tests and tool descriptions so builds target the remaining `iagent` binary.
 - Remove budget ratchet entries for deleted desktop files.
 - Update docs that advertised the Rust desktop binary.
-- Delete the `crates/jcode-desktop` source tree.
+- Delete the `crates/iagent-desktop` source tree.
 
 ## Verification
 

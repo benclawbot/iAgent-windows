@@ -1,6 +1,6 @@
 #![cfg_attr(test, allow(clippy::await_holding_lock))]
 
-//! Self-development tool - manage canary builds when working on jcode itself
+//! Self-development tool - manage canary builds when working on iagent itself
 
 use crate::background::{self, TaskResult};
 use crate::build;
@@ -260,7 +260,7 @@ impl BuildRequest {
         self.status_file.as_ref().map(PathBuf::from).or_else(|| {
             self.background_task_id.as_ref().map(|task_id| {
                 std::env::temp_dir()
-                    .join("jcode-bg-tasks")
+                    .join("iagent-bg-tasks")
                     .join(format!("{}.status.json", task_id))
             })
         })
@@ -400,7 +400,7 @@ impl Tool for SelfDevTool {
                 "target": {
                     "type": "string",
                     "enum": ["auto", "backend"],
-                        "description": "Build target for action=build. auto and backend both build the jcode binary; Rust desktop and TUI frontends have been retired."
+                        "description": "Build target for action=build. auto and backend both build the iagent binary; Rust desktop and TUI frontends have been retired."
                 },
                 "command": {
                     "type": "string",
@@ -491,7 +491,7 @@ impl Tool for SelfDevTool {
 
 impl SelfDevTool {
     fn is_test_session() -> bool {
-        std::env::var("JCODE_TEST_SESSION")
+        std::env::var("IAGENT_TEST_SESSION")
             .map(|value| {
                 let trimmed = value.trim();
                 !trimmed.is_empty() && trimmed != "0" && !trimmed.eq_ignore_ascii_case("false")
@@ -500,7 +500,7 @@ impl SelfDevTool {
     }
 
     fn reload_timeout_secs() -> u64 {
-        std::env::var("JCODE_SELFDEV_RELOAD_TIMEOUT_SECS")
+        std::env::var("IAGENT_SELFDEV_RELOAD_TIMEOUT_SECS")
             .ok()
             .and_then(|raw| raw.trim().parse::<u64>().ok())
             .filter(|secs| *secs > 0)
@@ -529,7 +529,7 @@ impl SelfDevTool {
         build::client_update_candidate(true)
             .map(|(path, _label)| path)
             .or_else(|| std::env::current_exe().ok())
-            .ok_or_else(|| anyhow::anyhow!("Could not resolve jcode executable to launch"))
+            .ok_or_else(|| anyhow::anyhow!("Could not resolve iagent executable to launch"))
     }
 
     fn build_command(repo_dir: &Path, target: build::SelfDevBuildTarget) -> SelfDevBuildCommand {

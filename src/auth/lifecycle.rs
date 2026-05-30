@@ -359,7 +359,7 @@ fn direct_provider_activation(provider_id: &str) -> Option<ProviderActivation> {
             ActiveProvider::OpenRouter,
         )),
         "iagent" => Some(ProviderActivation::locked(
-            RuntimeProviderId::Jcode,
+            RuntimeProviderId::Iagent,
             ActiveProvider::OpenRouter,
         )),
         "bedrock" => Some(ProviderActivation::locked(
@@ -524,10 +524,10 @@ mod tests {
     #[test]
     fn direct_login_provider_activation_sets_runtime_identity_and_active_provider() {
         let _guard = EnvGuard::new(&[
-            "JCODE_RUNTIME_PROVIDER",
-            "JCODE_ACTIVE_PROVIDER",
-            "JCODE_FORCE_PROVIDER",
-            "JCODE_OPENROUTER_MODEL",
+            "IAGENT_RUNTIME_PROVIDER",
+            "IAGENT_ACTIVE_PROVIDER",
+            "IAGENT_FORCE_PROVIDER",
+            "IAGENT_OPENROUTER_MODEL",
         ]);
 
         for (provider, runtime, active) in [
@@ -535,16 +535,16 @@ mod tests {
             ("openai", "openai", "openai"),
             ("openai-api", "openai-api", "openai"),
             ("openrouter", "openrouter", "openrouter"),
-            ("iagent", "jcode", "openrouter"),
+            ("iagent", "iagent", "openrouter"),
             ("bedrock", "bedrock", "bedrock"),
             ("cursor", "cursor", "cursor"),
             ("copilot", "copilot", "copilot"),
             ("gemini", "gemini", "gemini"),
             ("antigravity", "antigravity", "antigravity"),
         ] {
-            crate::env::remove_var("JCODE_RUNTIME_PROVIDER");
-            crate::env::remove_var("JCODE_ACTIVE_PROVIDER");
-            crate::env::remove_var("JCODE_FORCE_PROVIDER");
+            crate::env::remove_var("IAGENT_RUNTIME_PROVIDER");
+            crate::env::remove_var("IAGENT_ACTIVE_PROVIDER");
+            crate::env::remove_var("IAGENT_FORCE_PROVIDER");
 
             let activation = activate_auth_change(&AuthActivationRequest::new(
                 None,
@@ -553,30 +553,30 @@ mod tests {
 
             assert_eq!(activation.provider_id.as_deref(), Some(provider));
             assert_eq!(
-                std::env::var("JCODE_RUNTIME_PROVIDER").as_deref(),
+                std::env::var("IAGENT_RUNTIME_PROVIDER").as_deref(),
                 Ok(runtime)
             );
             assert_eq!(
-                std::env::var("JCODE_ACTIVE_PROVIDER").as_deref(),
+                std::env::var("IAGENT_ACTIVE_PROVIDER").as_deref(),
                 Ok(active)
             );
-            assert_eq!(std::env::var("JCODE_FORCE_PROVIDER").as_deref(), Ok("1"));
+            assert_eq!(std::env::var("IAGENT_FORCE_PROVIDER").as_deref(), Ok("1"));
         }
     }
 
     #[test]
     fn direct_login_provider_descriptor_matrix_has_full_lifecycle_parity() {
         let _guard = EnvGuard::new(&[
-            "JCODE_RUNTIME_PROVIDER",
-            "JCODE_ACTIVE_PROVIDER",
-            "JCODE_FORCE_PROVIDER",
-            "JCODE_OPENROUTER_MODEL",
+            "IAGENT_RUNTIME_PROVIDER",
+            "IAGENT_ACTIVE_PROVIDER",
+            "IAGENT_FORCE_PROVIDER",
+            "IAGENT_OPENROUTER_MODEL",
         ]);
 
         let mut covered = Vec::new();
         for provider in crate::provider_catalog::login_providers() {
             let Some((normalized, runtime, active, switch_prefix)) = (match provider.target {
-                crate::provider_catalog::LoginProviderTarget::Jcode => {
+                crate::provider_catalog::LoginProviderTarget::Iagent => {
                     Some(("iagent", "iagent", "openrouter", "openrouter"))
                 }
                 crate::provider_catalog::LoginProviderTarget::Claude => {
@@ -634,9 +634,9 @@ mod tests {
                 provider.id
             );
 
-            crate::env::remove_var("JCODE_RUNTIME_PROVIDER");
-            crate::env::remove_var("JCODE_ACTIVE_PROVIDER");
-            crate::env::remove_var("JCODE_FORCE_PROVIDER");
+            crate::env::remove_var("IAGENT_RUNTIME_PROVIDER");
+            crate::env::remove_var("IAGENT_ACTIVE_PROVIDER");
+            crate::env::remove_var("IAGENT_FORCE_PROVIDER");
 
             let activation = activate_auth_change(&AuthActivationRequest::new(
                 None,
@@ -648,14 +648,14 @@ mod tests {
                 Some(provider.display_name)
             );
             assert_eq!(
-                std::env::var("JCODE_RUNTIME_PROVIDER").as_deref(),
+                std::env::var("IAGENT_RUNTIME_PROVIDER").as_deref(),
                 Ok(runtime)
             );
             assert_eq!(
-                std::env::var("JCODE_ACTIVE_PROVIDER").as_deref(),
+                std::env::var("IAGENT_ACTIVE_PROVIDER").as_deref(),
                 Ok(active)
             );
-            assert_eq!(std::env::var("JCODE_FORCE_PROVIDER").as_deref(), Ok("1"));
+            assert_eq!(std::env::var("IAGENT_FORCE_PROVIDER").as_deref(), Ok("1"));
             assert_eq!(
                 activation.model_switch_request("ignored-runtime", "shared-model"),
                 format!("{switch_prefix}:shared-model"),
@@ -703,7 +703,7 @@ mod tests {
             ("openai", "openai:shared-model"),
             ("openai-api", "openai:shared-model"),
             ("openrouter", "openrouter:shared-model"),
-            ("jcode", "openrouter:shared-model"),
+            ("iagent", "openrouter:shared-model"),
             ("azure-openai", "openrouter:shared-model"),
             ("bedrock", "bedrock:shared-model"),
             ("cursor", "cursor:shared-model"),

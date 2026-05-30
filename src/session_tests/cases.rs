@@ -4,7 +4,7 @@ use anyhow::{Result, anyhow};
 #[test]
 fn test_session_exists_roundtrip() -> Result<()> {
     let tmp_dir = std::env::temp_dir().join(format!(
-        "jcode-session-test-{}",
+        "iagent-session-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_err(|e| anyhow!(e))?
@@ -32,9 +32,9 @@ fn test_session_exists_roundtrip() -> Result<()> {
 #[test]
 fn derive_session_provider_key_prefers_runtime_identity_over_transport() {
     let _lock = lock_env();
-    let _runtime = EnvVarGuard::set("JCODE_RUNTIME_PROVIDER", "azure-openai");
-    let _namespace = EnvVarGuard::set("JCODE_OPENROUTER_CACHE_NAMESPACE", "azure-cache");
-    let _active = EnvVarGuard::set("JCODE_ACTIVE_PROVIDER", "openrouter");
+    let _runtime = EnvVarGuard::set("IAGENT_RUNTIME_PROVIDER", "azure-openai");
+    let _namespace = EnvVarGuard::set("IAGENT_OPENROUTER_CACHE_NAMESPACE", "azure-cache");
+    let _active = EnvVarGuard::set("IAGENT_ACTIVE_PROVIDER", "openrouter");
 
     assert_eq!(
         derive_session_provider_key("openrouter").as_deref(),
@@ -45,9 +45,9 @@ fn derive_session_provider_key_prefers_runtime_identity_over_transport() {
 #[test]
 fn derive_session_provider_key_falls_back_to_openrouter_namespace() {
     let _lock = lock_env();
-    let _runtime = EnvVarGuard::remove("JCODE_RUNTIME_PROVIDER");
-    let _namespace = EnvVarGuard::set("JCODE_OPENROUTER_CACHE_NAMESPACE", "azure-openai");
-    let _active = EnvVarGuard::set("JCODE_ACTIVE_PROVIDER", "openrouter");
+    let _runtime = EnvVarGuard::remove("IAGENT_RUNTIME_PROVIDER");
+    let _namespace = EnvVarGuard::set("IAGENT_OPENROUTER_CACHE_NAMESPACE", "azure-openai");
+    let _active = EnvVarGuard::set("IAGENT_ACTIVE_PROVIDER", "openrouter");
 
     assert_eq!(
         derive_session_provider_key("openrouter").as_deref(),
@@ -58,9 +58,9 @@ fn derive_session_provider_key_falls_back_to_openrouter_namespace() {
 #[test]
 fn derive_session_provider_key_keeps_openai_compatible_profile_namespace() {
     let _lock = lock_env();
-    let _runtime = EnvVarGuard::set("JCODE_RUNTIME_PROVIDER", "openai-compatible");
-    let _namespace = EnvVarGuard::set("JCODE_OPENROUTER_CACHE_NAMESPACE", "zai");
-    let _active = EnvVarGuard::set("JCODE_ACTIVE_PROVIDER", "openrouter");
+    let _runtime = EnvVarGuard::set("IAGENT_RUNTIME_PROVIDER", "openai-compatible");
+    let _namespace = EnvVarGuard::set("IAGENT_OPENROUTER_CACHE_NAMESPACE", "zai");
+    let _active = EnvVarGuard::set("IAGENT_ACTIVE_PROVIDER", "openrouter");
 
     assert_eq!(
         derive_session_provider_key("openrouter").as_deref(),
@@ -206,11 +206,11 @@ fn initial_session_context_uses_current_cwd_when_inserted() -> Result<()> {
     let _env_lock = lock_env();
     let original_cwd = std::env::current_dir().map_err(|e| anyhow!(e))?;
     let first_dir = tempfile::Builder::new()
-        .prefix("jcode-session-context-first-")
+        .prefix("iagent-session-context-first-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
     let second_dir = tempfile::Builder::new()
-        .prefix("jcode-session-context-second-")
+        .prefix("iagent-session-context-second-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
 
@@ -254,11 +254,11 @@ fn initial_session_context_can_refresh_before_real_conversation() -> Result<()> 
     let _env_lock = lock_env();
     let original_cwd = std::env::current_dir().map_err(|e| anyhow!(e))?;
     let first_dir = tempfile::Builder::new()
-        .prefix("jcode-session-context-stale-")
+        .prefix("iagent-session-context-stale-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
     let second_dir = tempfile::Builder::new()
-        .prefix("jcode-session-context-real-")
+        .prefix("iagent-session-context-real-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
 
@@ -303,11 +303,11 @@ fn initial_session_context_does_not_refresh_after_real_conversation() -> Result<
     let _env_lock = lock_env();
     let original_cwd = std::env::current_dir().map_err(|e| anyhow!(e))?;
     let first_dir = tempfile::Builder::new()
-        .prefix("jcode-session-context-original-")
+        .prefix("iagent-session-context-original-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
     let second_dir = tempfile::Builder::new()
-        .prefix("jcode-session-context-late-")
+        .prefix("iagent-session-context-late-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
 
@@ -374,10 +374,10 @@ fn existing_non_empty_session_does_not_get_retroactive_session_context() {
 fn load_startup_stub_preserves_metadata_but_skips_heavy_vectors() -> Result<()> {
     let _env_lock = lock_env();
     let temp_home = tempfile::Builder::new()
-        .prefix("jcode-startup-stub-test-")
+        .prefix("iagent-startup-stub-test-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
-    let _home = EnvVarGuard::set("JCODE_HOME", temp_home.path().as_os_str());
+    let _home = EnvVarGuard::set("IAGENT_HOME", temp_home.path().as_os_str());
 
     let session_id = "session_startup_stub_roundtrip";
     let mut session = Session::create_with_id(
@@ -449,10 +449,10 @@ fn load_startup_stub_preserves_metadata_but_skips_heavy_vectors() -> Result<()> 
 fn load_for_remote_startup_preserves_messages_and_replay_but_skips_heavy_vectors() -> Result<()> {
     let _env_lock = lock_env();
     let temp_home = tempfile::Builder::new()
-        .prefix("jcode-remote-startup-test-")
+        .prefix("iagent-remote-startup-test-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
-    let _home = EnvVarGuard::set("JCODE_HOME", temp_home.path().as_os_str());
+    let _home = EnvVarGuard::set("IAGENT_HOME", temp_home.path().as_os_str());
 
     let session_id = "session_remote_startup_roundtrip";
     let mut session = Session::create_with_id(
@@ -518,7 +518,7 @@ fn load_for_remote_startup_preserves_messages_and_replay_but_skips_heavy_vectors
 #[test]
 fn test_create_marks_debug_when_test_session_env_enabled() {
     let _env_lock = lock_env();
-    let _test_flag = EnvVarGuard::set("JCODE_TEST_SESSION", "1");
+    let _test_flag = EnvVarGuard::set("IAGENT_TEST_SESSION", "1");
 
     let s1 = Session::create(None, None);
     assert!(s1.is_debug);
@@ -530,7 +530,7 @@ fn test_create_marks_debug_when_test_session_env_enabled() {
 #[test]
 fn test_create_not_debug_when_test_session_env_disabled() {
     let _env_lock = lock_env();
-    let _test_flag = EnvVarGuard::set("JCODE_TEST_SESSION", "0");
+    let _test_flag = EnvVarGuard::set("IAGENT_TEST_SESSION", "0");
 
     let s = Session::create(None, None);
     assert!(!s.is_debug);
@@ -540,11 +540,11 @@ fn test_create_not_debug_when_test_session_env_disabled() {
 fn test_recover_crashed_sessions_preserves_debug_flag() -> Result<()> {
     let _env_lock = lock_env();
     let temp_home = tempfile::Builder::new()
-        .prefix("jcode-recover-debug-test-")
+        .prefix("iagent-recover-debug-test-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
-    let _home = EnvVarGuard::set("JCODE_HOME", temp_home.path().as_os_str());
-    let _test_flag = EnvVarGuard::set("JCODE_TEST_SESSION", "0");
+    let _home = EnvVarGuard::set("IAGENT_HOME", temp_home.path().as_os_str());
+    let _test_flag = EnvVarGuard::set("IAGENT_TEST_SESSION", "0");
 
     let mut crashed = Session::create_with_id(
         "session_recover_debug_source".to_string(),
@@ -574,10 +574,10 @@ fn test_recover_crashed_sessions_preserves_debug_flag() -> Result<()> {
 fn test_save_persists_full_session_content() -> Result<()> {
     let _env_lock = lock_env();
     let temp_home = tempfile::Builder::new()
-        .prefix("jcode-session-save-test-")
+        .prefix("iagent-session-save-test-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
-    let _home = EnvVarGuard::set("JCODE_HOME", temp_home.path().as_os_str());
+    let _home = EnvVarGuard::set("IAGENT_HOME", temp_home.path().as_os_str());
 
     let mut session = Session::create_with_id(
         "session_save_persist_test".to_string(),
@@ -628,10 +628,10 @@ fn test_save_persists_full_session_content() -> Result<()> {
 fn test_save_persists_compaction_state() -> Result<()> {
     let _env_lock = lock_env();
     let temp_home = tempfile::Builder::new()
-        .prefix("jcode-session-compaction-save-test-")
+        .prefix("iagent-session-compaction-save-test-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
-    let _home = EnvVarGuard::set("JCODE_HOME", temp_home.path().as_os_str());
+    let _home = EnvVarGuard::set("IAGENT_HOME", temp_home.path().as_os_str());
 
     let mut session = Session::create_with_id(
         "session_compaction_persist_test".to_string(),
@@ -657,10 +657,10 @@ fn test_save_persists_compaction_state() -> Result<()> {
 fn test_save_persists_provider_key() -> Result<()> {
     let _env_lock = lock_env();
     let temp_home = tempfile::Builder::new()
-        .prefix("jcode-session-provider-key-save-test-")
+        .prefix("iagent-session-provider-key-save-test-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
-    let _home = EnvVarGuard::set("JCODE_HOME", temp_home.path().as_os_str());
+    let _home = EnvVarGuard::set("IAGENT_HOME", temp_home.path().as_os_str());
 
     let mut session = Session::create_with_id(
         "session_provider_key_persist_test".to_string(),
@@ -682,10 +682,10 @@ fn test_save_persists_provider_key() -> Result<()> {
 fn test_save_persists_reasoning_effort() -> Result<()> {
     let _env_lock = lock_env();
     let temp_home = tempfile::Builder::new()
-        .prefix("jcode-session-reasoning-effort-save-test-")
+        .prefix("iagent-session-reasoning-effort-save-test-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
-    let _home = EnvVarGuard::set("JCODE_HOME", temp_home.path().as_os_str());
+    let _home = EnvVarGuard::set("IAGENT_HOME", temp_home.path().as_os_str());
 
     let mut session = Session::create_with_id(
         "session_reasoning_effort_persist_test".to_string(),
@@ -707,10 +707,10 @@ fn test_save_persists_reasoning_effort() -> Result<()> {
 fn test_save_appends_journal_and_load_replays_it() -> Result<()> {
     let _env_lock = lock_env();
     let temp_home = tempfile::Builder::new()
-        .prefix("jcode-session-journal-test-")
+        .prefix("iagent-session-journal-test-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
-    let _home = EnvVarGuard::set("JCODE_HOME", temp_home.path().as_os_str());
+    let _home = EnvVarGuard::set("IAGENT_HOME", temp_home.path().as_os_str());
 
     let mut session = Session::create_with_id(
         "session_journal_append_test".to_string(),
@@ -754,10 +754,10 @@ fn test_save_appends_journal_and_load_replays_it() -> Result<()> {
 fn test_save_checkpoints_after_full_mutation_and_clears_journal() -> Result<()> {
     let _env_lock = lock_env();
     let temp_home = tempfile::Builder::new()
-        .prefix("jcode-session-checkpoint-test-")
+        .prefix("iagent-session-checkpoint-test-")
         .tempdir()
         .map_err(|e| anyhow!(e))?;
-    let _home = EnvVarGuard::set("JCODE_HOME", temp_home.path().as_os_str());
+    let _home = EnvVarGuard::set("IAGENT_HOME", temp_home.path().as_os_str());
 
     let mut session = Session::create_with_id(
         "session_journal_checkpoint_test".to_string(),

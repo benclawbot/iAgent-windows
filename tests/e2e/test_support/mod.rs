@@ -1,4 +1,4 @@
-//! End-to-end tests for jcode using a mock provider
+//! End-to-end tests for iagent using a mock provider
 //!
 //! These tests verify the full flow from user input to response
 //! without making actual API calls.
@@ -34,7 +34,7 @@ pub(crate) use tokio_tungstenite::connect_async;
 pub(crate) use tokio_tungstenite::tungstenite::Message as WsMessage;
 pub(crate) use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 
-static JCODE_HOME_LOCK: std::sync::OnceLock<Mutex<()>> = std::sync::OnceLock::new();
+static IAGENT_HOME_LOCK: std::sync::OnceLock<Mutex<()>> = std::sync::OnceLock::new();
 
 pub(crate) fn short_runtime_dir(name: String) -> std::path::PathBuf {
     #[cfg(unix)]
@@ -47,8 +47,8 @@ pub(crate) fn short_runtime_dir(name: String) -> std::path::PathBuf {
     }
 }
 
-fn lock_jcode_home() -> std::sync::MutexGuard<'static, ()> {
-    let mutex = JCODE_HOME_LOCK.get_or_init(|| Mutex::new(()));
+fn lock_iagent_home() -> std::sync::MutexGuard<'static, ()> {
+    let mutex = IAGENT_HOME_LOCK.get_or_init(|| Mutex::new(()));
     // Recover from poisoned state if a previous test panicked
     match mutex.lock() {
         Ok(guard) => guard,
@@ -67,21 +67,21 @@ pub(crate) struct TestEnvGuard {
 
 impl TestEnvGuard {
     pub(crate) fn new() -> Result<Self> {
-        let lock = lock_jcode_home();
+        let lock = lock_iagent_home();
         let temp_home = tempfile::Builder::new()
             .prefix("iagent-e2e-home-")
             .tempdir()?;
-        let prev_home = std::env::var_os("JCODE_HOME");
-        let prev_runtime_dir = std::env::var_os("JCODE_RUNTIME_DIR");
-        let prev_test_session = std::env::var_os("JCODE_TEST_SESSION");
-        let prev_debug_control = std::env::var_os("JCODE_DEBUG_CONTROL");
+        let prev_home = std::env::var_os("IAGENT_HOME");
+        let prev_runtime_dir = std::env::var_os("IAGENT_RUNTIME_DIR");
+        let prev_test_session = std::env::var_os("IAGENT_TEST_SESSION");
+        let prev_debug_control = std::env::var_os("IAGENT_DEBUG_CONTROL");
         let runtime_dir = temp_home.path().join("runtime");
         std::fs::create_dir_all(&runtime_dir)?;
 
-        iagent::env::set_var("JCODE_HOME", temp_home.path());
-        iagent::env::set_var("JCODE_RUNTIME_DIR", &runtime_dir);
-        iagent::env::set_var("JCODE_TEST_SESSION", "1");
-        iagent::env::set_var("JCODE_DEBUG_CONTROL", "1");
+        iagent::env::set_var("IAGENT_HOME", temp_home.path());
+        iagent::env::set_var("IAGENT_RUNTIME_DIR", &runtime_dir);
+        iagent::env::set_var("IAGENT_TEST_SESSION", "1");
+        iagent::env::set_var("IAGENT_DEBUG_CONTROL", "1");
 
         Ok(Self {
             _lock: lock,
@@ -97,27 +97,27 @@ impl TestEnvGuard {
 impl Drop for TestEnvGuard {
     fn drop(&mut self) {
         if let Some(prev_home) = &self.prev_home {
-            iagent::env::set_var("JCODE_HOME", prev_home);
+            iagent::env::set_var("IAGENT_HOME", prev_home);
         } else {
-            iagent::env::remove_var("JCODE_HOME");
+            iagent::env::remove_var("IAGENT_HOME");
         }
 
         if let Some(prev_runtime_dir) = &self.prev_runtime_dir {
-            iagent::env::set_var("JCODE_RUNTIME_DIR", prev_runtime_dir);
+            iagent::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime_dir);
         } else {
-            iagent::env::remove_var("JCODE_RUNTIME_DIR");
+            iagent::env::remove_var("IAGENT_RUNTIME_DIR");
         }
 
         if let Some(prev_test_session) = &self.prev_test_session {
-            iagent::env::set_var("JCODE_TEST_SESSION", prev_test_session);
+            iagent::env::set_var("IAGENT_TEST_SESSION", prev_test_session);
         } else {
-            iagent::env::remove_var("JCODE_TEST_SESSION");
+            iagent::env::remove_var("IAGENT_TEST_SESSION");
         }
 
         if let Some(prev_debug_control) = &self.prev_debug_control {
-            iagent::env::set_var("JCODE_DEBUG_CONTROL", prev_debug_control);
+            iagent::env::set_var("IAGENT_DEBUG_CONTROL", prev_debug_control);
         } else {
-            iagent::env::remove_var("JCODE_DEBUG_CONTROL");
+            iagent::env::remove_var("IAGENT_DEBUG_CONTROL");
         }
     }
 }
@@ -568,7 +568,7 @@ pub(crate) async fn run_unix_transport_scenario() -> Result<TransportScenarioRes
                 let state = debug_run_command(debug_socket_path.clone(), "state", None)
                     .await
                     .unwrap_or_else(|e| format!("<state error: {e}>"));
-                let logs = std::env::var_os("JCODE_HOME")
+                let logs = std::env::var_os("IAGENT_HOME")
                     .and_then(|home| latest_log_excerpt(std::path::Path::new(&home)));
                 let seen = message_events
                     .iter()

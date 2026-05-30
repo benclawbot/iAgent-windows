@@ -62,8 +62,8 @@ jobs:
         shell: pwsh
         run: cargo check --workspace --all-targets --no-default-features --features pdf,bedrock --target x86_64-pc-windows-msvc
 
-  check-terminal-ui:
-    name: Check terminal-ui build
+  check-tui:
+    name: Check tui feature build
     runs-on: windows-latest
     timeout-minutes: 30
 
@@ -82,9 +82,9 @@ jobs:
         shell: pwsh
         run: ./scripts/check_powershell_syntax.ps1
 
-      - name: Cargo check (terminal-ui)
+      - name: Cargo check (tui)
         shell: pwsh
-        run: cargo check --workspace --all-targets --features terminal-ui --target x86_64-pc-windows-msvc
+        run: cargo check --workspace --all-targets --features tui --target x86_64-pc-windows-msvc
 
   clippy:
     name: Clippy
@@ -174,7 +174,7 @@ jobs:
     needs:
       - check-headless
       - check-headless-explicit
-      - check-terminal-ui
+      - check-tui
       - clippy
       - test-unit
 

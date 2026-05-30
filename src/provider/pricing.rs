@@ -45,7 +45,7 @@ pub(crate) fn openai_oauth_pricing(model: &str) -> RouteCheapnessEstimate {
 
 pub(crate) fn copilot_pricing(model: &str) -> RouteCheapnessEstimate {
     let zero_premium_mode = matches!(
-        std::env::var("JCODE_COPILOT_PREMIUM").ok().as_deref(),
+        std::env::var("IAGENT_COPILOT_PREMIUM").ok().as_deref(),
         Some("0")
     );
     core_pricing::copilot_pricing(model, zero_premium_mode)
@@ -150,23 +150,23 @@ mod tests {
     fn with_clean_provider_test_env<T>(f: impl FnOnce() -> T) -> T {
         let _guard = crate::storage::lock_test_env();
         let temp = tempfile::tempdir().expect("tempdir");
-        let prev_home = std::env::var_os("JCODE_HOME");
+        let prev_home = std::env::var_os("IAGENT_HOME");
         let prev_openai_api_key = std::env::var_os("OPENAI_API_KEY");
-        let prev_copilot_premium = std::env::var_os("JCODE_COPILOT_PREMIUM");
+        let prev_copilot_premium = std::env::var_os("IAGENT_COPILOT_PREMIUM");
         crate::auth::claude::set_active_account_override(None);
         crate::auth::codex::set_active_account_override(None);
-        env::set_var("JCODE_HOME", temp.path());
+        env::set_var("IAGENT_HOME", temp.path());
         env::remove_var("OPENAI_API_KEY");
-        env::remove_var("JCODE_COPILOT_PREMIUM");
+        env::remove_var("IAGENT_COPILOT_PREMIUM");
 
         let result = f();
 
         crate::auth::claude::set_active_account_override(None);
         crate::auth::codex::set_active_account_override(None);
         if let Some(prev_home) = prev_home {
-            env::set_var("JCODE_HOME", prev_home);
+            env::set_var("IAGENT_HOME", prev_home);
         } else {
-            env::remove_var("JCODE_HOME");
+            env::remove_var("IAGENT_HOME");
         }
         if let Some(prev_openai_api_key) = prev_openai_api_key {
             env::set_var("OPENAI_API_KEY", prev_openai_api_key);
@@ -174,9 +174,9 @@ mod tests {
             env::remove_var("OPENAI_API_KEY");
         }
         if let Some(prev_copilot_premium) = prev_copilot_premium {
-            env::set_var("JCODE_COPILOT_PREMIUM", prev_copilot_premium);
+            env::set_var("IAGENT_COPILOT_PREMIUM", prev_copilot_premium);
         } else {
-            env::remove_var("JCODE_COPILOT_PREMIUM");
+            env::remove_var("IAGENT_COPILOT_PREMIUM");
         }
         result
     }
@@ -238,7 +238,7 @@ mod tests {
     #[test]
     fn copilot_zero_mode_marks_estimate_high_confidence_and_zero_reference_cost() {
         with_clean_provider_test_env(|| {
-            env::set_var("JCODE_COPILOT_PREMIUM", "0");
+            env::set_var("IAGENT_COPILOT_PREMIUM", "0");
             let estimate = copilot_pricing("claude-opus-4-6");
             assert_eq!(estimate.billing_kind, RouteBillingKind::IncludedQuota);
             assert_eq!(estimate.confidence, RouteCostConfidence::High);

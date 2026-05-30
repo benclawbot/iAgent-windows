@@ -7,7 +7,7 @@ use crate::{build, logging, perf, server, startup_profile, storage, telemetry, u
 
 use super::{
     args::{Args, Command},
-    dispatch, hot_exec, output, terminal,
+    dispatch, first_run, hot_exec, output, terminal,
 };
 
 pub async fn run() -> Result<()> {
@@ -35,6 +35,7 @@ pub async fn run() -> Result<()> {
     startup_profile::mark("telemetry_check");
 
     let args = parse_and_prepare_args()?;
+    first_run::maybe_run_first_run_setup(&args)?;
     spawn_background_update_check(&args);
 
     if let Err(e) = dispatch::run_main(args).await {
@@ -57,7 +58,13 @@ fn parse_and_prepare_args() -> Result<Args> {
     }
 
     if args.trace {
-        crate::env::set_var("JCODE_TRACE", "1");
+        crate::env::set_var("IAGENT_TRACE", "1");
+    }
+    if args.auto_approve {
+        crate::env::set_var("IAGENT_AUTO_APPROVE", "1");
+        eprintln!(
+            "WARNING: --auto-approve is enabled. Mutating actions may run without interactive approval."
+        );
     }
 
     if let Some(ref socket) = args.socket {

@@ -31,7 +31,7 @@ async fn smoke_version_command() -> Result<()> {
 
     assert!(
         stdout.contains("iagent") || stdout.contains("0.12"),
-        "Version output should contain 'jcode' or version number. Got: {}",
+        "Version output should contain 'iagent' or version number. Got: {}",
         stdout
     );
 

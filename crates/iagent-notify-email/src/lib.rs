@@ -446,7 +446,7 @@ mod tests {
 
     #[test]
     fn test_strip_quoted_reply() {
-        let email = "Thanks, please clean up the test data.\n\n> On Mon, Feb 9, 2026 jcode wrote:\n> Ambient cycle complete.\n";
+        let email = "Thanks, please clean up the test data.\n\n> On Mon, Feb 9, 2026 iagent wrote:\n> Ambient cycle complete.\n";
         let stripped = strip_quoted_reply(email);
         assert!(stripped.contains("clean up the test data"));
         assert!(!stripped.contains("Ambient cycle complete"));

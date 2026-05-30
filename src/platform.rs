@@ -241,7 +241,7 @@ pub fn atomic_symlink_swap(src: &Path, dst: &Path, temp: &Path) -> std::io::Resu
 /// Spawn a process detached from the current client session.
 ///
 /// This is used for launching new terminal windows (for `/resume`, `/split`,
-/// crash restore, etc.) so the new client survives if the invoking jcode
+/// crash restore, etc.) so the new client survives if the invoking iagent
 /// process exits or its terminal closes.
 pub fn spawn_detached(cmd: &mut std::process::Command) -> std::io::Result<std::process::Child> {
     #[cfg(unix)]

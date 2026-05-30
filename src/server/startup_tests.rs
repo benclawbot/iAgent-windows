@@ -40,8 +40,8 @@ impl Provider for TestProvider {
 async fn server_run_refuses_to_replace_live_socket() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
     let socket_path = temp.path().join("iagent.sock");
     let debug_socket_path = temp.path().join("iagent-debug.sock");
     let _listener = Listener::bind(&socket_path).expect("bind existing live socket");
@@ -60,9 +60,9 @@ async fn server_run_refuses_to_replace_live_socket() {
     );
 
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 

@@ -2,7 +2,7 @@ from iagent.proposals import ActionProposal, proposals_from_actions
 from iagent.response_actions import ResponseActions
 
 
-def test_proposals_from_actions_builds_command_and_jcode_cards() -> None:
+def test_proposals_from_actions_builds_command_and_iagent_cards() -> None:
     actions = ResponseActions(
         spoken_text="I can do that.",
         point_tag=None,

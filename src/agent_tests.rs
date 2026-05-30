@@ -651,8 +651,8 @@ async fn build_memory_prompt_nonblocking_defers_pending_memory_during_tool_loop(
 async fn mark_closed_persists_soft_interrupts_for_restore_after_reload() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::TempDir::new().expect("temp dir");
-    let prev_home = std::env::var_os("JCODE_HOME");
-    crate::env::set_var("JCODE_HOME", temp.path());
+    let prev_home = std::env::var_os("IAGENT_HOME");
+    crate::env::set_var("IAGENT_HOME", temp.path());
 
     let provider: Arc<dyn Provider> = Arc::new(NativeAutoCompactionProvider);
     let registry = Registry::new(provider.clone()).await;
@@ -681,9 +681,9 @@ async fn mark_closed_persists_soft_interrupts_for_restore_after_reload() {
     );
 
     if let Some(prev_home) = prev_home {
-        crate::env::set_var("JCODE_HOME", prev_home);
+        crate::env::set_var("IAGENT_HOME", prev_home);
     } else {
-        crate::env::remove_var("JCODE_HOME");
+        crate::env::remove_var("IAGENT_HOME");
     }
 }
 

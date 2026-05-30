@@ -11,13 +11,13 @@ fn test_env_lock() -> std::sync::MutexGuard<'static, ()> {
 fn with_temp_iagent_home<T>(f: impl FnOnce() -> T) -> T {
     let _guard = test_env_lock();
     let temp_home = tempfile::tempdir().expect("tempdir");
-    let prev_home = std::env::var_os("JCODE_HOME");
-    iagent_core::env::set_var("JCODE_HOME", temp_home.path());
+    let prev_home = std::env::var_os("IAGENT_HOME");
+    iagent_core::env::set_var("IAGENT_HOME", temp_home.path());
     let result = f();
     if let Some(prev_home) = prev_home {
-        iagent_core::env::set_var("JCODE_HOME", prev_home);
+        iagent_core::env::set_var("IAGENT_HOME", prev_home);
     } else {
-        iagent_core::env::remove_var("JCODE_HOME");
+        iagent_core::env::remove_var("IAGENT_HOME");
     }
     result
 }
@@ -27,7 +27,7 @@ fn create_git_repo_fixture() -> tempfile::TempDir {
     std::fs::create_dir_all(temp.path().join(".git")).expect("create .git dir");
     std::fs::write(
         temp.path().join("Cargo.toml"),
-        "[package]\nname = \"jcode\"\nversion = \"0.0.0\"\n",
+        "[package]\nname = \"iagent\"\nversion = \"0.0.0\"\n",
     )
     .expect("write Cargo.toml");
     std::process::Command::new("git")
@@ -173,13 +173,13 @@ fn test_binary_choice_for_canary_session() {
 #[test]
 fn test_find_repo_in_ancestors_walks_upward() {
     let temp = tempfile::tempdir().expect("tempdir");
-    let repo = temp.path().join("jcode-repo");
+    let repo = temp.path().join("iagent-repo");
     let nested = repo.join("a").join("b").join("c");
 
     std::fs::create_dir_all(repo.join(".git")).expect("create .git");
     std::fs::write(
         repo.join("Cargo.toml"),
-        "[package]\nname = \"jcode\"\nversion = \"0.0.0\"\n",
+        "[package]\nname = \"iagent\"\nversion = \"0.0.0\"\n",
     )
     .expect("write Cargo.toml");
     std::fs::create_dir_all(&nested).expect("create nested dirs");
@@ -192,8 +192,8 @@ fn test_find_repo_in_ancestors_walks_upward() {
 fn test_client_update_candidate_prefers_dev_binary_for_selfdev() {
     let _guard = test_env_lock();
     let temp_home = tempfile::tempdir().expect("tempdir");
-    let prev_home = std::env::var_os("JCODE_HOME");
-    iagent_core::env::set_var("JCODE_HOME", temp_home.path());
+    let prev_home = std::env::var_os("IAGENT_HOME");
+    iagent_core::env::set_var("IAGENT_HOME", temp_home.path());
 
     let version = "test-current";
     let version_binary =
@@ -209,9 +209,9 @@ fn test_client_update_candidate_prefers_dev_binary_for_selfdev() {
     );
 
     if let Some(prev_home) = prev_home {
-        iagent_core::env::set_var("JCODE_HOME", prev_home);
+        iagent_core::env::set_var("IAGENT_HOME", prev_home);
     } else {
-        iagent_core::env::remove_var("JCODE_HOME");
+        iagent_core::env::remove_var("IAGENT_HOME");
     }
 }
 
@@ -235,7 +235,7 @@ fn update_launcher_symlink_stays_inside_sandbox_home() {
 
         let launcher = update_launcher_symlink_to_current().expect("update launcher");
         let expected_launcher = storage::iagent_dir()
-            .expect("jcode dir")
+            .expect("iagent dir")
             .join("bin")
             .join(binary_name());
         assert_eq!(launcher, expected_launcher);

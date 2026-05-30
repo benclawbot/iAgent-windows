@@ -70,7 +70,7 @@ fn first_three_launches_can_include_hotkey_notice_too() {
 
 #[test]
 fn paused_iagent_shell_command_keeps_failures_visible() {
-    let command = paused_iagent_shell_command("/tmp/jcode");
+    let command = paused_iagent_shell_command("/tmp/iagent");
     assert!(command.contains("Press Enter to close"));
     assert!(command.contains("iagent exited with status"));
     assert!(command.contains("iagent executable not found"));

@@ -21,8 +21,8 @@ if hasattr(os, "getuid"):
     RUNTIME_DIR = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
 else:
     RUNTIME_DIR = os.environ.get("XDG_RUNTIME_DIR") or os.environ.get("TEMP", ".")
-SOCKET_PATH = os.path.join(RUNTIME_DIR, "jcode-debug.sock")
-JCODE_DIR = os.path.expanduser("~/.jcode")
+SOCKET_PATH = os.path.join(RUNTIME_DIR, "iagent-debug.sock")
+IAGENT_DIR = os.path.expanduser("~/.iagent")
 
 def send_cmd(sock, cmd, session_id=None, timeout=60):
     """Send a debug command and get the response."""
@@ -61,7 +61,7 @@ def test_selfdev_status():
 
     try:
         # Create a test session
-        result = send_cmd(sock, "create_session:selfdev:/home/jeremy/jcode")
+        result = send_cmd(sock, "create_session:selfdev:/home/jeremy/iagent")
         if not result or not result.get('ok'):
             print(f"Failed to create session: {result}")
             return False
@@ -124,7 +124,7 @@ def test_selfdev_socket_info():
         return False
 
     try:
-        result = send_cmd(sock, "create_session:selfdev:/home/jeremy/jcode")
+        result = send_cmd(sock, "create_session:selfdev:/home/jeremy/iagent")
         if not result or not result.get('ok'):
             return False
         session_id = json.loads(result['output'])['session_id']
@@ -174,9 +174,9 @@ def test_reload_context():
     print("=" * 60)
 
     context_candidates = sorted(
-        glob.glob(os.path.join(JCODE_DIR, "reload-context-*.json"))
+        glob.glob(os.path.join(IAGENT_DIR, "reload-context-*.json"))
     )
-    legacy_context_path = os.path.join(JCODE_DIR, "reload-context.json")
+    legacy_context_path = os.path.join(IAGENT_DIR, "reload-context.json")
     if os.path.exists(legacy_context_path):
         context_candidates.append(legacy_context_path)
 

@@ -224,6 +224,10 @@ pub enum MemorySubcommand {
         overwrite: bool,
     },
     Stats,
+    Clear {
+        scope: String,
+        force: bool,
+    },
     ClearTest,
 }
 
@@ -441,6 +445,47 @@ pub fn run_memory_command(cmd: MemorySubcommand) -> Result<()> {
             }
         }
 
+        MemorySubcommand::Clear { scope, force } => {
+            if !force {
+                print!(
+                    "This will permanently delete '{}' memories. Type YES to continue: ",
+                    scope
+                );
+                std::io::stdout().flush()?;
+                let mut input = String::new();
+                std::io::stdin().read_line(&mut input)?;
+                if input.trim() != "YES" {
+                    println!("Aborted.");
+                    return Ok(());
+                }
+            }
+
+            let mut cleared = 0usize;
+            if scope == "all" || scope == "project" {
+                let mut graph = manager.load_project_graph()?;
+                cleared += graph.memory_count();
+                graph.memories.clear();
+                graph.tags.clear();
+                graph.edges.clear();
+                graph.reverse_edges.clear();
+                graph.clusters.clear();
+                graph.metadata = Default::default();
+                manager.save_project_graph(&graph)?;
+            }
+            if scope == "all" || scope == "global" {
+                let mut graph = manager.load_global_graph()?;
+                cleared += graph.memory_count();
+                graph.memories.clear();
+                graph.tags.clear();
+                graph.edges.clear();
+                graph.reverse_edges.clear();
+                graph.clusters.clear();
+                graph.metadata = Default::default();
+                manager.save_global_graph(&graph)?;
+            }
+            println!("Cleared {} memories from scope '{}'.", cleared, scope);
+        }
+
         MemorySubcommand::ClearTest => {
             let test_dir = storage::iagent_dir()?.join("memory").join("test");
             if test_dir.exists() {
@@ -494,7 +539,7 @@ pub fn run_pair_command(list: bool, revoke: Option<String>) -> Result<()> {
     let gw_config = &crate::config::config().gateway;
 
     if !gw_config.enabled {
-        eprintln!("\x1b[33m⚠\x1b[0m  Gateway is disabled. Enable it in ~/.jcode/config.toml:\n");
+        eprintln!("\x1b[33m⚠\x1b[0m  Gateway is disabled. Enable it in ~/.iagent/config.toml:\n");
         eprintln!("    \x1b[2m[gateway]\x1b[0m");
         eprintln!("    \x1b[2menabled = true\x1b[0m");
         eprintln!("    \x1b[2mport = {}\x1b[0m\n", gw_config.port);
@@ -504,7 +549,7 @@ pub fn run_pair_command(list: bool, revoke: Option<String>) -> Result<()> {
     let code = registry.generate_pairing_code();
     let connect_host = resolve_connect_host(&gw_config.bind_addr);
     let pair_uri = format!(
-        "jcode://pair?host={}&port={}&code={}",
+        "iagent://pair?host={}&port={}&code={}",
         connect_host, gw_config.port, code
     );
 
@@ -533,7 +578,7 @@ pub fn run_pair_command(list: bool, revoke: Option<String>) -> Result<()> {
 
     if connect_host == "<your-mac-hostname>" {
         eprintln!(
-            "\n  \x1b[33mTip:\x1b[0m set JCODE_GATEWAY_HOST to your reachable Tailscale hostname."
+            "\n  \x1b[33mTip:\x1b[0m set IAGENT_GATEWAY_HOST to your reachable Tailscale hostname."
         );
     }
 
@@ -555,7 +600,7 @@ pub fn run_pair_command(list: bool, revoke: Option<String>) -> Result<()> {
 
 pub fn resolve_connect_host(bind_addr: &str) -> String {
     if bind_addr == "0.0.0.0" || bind_addr == "::" {
-        if let Some(host) = std::env::var("JCODE_GATEWAY_HOST")
+        if let Some(host) = std::env::var("IAGENT_GATEWAY_HOST")
             .ok()
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
@@ -774,7 +819,7 @@ pub async fn run_single_message_command(
 }
 
 fn run_command_auto_poke_enabled() -> bool {
-    std::env::var("JCODE_RUN_AUTO_POKE")
+    std::env::var("IAGENT_RUN_AUTO_POKE")
         .ok()
         .map(|value| {
             let value = value.trim().to_ascii_lowercase();
@@ -784,7 +829,7 @@ fn run_command_auto_poke_enabled() -> bool {
 }
 
 fn run_command_auto_poke_max_turns() -> Option<usize> {
-    std::env::var("JCODE_RUN_AUTO_POKE_MAX_TURNS")
+    std::env::var("IAGENT_RUN_AUTO_POKE_MAX_TURNS")
         .ok()
         .and_then(|value| value.trim().parse::<usize>().ok())
         .filter(|value| *value > 0)
@@ -840,7 +885,7 @@ async fn run_single_message_command_plain_with_auto_poke(
         }
         next_message = build_run_poke_message(&incomplete);
         eprintln!(
-            "Auto-poking: {} incomplete todo(s). Set JCODE_RUN_AUTO_POKE=0 to disable.",
+            "Auto-poking: {} incomplete todo(s). Set IAGENT_RUN_AUTO_POKE=0 to disable.",
             incomplete.len()
         );
     }

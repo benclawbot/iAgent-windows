@@ -522,7 +522,7 @@ pub struct DisplayConfig {
     /// Show thinking/reasoning content by default (default: false)
     pub show_thinking: bool,
     /// How to display mermaid diagrams (none/margin/pinned, default: none).
-    /// Mermaid rendering is temporarily disabled for users unless JCODE_ENABLE_MERMAID=1.
+    /// Mermaid rendering is temporarily disabled for users unless IAGENT_ENABLE_MERMAID=1.
     pub diagram_mode: DiagramDisplayMode,
     /// Markdown block spacing style (compact/document, default: compact)
     pub markdown_spacing: MarkdownSpacingMode,
@@ -662,7 +662,7 @@ impl Default for WebSearchConfig {
             engine: WebSearchEngine::Duckduckgo,
             fallback_engines: vec![WebSearchEngine::Bing],
             bing_api_key: None,
-            bing_api_key_env: "JCODE_BING_API_KEY".to_string(),
+            bing_api_key_env: "IAGENT_BING_API_KEY".to_string(),
             bing_market: "en-US".to_string(),
         }
     }
@@ -846,7 +846,7 @@ pub struct SafetyConfig {
     pub email_smtp_port: u16,
     /// Email sender address
     pub email_from: Option<String>,
-    /// SMTP password (prefer JCODE_SMTP_PASSWORD env var)
+    /// SMTP password (prefer IAGENT_SMTP_PASSWORD env var)
     pub email_password: Option<String>,
     /// IMAP host for receiving email replies (e.g. imap.gmail.com)
     pub email_imap_host: Option<String>,
@@ -898,6 +898,44 @@ impl Default for SafetyConfig {
             discord_channel_id: None,
             discord_bot_user_id: None,
             discord_reply_enabled: false,
+        }
+    }
+}
+
+/// Shell execution policy for local tool execution.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum ShellExecutionMode {
+    /// Require per-action user approval before execution.
+    #[default]
+    Proposal,
+    /// Execute shell actions without prompting.
+    Auto,
+    /// Disable shell execution entirely.
+    Disabled,
+}
+
+/// Runtime permissions policy.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PermissionsConfig {
+    /// Shell execution mode: proposal | auto | disabled
+    pub shell_execution: ShellExecutionMode,
+    /// Paths where mutating actions are expected to be allowed.
+    pub file_write_paths: Vec<String>,
+    /// Allow outbound network access from tools.
+    pub network_access: bool,
+    /// Allow explicit privilege escalation attempts.
+    pub elevation_allowed: bool,
+}
+
+impl Default for PermissionsConfig {
+    fn default() -> Self {
+        Self {
+            shell_execution: ShellExecutionMode::Proposal,
+            file_write_paths: vec!["~".to_string(), "%USERPROFILE%\\Projects".to_string()],
+            network_access: true,
+            elevation_allowed: false,
         }
     }
 }

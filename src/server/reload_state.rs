@@ -6,7 +6,7 @@ use std::time::Duration;
 const RELOAD_HANDOFF_EVENT_POLL_MS: i32 = 100;
 
 pub fn reload_marker_path() -> PathBuf {
-    crate::storage::runtime_dir().join("jcode.reload")
+    crate::storage::runtime_dir().join("iagent.reload")
 }
 
 pub fn write_reload_marker() {
@@ -602,7 +602,7 @@ mod tests {
 
     impl EnvGuard {
         fn set_runtime_dir(path: &std::path::Path) -> Self {
-            let key = "JCODE_RUNTIME_DIR";
+            let key = "IAGENT_RUNTIME_DIR";
             let old = std::env::var_os(key);
             crate::env::set_var(key, path);
             Self { key, old }

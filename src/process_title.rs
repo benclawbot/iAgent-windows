@@ -1,7 +1,7 @@
 use crate::cli::args::{Args, Command};
 
 const LINUX_PROCESS_TITLE_LIMIT: usize = 15;
-const KILLALL_PROCESS_NAME: &str = "jcode";
+const KILLALL_PROCESS_NAME: &str = "iagent";
 
 fn compact_process_title(prefix: &str, name: Option<&str>) -> String {
     let mut title = prefix.to_string();
@@ -220,9 +220,9 @@ mod tests {
     #[test]
     fn terminal_session_label_for_id_reads_custom_title_from_session() {
         let _guard = lock_test_env();
-        let previous_home = std::env::var_os("JCODE_HOME");
+        let previous_home = std::env::var_os("IAGENT_HOME");
         let temp = tempfile::tempdir().expect("temp dir");
-        crate::env::set_var("JCODE_HOME", temp.path());
+        crate::env::set_var("IAGENT_HOME", temp.path());
 
         let mut session = crate::session::Session::create_with_id(
             "session_fox_123".to_string(),
@@ -238,9 +238,9 @@ mod tests {
         );
 
         if let Some(previous_home) = previous_home {
-            crate::env::set_var("JCODE_HOME", previous_home);
+            crate::env::set_var("IAGENT_HOME", previous_home);
         } else {
-            crate::env::remove_var("JCODE_HOME");
+            crate::env::remove_var("IAGENT_HOME");
         }
     }
 

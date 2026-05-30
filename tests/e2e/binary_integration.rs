@@ -2,11 +2,11 @@ use crate::test_support::*;
 
 // ============================================================================
 // Binary Integration Tests
-// These tests run the actual jcode binary and require real credentials.
+// These tests run the actual iagent binary and require real credentials.
 // Run with: cargo test --test e2e binary_integration -- --ignored
 // ============================================================================
 
-/// Test that the jcode binary can run independent with Claude provider
+/// Test that the iagent binary can run independent with Claude provider
 #[tokio::test]
 #[ignore] // Requires Claude credentials
 async fn binary_integration_independent_claude() -> Result<()> {
@@ -38,7 +38,7 @@ async fn binary_integration_independent_claude() -> Result<()> {
     Ok(())
 }
 
-/// Test that the jcode binary can run with OpenAI provider
+/// Test that the iagent binary can run with OpenAI provider
 #[tokio::test]
 #[ignore] // Requires OpenAI/Codex credentials
 async fn binary_integration_openai_provider() -> Result<()> {
@@ -77,7 +77,7 @@ async fn binary_integration_openai_provider() -> Result<()> {
     Ok(())
 }
 
-/// Test that jcode version command works
+/// Test that iagent version command works
 #[tokio::test]
 async fn binary_version_command() -> Result<()> {
     use std::process::Command;
@@ -92,7 +92,7 @@ async fn binary_version_command() -> Result<()> {
     assert!(output.status.success(), "Version command should succeed");
     assert!(
         stdout.contains("iagent") || stdout.contains("20"),
-        "Version should contain 'jcode' or date. Got: {}",
+        "Version should contain 'iagent' or date. Got: {}",
         stdout
     );
 
@@ -101,7 +101,7 @@ async fn binary_version_command() -> Result<()> {
 
 /// Test full server reload handoff against a real spawned server process.
 ///
-/// Requires a built release binary at target/release/jcode because the reload
+/// Requires a built release binary at target/release/iagent because the reload
 /// flow execs into the repo's reload candidate.
 #[tokio::test]
 #[ignore]
@@ -139,13 +139,13 @@ async fn binary_integration_reload_handoff() -> Result<()> {
         .arg("serve")
         // This test must exercise the real exec-based reload handoff, not the
         // in-process test shortcut used by other e2e cases.
-        .env_remove("JCODE_TEST_SESSION")
-        .env("JCODE_HOME", &home_dir)
-        .env("JCODE_RUNTIME_DIR", &runtime_dir)
-        .env("JCODE_INSTALL_DIR", &install_dir)
-        .env("JCODE_DEBUG_CONTROL", "1")
-        .env("JCODE_TEMP_SERVER", "1")
-        .env("JCODE_SERVER_OWNER_PID", std::process::id().to_string())
+        .env_remove("IAGENT_TEST_SESSION")
+        .env("IAGENT_HOME", &home_dir)
+        .env("IAGENT_RUNTIME_DIR", &runtime_dir)
+        .env("IAGENT_INSTALL_DIR", &install_dir)
+        .env("IAGENT_DEBUG_CONTROL", "1")
+        .env("IAGENT_TEMP_SERVER", "1")
+        .env("IAGENT_SERVER_OWNER_PID", std::process::id().to_string())
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::from(stderr_file))
@@ -228,7 +228,7 @@ async fn binary_integration_reload_handoff() -> Result<()> {
 
 /// Test repeated self-dev reload handoff against a real TUI client running in a PTY.
 ///
-/// Requires a built release binary at target/release/jcode because the
+/// Requires a built release binary at target/release/iagent because the
 /// self-dev server reload path execs into the repo's reload candidate.
 #[cfg(unix)]
 #[tokio::test]
@@ -255,9 +255,9 @@ async fn binary_integration_selfdev_reload_reconnects_quickly() -> Result<()> {
     std::fs::create_dir_all(&home_dir)?;
     std::fs::create_dir_all(&install_dir)?;
 
-    let _home_guard = EnvVarGuard::set("JCODE_HOME", &home_dir);
-    let _runtime_guard = EnvVarGuard::set("JCODE_RUNTIME_DIR", &runtime_dir);
-    let _install_guard = EnvVarGuard::set("JCODE_INSTALL_DIR", &install_dir);
+    let _home_guard = EnvVarGuard::set("IAGENT_HOME", &home_dir);
+    let _runtime_guard = EnvVarGuard::set("IAGENT_RUNTIME_DIR", &runtime_dir);
+    let _install_guard = EnvVarGuard::set("IAGENT_INSTALL_DIR", &install_dir);
 
     let socket_path = runtime_dir.join("iagent.sock");
     let debug_socket_path = runtime_dir.join("iagent-debug.sock");
@@ -268,10 +268,10 @@ async fn binary_integration_selfdev_reload_reconnects_quickly() -> Result<()> {
         .arg("antigravity")
         .arg("self-dev")
         .current_dir(env!("CARGO_MANIFEST_DIR"))
-        .env_remove("JCODE_TEST_SESSION")
-        .env("JCODE_HOME", &home_dir)
-        .env("JCODE_RUNTIME_DIR", &runtime_dir)
-        .env("JCODE_INSTALL_DIR", &install_dir);
+        .env_remove("IAGENT_TEST_SESSION")
+        .env("IAGENT_HOME", &home_dir)
+        .env("IAGENT_RUNTIME_DIR", &runtime_dir)
+        .env("IAGENT_INSTALL_DIR", &install_dir);
 
     let mut child = spawn_pty_child(command)?;
 
@@ -361,9 +361,9 @@ async fn binary_integration_selfdev_client_reload_resumes_session() -> Result<()
     std::fs::create_dir_all(&home_dir)?;
     std::fs::create_dir_all(&install_dir)?;
 
-    let _home_guard = EnvVarGuard::set("JCODE_HOME", &home_dir);
-    let _runtime_guard = EnvVarGuard::set("JCODE_RUNTIME_DIR", &runtime_dir);
-    let _install_guard = EnvVarGuard::set("JCODE_INSTALL_DIR", &install_dir);
+    let _home_guard = EnvVarGuard::set("IAGENT_HOME", &home_dir);
+    let _runtime_guard = EnvVarGuard::set("IAGENT_RUNTIME_DIR", &runtime_dir);
+    let _install_guard = EnvVarGuard::set("IAGENT_INSTALL_DIR", &install_dir);
 
     let socket_path = runtime_dir.join("iagent.sock");
     let debug_socket_path = runtime_dir.join("iagent-debug.sock");
@@ -382,10 +382,10 @@ async fn binary_integration_selfdev_client_reload_resumes_session() -> Result<()
         .arg("antigravity")
         .arg("self-dev")
         .current_dir(env!("CARGO_MANIFEST_DIR"))
-        .env_remove("JCODE_TEST_SESSION")
-        .env("JCODE_HOME", &home_dir)
-        .env("JCODE_RUNTIME_DIR", &runtime_dir)
-        .env("JCODE_INSTALL_DIR", &install_dir);
+        .env_remove("IAGENT_TEST_SESSION")
+        .env("IAGENT_HOME", &home_dir)
+        .env("IAGENT_RUNTIME_DIR", &runtime_dir)
+        .env("IAGENT_INSTALL_DIR", &install_dir);
 
     let mut child = spawn_pty_child(command)?;
 
@@ -523,9 +523,9 @@ async fn binary_integration_selfdev_full_reload_resumes_session_quickly() -> Res
     std::fs::create_dir_all(&home_dir)?;
     std::fs::create_dir_all(&install_dir)?;
 
-    let _home_guard = EnvVarGuard::set("JCODE_HOME", &home_dir);
-    let _runtime_guard = EnvVarGuard::set("JCODE_RUNTIME_DIR", &runtime_dir);
-    let _install_guard = EnvVarGuard::set("JCODE_INSTALL_DIR", &install_dir);
+    let _home_guard = EnvVarGuard::set("IAGENT_HOME", &home_dir);
+    let _runtime_guard = EnvVarGuard::set("IAGENT_RUNTIME_DIR", &runtime_dir);
+    let _install_guard = EnvVarGuard::set("IAGENT_INSTALL_DIR", &install_dir);
 
     let socket_path = runtime_dir.join("iagent.sock");
     let debug_socket_path = runtime_dir.join("iagent-debug.sock");
@@ -544,10 +544,10 @@ async fn binary_integration_selfdev_full_reload_resumes_session_quickly() -> Res
         .arg("antigravity")
         .arg("self-dev")
         .current_dir(env!("CARGO_MANIFEST_DIR"))
-        .env_remove("JCODE_TEST_SESSION")
-        .env("JCODE_HOME", &home_dir)
-        .env("JCODE_RUNTIME_DIR", &runtime_dir)
-        .env("JCODE_INSTALL_DIR", &install_dir);
+        .env_remove("IAGENT_TEST_SESSION")
+        .env("IAGENT_HOME", &home_dir)
+        .env("IAGENT_RUNTIME_DIR", &runtime_dir)
+        .env("IAGENT_INSTALL_DIR", &install_dir);
 
     let mut child = spawn_pty_child(command)?;
 

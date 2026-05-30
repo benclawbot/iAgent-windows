@@ -70,11 +70,11 @@ impl Tool for WebSearchTool {
                 "engine": {
                     "type": "string",
                     "enum": ["duckduckgo", "bing"],
-                    "description": "Search engine. Defaults to duckduckgo. Bing uses JCODE_BING_API_KEY when set, otherwise Bing HTML scraping."
+                    "description": "Search engine. Defaults to duckduckgo. Bing uses IAGENT_BING_API_KEY when set, otherwise Bing HTML scraping."
                 },
                 "bing_market": {
                     "type": "string",
-                    "description": "Optional Bing market, e.g. en-US or zh-CN. Defaults to JCODE_BING_MARKET or en-US."
+                    "description": "Optional Bing market, e.g. en-US or zh-CN. Defaults to IAGENT_BING_MARKET or en-US."
                 }
             }
         })
@@ -500,7 +500,7 @@ mod tests {
             </li>
             <li class="b_algo"><h2><a href="https://www.bing.com/aclk">ad</a></h2></li>
             <li class="b_algo">
-              <h2><a href="https://example.org/jcode">Jcode</a></h2>
+              <h2><a href="https://example.org/iagent">Iagent</a></h2>
               <div class="b_caption"><p>Agentic coding.</p></div>
             </li>
         "#;
@@ -510,7 +510,7 @@ mod tests {
         assert_eq!(results[0].title, "Rust & Cargo");
         assert_eq!(results[0].url, "https://example.com/rust");
         assert_eq!(results[0].snippet, "A systems language.");
-        assert_eq!(results[1].title, "Jcode");
+        assert_eq!(results[1].title, "Iagent");
     }
 
     #[test]

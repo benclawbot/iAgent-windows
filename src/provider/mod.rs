@@ -11,7 +11,7 @@ mod dispatch;
 mod failover;
 mod fingerprint;
 pub mod gemini;
-pub mod jcode;
+pub mod iagent;
 pub mod models;
 mod multi_provider;
 pub mod openai;
@@ -40,7 +40,7 @@ use std::sync::{Arc, RwLock};
 
 pub use iagent_provider_core::{
     ALL_CLAUDE_MODELS, ALL_OPENAI_MODELS, CHEAPNESS_REFERENCE_INPUT_TOKENS,
-    CHEAPNESS_REFERENCE_OUTPUT_TOKENS, DEFAULT_CONTEXT_LIMIT, EventStream, JCODE_USER_AGENT,
+    CHEAPNESS_REFERENCE_OUTPUT_TOKENS, DEFAULT_CONTEXT_LIMIT, EventStream, IAGENT_USER_AGENT,
     ModelCapabilities, ModelCatalogRefreshSummary, ModelRoute, NativeCompactionResult,
     NativeToolResult, NativeToolResultSender, PremiumMode, Provider, ProviderFailoverPrompt,
     RouteBillingKind, RouteCheapnessEstimate, RouteCostConfidence, RouteCostSource,
@@ -1397,7 +1397,7 @@ impl Provider for MultiProvider {
         }
 
         let total_ms = routes_started.elapsed().as_millis();
-        if total_ms >= 250 || std::env::var("JCODE_LOG_MODEL_PICKER_TIMING").is_ok() {
+        if total_ms >= 250 || std::env::var("IAGENT_LOG_MODEL_PICKER_TIMING").is_ok() {
             log_info!((
                 "[TIMING] model_routes: routes={}, openrouter_configured={}, openrouter_models={}, openrouter_endpoint_cache_hits={}, openrouter_endpoint_routes={}, openrouter_scheduled_endpoint_refreshes={}, total={}ms",
                 routes.len(),
@@ -1484,7 +1484,7 @@ impl Provider for MultiProvider {
     fn handles_tools_internally(&self) -> bool {
         match self.active_provider() {
             ActiveProvider::Claude => {
-                // Direct API does NOT handle tools internally - jcode executes them
+                // Direct API does NOT handle tools internally - iagent executes them
                 if self.anthropic_provider().is_some() {
                     false
                 } else {
@@ -1507,8 +1507,8 @@ impl Provider for MultiProvider {
                 .cursor_provider()
                 .map(|o| o.handles_tools_internally())
                 .unwrap_or(false),
-            ActiveProvider::Bedrock => false, // jcode executes Bedrock tool calls
-            ActiveProvider::OpenRouter => false, // jcode executes tools
+            ActiveProvider::Bedrock => false, // iagent executes Bedrock tool calls
+            ActiveProvider::OpenRouter => false, // iagent executes tools
         }
     }
 

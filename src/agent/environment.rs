@@ -1,4 +1,4 @@
-use super::{Agent, JCODE_REPO_SOURCE_STATE, WORKING_GIT_STATE_CACHE};
+use super::{Agent, IAGENT_REPO_SOURCE_STATE, WORKING_GIT_STATE_CACHE};
 use crate::logging;
 use crate::session::{EnvSnapshot, GitState};
 use chrono::Utc;
@@ -63,7 +63,7 @@ impl Agent {
         detail: EnvSnapshotDetail,
     ) -> EnvSnapshot {
         let (iagent_git_hash, iagent_git_dirty) = match detail {
-            EnvSnapshotDetail::Full => JCODE_REPO_SOURCE_STATE.clone(),
+            EnvSnapshotDetail::Full => IAGENT_REPO_SOURCE_STATE.clone(),
             EnvSnapshotDetail::Minimal => (None, None),
         };
 

@@ -1679,7 +1679,7 @@ impl Server {
 
     /// Start the server (both main and debug sockets)
     pub async fn run(&self) -> Result<()> {
-        // Ensure socket directory exists (for named sockets like /run/user/1000/jcode/)
+        // Ensure socket directory exists (for named sockets like /run/user/1000/iagent/)
         if let Some(parent) = self.socket_path.parent() {
             std::fs::create_dir_all(parent)?;
         }

@@ -2,16 +2,16 @@ use super::*;
 
 fn with_temp_iagent_home(test: impl FnOnce()) {
     let _guard = crate::storage::lock_test_env();
-    let prev_home = std::env::var_os("JCODE_HOME");
+    let prev_home = std::env::var_os("IAGENT_HOME");
     let temp = tempfile::TempDir::new().expect("create temp dir");
-    crate::env::set_var("JCODE_HOME", temp.path());
+    crate::env::set_var("IAGENT_HOME", temp.path());
 
     test();
 
     if let Some(prev_home) = prev_home {
-        crate::env::set_var("JCODE_HOME", prev_home);
+        crate::env::set_var("IAGENT_HOME", prev_home);
     } else {
-        crate::env::remove_var("JCODE_HOME");
+        crate::env::remove_var("IAGENT_HOME");
     }
 }
 
@@ -94,9 +94,9 @@ fn test_should_prompt_extension_install_only_before_setup_complete() {
 #[test]
 fn setup_complete_requires_native_host_binary() {
     let _guard = crate::storage::lock_test_env();
-    let prev_home = std::env::var_os("JCODE_HOME");
+    let prev_home = std::env::var_os("IAGENT_HOME");
     let temp = tempfile::TempDir::new().expect("create temp dir");
-    crate::env::set_var("JCODE_HOME", temp.path());
+    crate::env::set_var("IAGENT_HOME", temp.path());
 
     std::fs::create_dir_all(browser_dir()).expect("create browser dir");
     std::fs::write(setup_marker_path(), "test").expect("write setup marker");
@@ -110,9 +110,9 @@ fn setup_complete_requires_native_host_binary() {
     assert!(is_setup_complete());
 
     if let Some(prev_home) = prev_home {
-        crate::env::set_var("JCODE_HOME", prev_home);
+        crate::env::set_var("IAGENT_HOME", prev_home);
     } else {
-        crate::env::remove_var("JCODE_HOME");
+        crate::env::remove_var("IAGENT_HOME");
     }
 }
 
@@ -146,9 +146,9 @@ fn ensure_browser_session_fails_fast_when_session_process_exits_immediately() {
     use std::time::{Duration, Instant};
 
     let _guard = crate::storage::lock_test_env();
-    let prev_home = std::env::var_os("JCODE_HOME");
+    let prev_home = std::env::var_os("IAGENT_HOME");
     let temp = tempfile::TempDir::new().expect("create temp dir");
-    crate::env::set_var("JCODE_HOME", temp.path());
+    crate::env::set_var("IAGENT_HOME", temp.path());
 
     let browser_dir = temp.path().join("browser");
     std::fs::create_dir_all(&browser_dir).expect("create browser dir");
@@ -172,8 +172,8 @@ fn ensure_browser_session_fails_fast_when_session_process_exits_immediately() {
     );
 
     if let Some(prev_home) = prev_home {
-        crate::env::set_var("JCODE_HOME", prev_home);
+        crate::env::set_var("IAGENT_HOME", prev_home);
     } else {
-        crate::env::remove_var("JCODE_HOME");
+        crate::env::remove_var("IAGENT_HOME");
     }
 }

@@ -6,7 +6,7 @@ Retire the Rust terminal UI from `iagent-windows` now that the Python app owns t
 
 ## Cross-Reference Findings
 
-- TUI workspace crates: `jcode-tui-account-picker`, `jcode-tui-core`, `jcode-tui-markdown`, `jcode-tui-mermaid`, `jcode-tui-messages`, `jcode-tui-render`, `jcode-tui-session-picker`, `jcode-tui-style`, `jcode-tui-tool-display`, `jcode-tui-usage-overlay`, and `jcode-tui-workspace`.
+- TUI workspace crates: `iagent-tui-account-picker`, `iagent-tui-core`, `iagent-tui-markdown`, `iagent-tui-mermaid`, `iagent-tui-messages`, `iagent-tui-render`, `iagent-tui-session-picker`, `iagent-tui-style`, `iagent-tui-tool-display`, `iagent-tui-usage-overlay`, and `iagent-tui-workspace`.
 - Root TUI source: `src/tui*`, `src/cli/tui_launch.rs`, `src/cli/terminal.rs`, `src/bin/tui_bench.rs`, and `src/video_export.rs`.
 - Cargo wiring: optional TUI deps plus the retired TUI feature wiring.
 - CI wiring: the existing Windows Backend `Check terminal-ui build` job remains because the current GitHub token cannot push workflow edits; `terminal-ui` is retained as a no-op compatibility feature.

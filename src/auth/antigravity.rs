@@ -8,14 +8,14 @@ const GOOGLE_USERINFO_URL: &str = "https://www.googleapis.com/oauth2/v1/userinfo
 pub const DEFAULT_PORT: u16 = 51121;
 const LOOPBACK_HOST: &str = "127.0.0.1";
 const REDIRECT_PATH: &str = "/oauth-callback";
-// Configure OAuth credentials outside the repository. The upstream jcode fork
+// Configure OAuth credentials outside the repository. The upstream iagent fork
 // embedded public desktop OAuth credentials; iAgent keeps them out of source so
 // GitHub push protection and downstream distributions stay clean.
-const ANTIGRAVITY_CLIENT_ID: &str = "configure-via-JCODE_ANTIGRAVITY_CLIENT_ID";
-const ANTIGRAVITY_CLIENT_SECRET: &str = "configure-via-JCODE_ANTIGRAVITY_CLIENT_SECRET";
-const CLIENT_ID_ENV: &str = "JCODE_ANTIGRAVITY_CLIENT_ID";
-const CLIENT_SECRET_ENV: &str = "JCODE_ANTIGRAVITY_CLIENT_SECRET";
-const VERSION_ENV: &str = "JCODE_ANTIGRAVITY_VERSION";
+const ANTIGRAVITY_CLIENT_ID: &str = "configure-via-IAGENT_ANTIGRAVITY_CLIENT_ID";
+const ANTIGRAVITY_CLIENT_SECRET: &str = "configure-via-IAGENT_ANTIGRAVITY_CLIENT_SECRET";
+const CLIENT_ID_ENV: &str = "IAGENT_ANTIGRAVITY_CLIENT_ID";
+const CLIENT_SECRET_ENV: &str = "IAGENT_ANTIGRAVITY_CLIENT_SECRET";
+const VERSION_ENV: &str = "IAGENT_ANTIGRAVITY_VERSION";
 const ANTIGRAVITY_VERSION: &str = "1.18.3";
 const ANTIGRAVITY_SCOPES: &[&str] = &[
     "https://www.googleapis.com/auth/cloud-platform",

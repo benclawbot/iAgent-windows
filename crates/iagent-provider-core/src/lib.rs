@@ -242,7 +242,7 @@ pub trait Provider: Send + Sync {
         false
     }
 
-    /// Returns true if jcode should proactively run its own summary-based compaction.
+    /// Returns true if iagent should proactively run its own summary-based compaction.
     fn uses_iagent_compaction(&self) -> bool {
         self.supports_compaction()
     }
@@ -330,7 +330,7 @@ pub enum PremiumMode {
 /// Channel for sending provider-native tool results back to a provider bridge.
 pub type NativeToolResultSender = tokio::sync::mpsc::Sender<NativeToolResult>;
 
-/// Native tool result to send back to provider bridges that delegate tool execution to jcode.
+/// Native tool result to send back to provider bridges that delegate tool execution to iagent.
 #[derive(Debug, Clone, Serialize)]
 pub struct NativeToolResult {
     #[serde(rename = "type")]
@@ -375,7 +375,7 @@ impl NativeToolResult {
 }
 
 /// Canonical User-Agent for generic outbound iagent HTTP requests.
-pub const JCODE_USER_AGENT: &str = concat!("iagent/", env!("CARGO_PKG_VERSION"));
+pub const IAGENT_USER_AGENT: &str = concat!("iagent/", env!("CARGO_PKG_VERSION"));
 
 /// Shared HTTP client for all generic provider requests. Creating a `reqwest::Client` is expensive
 /// (~10ms due to TLS init, connection pool setup), so we reuse a single instance. Provider-specific
@@ -387,7 +387,7 @@ pub fn shared_http_client() -> reqwest::Client {
     CLIENT
         .get_or_init(|| {
             reqwest::Client::builder()
-                .user_agent(JCODE_USER_AGENT)
+                .user_agent(IAGENT_USER_AGENT)
                 .connect_timeout(Duration::from_secs(15))
                 .tcp_keepalive(Some(Duration::from_secs(30)))
                 .pool_idle_timeout(Duration::from_secs(90))
@@ -396,9 +396,9 @@ pub fn shared_http_client() -> reqwest::Client {
                 .unwrap_or_else(|err| {
                     eprintln!("iagent: failed to build shared provider HTTP client: {err}");
                     reqwest::Client::builder()
-                        .user_agent(JCODE_USER_AGENT)
+                        .user_agent(IAGENT_USER_AGENT)
                         .build()
-                        .expect("fallback Jcode HTTP client should build")
+                        .expect("fallback Iagent HTTP client should build")
                 })
         })
         .clone()
@@ -596,6 +596,6 @@ mod tests {
 
     #[test]
     fn canonical_user_agent_identifies_iagent() {
-        assert!(JCODE_USER_AGENT.starts_with("iagent/"));
+        assert!(IAGENT_USER_AGENT.starts_with("iagent/"));
     }
 }

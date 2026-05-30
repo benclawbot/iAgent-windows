@@ -25,8 +25,8 @@ pub(crate) async fn run_main(mut args: Args) -> Result<()> {
         .filter(|value| !value.is_empty())
     {
         provider_catalog::apply_named_provider_profile_env(profile_name)?;
-        crate::env::set_var("JCODE_PROVIDER_PROFILE_NAME", profile_name);
-        crate::env::set_var("JCODE_PROVIDER_PROFILE_ACTIVE", "1");
+        crate::env::set_var("IAGENT_PROVIDER_PROFILE_NAME", profile_name);
+        crate::env::set_var("IAGENT_PROVIDER_PROFILE_ACTIVE", "1");
         args.provider = ProviderChoice::OpenaiCompatible;
     }
 
@@ -37,7 +37,7 @@ pub(crate) async fn run_main(mut args: Args) -> Result<()> {
             temp_idle_timeout_secs,
         }) => {
             let serve_start = Instant::now();
-            crate::env::set_var("JCODE_NON_INTERACTIVE", "1");
+            crate::env::set_var("IAGENT_NON_INTERACTIVE", "1");
             if temporary_server {
                 server::configure_temporary_server(owner_pid, temp_idle_timeout_secs);
             }
@@ -352,6 +352,7 @@ fn map_memory_subcommand(subcmd: MemoryCommand) -> commands::MemorySubcommand {
             overwrite,
         },
         MemoryCommand::Stats => commands::MemorySubcommand::Stats,
+        MemoryCommand::Clear { scope, force } => commands::MemorySubcommand::Clear { scope, force },
         MemoryCommand::ClearTest => commands::MemorySubcommand::ClearTest,
     }
 }
@@ -397,7 +398,7 @@ async fn run_default_command(args: Args) -> Result<()> {
     let already_in_selfdev = crate::cli::selfdev::client_selfdev_requested();
 
     if in_iagent_repo && !already_in_selfdev && !args.no_selfdev {
-        output::stderr_info("📍 Detected jcode repository - enabling self-dev mode");
+        output::stderr_info("📍 Detected iagent repository - enabling self-dev mode");
         output::stderr_info("   Using shared server with self-dev session mode");
         output::stderr_info("   (use --no-selfdev to disable auto-detection)");
         output::stderr_blank_line();
@@ -418,7 +419,7 @@ async fn run_default_command(args: Args) -> Result<()> {
         server_running = wait_for_existing_reload_server("client startup").await;
     }
 
-    if !server_running && std::env::var("JCODE_RESUMING").is_ok() {
+    if !server_running && std::env::var("IAGENT_RESUMING").is_ok() {
         server_running = wait_for_resuming_server(
             "client startup without reload marker",
             std::time::Duration::from_secs(5),
@@ -698,7 +699,7 @@ pub(crate) async fn spawn_server(
     let mut cmd = ProcessCommand::new(&exe);
     cmd.env_remove(selfdev::CLIENT_SELFDEV_ENV);
     if client_requested_selfdev {
-        cmd.env("JCODE_DEBUG_CONTROL", "1");
+        cmd.env("IAGENT_DEBUG_CONTROL", "1");
     }
     cmd.arg("--provider").arg(provider_choice.as_arg_value());
     if let Some(provider_profile) = provider_profile {

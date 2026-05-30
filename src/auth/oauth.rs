@@ -433,10 +433,10 @@ pub async fn wait_for_callback_async_on_listener(
 /// Perform OAuth login for Claude
 pub async fn login_claude(no_browser: bool) -> Result<OAuthTokens> {
     let (verifier, challenge) = generate_pkce();
-    if let Ok(code) = std::env::var("JCODE_CLAUDE_AUTH_CODE") {
+    if let Ok(code) = std::env::var("IAGENT_CLAUDE_AUTH_CODE") {
         let trimmed = code.trim();
         if trimmed.is_empty() {
-            anyhow::bail!("JCODE_CLAUDE_AUTH_CODE is set but empty");
+            anyhow::bail!("IAGENT_CLAUDE_AUTH_CODE is set but empty");
         }
         eprintln!("Exchanging code for tokens...");
         return exchange_claude_code(&verifier, trimmed, claude::REDIRECT_URI).await;
@@ -444,7 +444,7 @@ pub async fn login_claude(no_browser: bool) -> Result<OAuthTokens> {
 
     if !std::io::stdin().is_terminal() {
         anyhow::bail!(
-            "Claude login needs an authorization code from stdin. Re-run in an interactive terminal, or set JCODE_CLAUDE_AUTH_CODE."
+            "Claude login needs an authorization code from stdin. Re-run in an interactive terminal, or set IAGENT_CLAUDE_AUTH_CODE."
         );
     }
 
@@ -906,7 +906,7 @@ pub async fn login_openai(no_browser: bool) -> Result<OAuthTokens> {
     exchange_openai_callback_input(&verifier, trimmed, &state, &redirect_uri).await
 }
 
-/// Save Claude tokens to jcode's credentials file (active account or first numbered account).
+/// Save Claude tokens to iagent's credentials file (active account or first numbered account).
 pub fn save_claude_tokens(tokens: &OAuthTokens) -> Result<()> {
     let label = claude_auth::login_target_label(None)?;
     save_claude_tokens_for_account(tokens, &label)
@@ -983,7 +983,7 @@ pub async fn update_claude_account_profile(
     Ok(email)
 }
 
-/// Load Claude tokens from jcode's credentials file (active account).
+/// Load Claude tokens from iagent's credentials file (active account).
 pub fn load_claude_tokens() -> Result<OAuthTokens> {
     if let Ok(creds) = claude_auth::load_credentials() {
         return Ok(OAuthTokens {

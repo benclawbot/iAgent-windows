@@ -4,10 +4,10 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 
-const TEMP_SERVER_ENV: &str = "JCODE_TEMP_SERVER";
-const SERVER_SCOPE_ENV: &str = "JCODE_SERVER_SCOPE";
-const OWNER_PID_ENV: &str = "JCODE_SERVER_OWNER_PID";
-const TEMP_IDLE_SECS_ENV: &str = "JCODE_TEMP_SERVER_IDLE_SECS";
+const TEMP_SERVER_ENV: &str = "IAGENT_TEMP_SERVER";
+const SERVER_SCOPE_ENV: &str = "IAGENT_SERVER_SCOPE";
+const OWNER_PID_ENV: &str = "IAGENT_SERVER_OWNER_PID";
+const TEMP_IDLE_SECS_ENV: &str = "IAGENT_TEMP_SERVER_IDLE_SECS";
 const DEFAULT_TEMP_IDLE_SECS: u64 = 30 * 60;
 const TEMP_SERVER_EXIT_CODE: i32 = super::EXIT_IDLE_TIMEOUT;
 
@@ -308,8 +308,8 @@ mod tests {
     #[test]
     fn temporary_metadata_path_is_socket_scoped() {
         assert_eq!(
-            metadata_path(Path::new("/tmp/example/jcode.sock")),
-            PathBuf::from("/tmp/example/jcode.sock.server.json")
+            metadata_path(Path::new("/tmp/example/iagent.sock")),
+            PathBuf::from("/tmp/example/iagent.sock.server.json")
         );
     }
 

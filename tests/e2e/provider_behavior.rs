@@ -104,7 +104,7 @@ async fn test_stream_error() -> Result<()> {
 async fn test_socket_model_cycle_supported_models() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-test-{}",
+        "iagent-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -153,7 +153,7 @@ async fn test_socket_model_cycle_supported_models() -> Result<()> {
 async fn test_resume_restores_model_and_tool_history() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-resume-test-{}",
+        "iagent-resume-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -251,7 +251,7 @@ async fn test_resume_restores_model_and_tool_history() -> Result<()> {
 async fn test_resume_session_with_local_history_uses_metadata_only_history() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-target-subscribe-test-{}",
+        "iagent-target-subscribe-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -383,7 +383,7 @@ async fn test_resume_session_with_local_history_uses_metadata_only_history() -> 
         debug_run_command(debug_socket_path.clone(), "history", Some(&session.id))
             .await
             .unwrap_or_else(|err| format!("<history error: {err}>")),
-        std::env::var_os("JCODE_HOME")
+        std::env::var_os("IAGENT_HOME")
             .and_then(|home| latest_log_excerpt(std::path::Path::new(&home)))
             .unwrap_or_else(|| "<no logs>".to_string())
     );
@@ -403,7 +403,7 @@ async fn test_resume_session_with_local_history_uses_metadata_only_history() -> 
 async fn test_resume_session_reports_reload_interruption_for_peer_sessions() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-reload-interruption-test-{}",
+        "iagent-reload-interruption-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -478,7 +478,7 @@ async fn test_resume_session_reports_reload_interruption_for_peer_sessions() -> 
 async fn test_subscribe_selfdev_hint_marks_canary() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-test-{}",
+        "iagent-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -526,7 +526,7 @@ async fn test_subscribe_selfdev_hint_marks_canary() -> Result<()> {
 async fn test_subscribe_working_dir_without_selfdev_hint_stays_normal() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-test-{}",
+        "iagent-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -540,7 +540,7 @@ async fn test_subscribe_working_dir_without_selfdev_hint_stays_normal() -> Resul
     std::fs::create_dir_all(fake_repo.path().join(".git"))?;
     std::fs::write(
         fake_repo.path().join("Cargo.toml"),
-        "[package]\nname = \"jcode\"\nversion = \"0.0.0\"\n",
+        "[package]\nname = \"iagent\"\nversion = \"0.0.0\"\n",
     )?;
     let nested_dir = fake_repo.path().join("nested").join("worktree");
     std::fs::create_dir_all(&nested_dir)?;
@@ -589,7 +589,7 @@ async fn test_subscribe_working_dir_without_selfdev_hint_stays_normal() -> Resul
 async fn test_model_switch_resets_provider_session() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-test-{}",
+        "iagent-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -676,7 +676,7 @@ async fn test_model_switch_resets_provider_session() -> Result<()> {
 async fn test_model_switch_is_per_session() -> Result<()> {
     let _env = setup_test_env()?;
     let runtime_dir = short_runtime_dir(format!(
-        "jcode-test-{}",
+        "iagent-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -781,7 +781,7 @@ async fn test_model_switch_is_per_session() -> Result<()> {
 }
 
 /// Test that the system prompt does NOT identify the agent as "Claude Code"
-/// The agent should identify as "jcode" or just a generic "coding assistant powered by Claude"
+/// The agent should identify as "iagent" or just a generic "coding assistant powered by Claude"
 #[tokio::test]
 async fn test_system_prompt_no_claude_code_identity() -> Result<()> {
     let _env = setup_test_env()?;

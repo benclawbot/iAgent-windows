@@ -7,12 +7,12 @@ use anyhow::Result;
 use async_trait::async_trait;
 use std::sync::{Arc, RwLock};
 
-pub struct JcodeProvider {
+pub struct IagentProvider {
     inner: MultiProvider,
     selected_model: Arc<RwLock<String>>,
 }
 
-impl JcodeProvider {
+impl IagentProvider {
     pub fn new() -> Self {
         crate::subscription_catalog::apply_runtime_env();
         Self::apply_runtime_profile();
@@ -40,14 +40,14 @@ impl JcodeProvider {
     }
 }
 
-impl Default for JcodeProvider {
+impl Default for IagentProvider {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl Provider for JcodeProvider {
+impl Provider for IagentProvider {
     async fn complete(
         &self,
         messages: &[Message],
@@ -82,7 +82,7 @@ impl Provider for JcodeProvider {
     }
 
     fn name(&self) -> &str {
-        "Jcode Subscription"
+        "Iagent Subscription"
     }
 
     fn model(&self) -> String {
@@ -255,7 +255,7 @@ mod tests {
         let runtime = tokio::runtime::Runtime::new().expect("tokio runtime");
 
         runtime.block_on(async {
-            let provider = JcodeProvider::new();
+            let provider = IagentProvider::new();
             assert!(crate::subscription_catalog::is_runtime_mode_enabled());
             assert!(
                 provider
@@ -275,8 +275,8 @@ mod tests {
         let runtime = tokio::runtime::Runtime::new().expect("tokio runtime");
 
         runtime.block_on(async {
-            let provider = JcodeProvider::new();
-            assert_eq!(provider.name(), "Jcode Subscription");
+            let provider = IagentProvider::new();
+            assert_eq!(provider.name(), "Iagent Subscription");
             let model = provider.model();
             assert!(
                 crate::subscription_catalog::is_curated_model(&model),

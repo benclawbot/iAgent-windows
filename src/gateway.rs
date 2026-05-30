@@ -554,7 +554,7 @@ async fn handle_http(
 /// ```json
 /// {
 ///   "token": "hex-auth-token",
-///   "server_name": "jcode",
+///   "server_name": "iagent",
 ///   "server_version": "v0.4.0"
 /// }
 /// ```
@@ -601,7 +601,7 @@ async fn handle_pair_request(
 
     let body = serde_json::json!({
         "token": token,
-        "server_name": "jcode",
+        "server_name": "iagent",
         "server_version": env!("IAGENT_VERSION"),
     });
     http_response(200, "OK", &body.to_string())

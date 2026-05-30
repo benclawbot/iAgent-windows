@@ -413,7 +413,7 @@ mod tests {
     fn repo_fixture(git_file: bool) -> tempfile::TempDir {
         let temp = tempfile::TempDir::new().expect("temp repo");
         if git_file {
-            std::fs::write(temp.path().join(".git"), "gitdir: /tmp/jcode-test-git\n")
+            std::fs::write(temp.path().join(".git"), "gitdir: /tmp/iagent-test-git\n")
                 .expect("git file");
         } else {
             std::fs::create_dir_all(temp.path().join(".git")).expect("git dir");

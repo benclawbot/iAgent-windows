@@ -157,7 +157,7 @@ impl Logger {
 
         // Use date-based log file
         let date = Local::now().format("%Y-%m-%d");
-        let path = log_dir.join(format!("jcode-{}.log", date));
+        let path = log_dir.join(format!("iagent-{}.log", date));
 
         let file = OpenOptions::new()
             .create(true)
@@ -265,13 +265,13 @@ macro_rules! log_warn {
     };
 }
 
-/// Log a debug message (only if JCODE_TRACE is set)
+/// Log a debug message (only if IAGENT_TRACE is set)
 #[expect(
     clippy::collapsible_if,
     reason = "Debug logging keeps env gating and logger access explicit"
 )]
 pub fn debug(message: &str) {
-    if std::env::var("JCODE_TRACE").is_ok() {
+    if std::env::var("IAGENT_TRACE").is_ok() {
         if let Ok(mut guard) = LOGGER.lock() {
             if let Some(logger) = guard.as_mut() {
                 logger.write("DEBUG", message);
@@ -361,7 +361,7 @@ pub fn current_session() -> Option<String> {
 pub fn log_path() -> Option<PathBuf> {
     let log_dir = log_dir()?;
     let date = Local::now().format("%Y-%m-%d");
-    Some(log_dir.join(format!("jcode-{}.log", date)))
+    Some(log_dir.join(format!("iagent-{}.log", date)))
 }
 
 /// Clean up old logs (keep last 7 days)

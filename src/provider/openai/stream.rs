@@ -545,7 +545,7 @@ fn handle_openai_image_generation_item(
                 err
             ));
             return Some(StreamEvent::TextDelta(
-                "\n[Generated image received, but Jcode could not decode it.]\n".to_string(),
+                "\n[Generated image received, but Iagent could not decode it.]\n".to_string(),
             ));
         }
     };
@@ -576,12 +576,12 @@ fn handle_openai_image_generation_item(
         .unwrap_or_default();
     let dir = std::env::current_dir()
         .unwrap_or_else(|_| std::env::temp_dir())
-        .join(".jcode")
+        .join(".iagent")
         .join("generated-images");
     if let Err(err) = std::fs::create_dir_all(&dir) {
         log_warn!(("Failed to create OpenAI generated image directory: {}", err));
         return Some(StreamEvent::TextDelta(format!(
-            "\n[Generated image received ({} bytes), but Jcode could not save it.]\n",
+            "\n[Generated image received ({} bytes), but Iagent could not save it.]\n",
             image_bytes.len()
         )));
     }
@@ -591,7 +591,7 @@ fn handle_openai_image_generation_item(
     if let Err(err) = std::fs::write(&path, image_bytes) {
         log_warn!(("Failed to save OpenAI generated image: {}", err));
         return Some(StreamEvent::TextDelta(
-            "\n[Generated image received, but Jcode could not save it.]\n".to_string(),
+            "\n[Generated image received, but Iagent could not save it.]\n".to_string(),
         ));
     }
 

@@ -86,7 +86,7 @@ impl OpenAITransportMode {
             "https" | "http" | "sse" => Self::HTTPS,
             other => {
                 log_warn!((
-                    "Unknown JCODE_OPENAI_TRANSPORT '{}'; using auto. Use: auto, websocket, or https.",
+                    "Unknown IAGENT_OPENAI_TRANSPORT '{}'; using auto. Use: auto, websocket, or https.",
                     other
                 ));
                 Self::Auto
@@ -437,7 +437,7 @@ impl OpenAIProvider {
     pub fn new(credentials: CodexCredentials) -> Self {
         // Check for model override from environment
         let mut model =
-            std::env::var("JCODE_OPENAI_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.to_string());
+            std::env::var("IAGENT_OPENAI_MODEL").unwrap_or_else(|_| DEFAULT_MODEL.to_string());
         if !crate::provider::known_openai_model_ids()
             .iter()
             .any(|known| known == &model)
@@ -450,11 +450,11 @@ impl OpenAIProvider {
             model = DEFAULT_MODEL.to_string();
         }
 
-        let prompt_cache_key = std::env::var("JCODE_OPENAI_PROMPT_CACHE_KEY")
+        let prompt_cache_key = std::env::var("IAGENT_OPENAI_PROMPT_CACHE_KEY")
             .ok()
             .map(|v| v.trim().to_string())
             .filter(|v| !v.is_empty());
-        let prompt_cache_retention = std::env::var("JCODE_OPENAI_PROMPT_CACHE_RETENTION")
+        let prompt_cache_retention = std::env::var("IAGENT_OPENAI_PROMPT_CACHE_RETENTION")
             .ok()
             .map(|v| v.trim().to_string())
             .filter(|v| !v.is_empty());
@@ -462,7 +462,7 @@ impl OpenAIProvider {
             Some("in_memory") | Some("24h") => prompt_cache_retention,
             Some(other) => {
                 log_info!((
-                    "Warning: Unsupported JCODE_OPENAI_PROMPT_CACHE_RETENTION '{}'; expected 'in_memory' or '24h'",
+                    "Warning: Unsupported IAGENT_OPENAI_PROMPT_CACHE_RETENTION '{}'; expected 'in_memory' or '24h'",
                     other
                 ));
                 None
@@ -603,7 +603,7 @@ impl OpenAIProvider {
             Ok(value) => Some(value),
             Err(_) => {
                 log_warn!((
-                    "Invalid JCODE_OPENAI_MAX_OUTPUT_TOKENS='{}'; using default {}",
+                    "Invalid IAGENT_OPENAI_MAX_OUTPUT_TOKENS='{}'; using default {}",
                     raw,
                     DEFAULT_MAX_OUTPUT_TOKENS
                 ));
@@ -641,13 +641,13 @@ impl OpenAIProvider {
     }
 
     fn load_max_output_tokens() -> Option<u32> {
-        let raw = std::env::var("JCODE_OPENAI_MAX_OUTPUT_TOKENS").ok();
+        let raw = std::env::var("IAGENT_OPENAI_MAX_OUTPUT_TOKENS").ok();
         let parsed = Self::parse_max_output_tokens(raw.as_deref());
         if raw.is_some() {
             match parsed {
                 Some(value) => log_info!(("OpenAI max_output_tokens configured to {}", value)),
                 None => crate::logging::info(
-                    "OpenAI max_output_tokens disabled (JCODE_OPENAI_MAX_OUTPUT_TOKENS=0)",
+                    "OpenAI max_output_tokens disabled (IAGENT_OPENAI_MAX_OUTPUT_TOKENS=0)",
                 ),
             }
         }

@@ -13,7 +13,7 @@ struct SpawnedWindowsServer {
 }
 
 impl SpawnedWindowsServer {
-    fn jcode_binary() -> std::path::PathBuf {
+    fn iagent_binary() -> std::path::PathBuf {
         let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let release_binary = manifest_dir
             .join("target")
@@ -42,7 +42,7 @@ impl SpawnedWindowsServer {
 
         let stdout_file = std::fs::File::create(&stdout_path)?;
         let stderr_file = std::fs::File::create(&stderr_path)?;
-        let mut command = Command::new(Self::jcode_binary());
+        let mut command = Command::new(Self::iagent_binary());
         command
             .arg("--no-update")
             .arg("--socket")
@@ -52,17 +52,17 @@ impl SpawnedWindowsServer {
             .arg("--model")
             .arg("windows-e2e-model")
             .arg("serve")
-            .env_remove("JCODE_TEST_SESSION")
-            .env("JCODE_HOME", &home_dir)
-            .env("JCODE_RUNTIME_DIR", &runtime_dir)
-            .env("JCODE_INSTALL_DIR", &install_dir)
-            .env("JCODE_NO_TELEMETRY", "1")
-            .env("JCODE_OPENAI_COMPAT_API_BASE", "http://127.0.0.1:9/v1")
-            .env("JCODE_OPENAI_COMPAT_DEFAULT_MODEL", "windows-e2e-model")
-            .env("JCODE_OPENAI_COMPAT_LOCAL_ENABLED", "1")
-            .env("JCODE_DEBUG_CONTROL", "1")
-            .env("JCODE_TEMP_SERVER", "1")
-            .env("JCODE_SERVER_OWNER_PID", std::process::id().to_string())
+            .env_remove("IAGENT_TEST_SESSION")
+            .env("IAGENT_HOME", &home_dir)
+            .env("IAGENT_RUNTIME_DIR", &runtime_dir)
+            .env("IAGENT_INSTALL_DIR", &install_dir)
+            .env("IAGENT_NO_TELEMETRY", "1")
+            .env("IAGENT_OPENAI_COMPAT_API_BASE", "http://127.0.0.1:9/v1")
+            .env("IAGENT_OPENAI_COMPAT_DEFAULT_MODEL", "windows-e2e-model")
+            .env("IAGENT_OPENAI_COMPAT_LOCAL_ENABLED", "1")
+            .env("IAGENT_DEBUG_CONTROL", "1")
+            .env("IAGENT_TEMP_SERVER", "1")
+            .env("IAGENT_SERVER_OWNER_PID", std::process::id().to_string())
             .env("RUST_BACKTRACE", "1")
             .stdin(Stdio::null())
             .stdout(Stdio::from(stdout_file))
@@ -88,22 +88,22 @@ impl SpawnedWindowsServer {
 
     fn apply_env<'a>(&self, command: &'a mut Command) -> &'a mut Command {
         command
-            .env_remove("JCODE_TEST_SESSION")
-            .env("JCODE_HOME", &self.home_dir)
-            .env("JCODE_RUNTIME_DIR", &self.runtime_dir)
-            .env("JCODE_INSTALL_DIR", &self.install_dir)
-            .env("JCODE_NO_TELEMETRY", "1")
-            .env("JCODE_OPENAI_COMPAT_API_BASE", "http://127.0.0.1:9/v1")
-            .env("JCODE_OPENAI_COMPAT_DEFAULT_MODEL", "windows-e2e-model")
-            .env("JCODE_OPENAI_COMPAT_LOCAL_ENABLED", "1")
-            .env("JCODE_DEBUG_CONTROL", "1")
-            .env("JCODE_TEMP_SERVER", "1")
-            .env("JCODE_SERVER_OWNER_PID", std::process::id().to_string())
+            .env_remove("IAGENT_TEST_SESSION")
+            .env("IAGENT_HOME", &self.home_dir)
+            .env("IAGENT_RUNTIME_DIR", &self.runtime_dir)
+            .env("IAGENT_INSTALL_DIR", &self.install_dir)
+            .env("IAGENT_NO_TELEMETRY", "1")
+            .env("IAGENT_OPENAI_COMPAT_API_BASE", "http://127.0.0.1:9/v1")
+            .env("IAGENT_OPENAI_COMPAT_DEFAULT_MODEL", "windows-e2e-model")
+            .env("IAGENT_OPENAI_COMPAT_LOCAL_ENABLED", "1")
+            .env("IAGENT_DEBUG_CONTROL", "1")
+            .env("IAGENT_TEMP_SERVER", "1")
+            .env("IAGENT_SERVER_OWNER_PID", std::process::id().to_string())
             .env("RUST_BACKTRACE", "1")
     }
 
-    fn jcode_command(&self) -> Command {
-        let mut command = Command::new(Self::jcode_binary());
+    fn iagent_command(&self) -> Command {
+        let mut command = Command::new(Self::iagent_binary());
         self.apply_env(&mut command);
         command
     }
@@ -116,7 +116,7 @@ impl SpawnedWindowsServer {
         let stderr_path = self._temp_root.path().join(format!("{label}-stderr.log"));
         let stdout_file = std::fs::File::create(&stdout_path)?;
         let stderr_file = std::fs::File::create(&stderr_path)?;
-        let mut command = Command::new(Self::jcode_binary());
+        let mut command = Command::new(Self::iagent_binary());
         self.apply_env(&mut command)
             .arg("--no-update")
             .arg("--socket")
@@ -169,7 +169,7 @@ impl SpawnedWindowsServer {
             }
         }
 
-        if let Ok(artifact_root) = std::env::var("JCODE_E2E_ARTIFACT_DIR") {
+        if let Ok(artifact_root) = std::env::var("IAGENT_E2E_ARTIFACT_DIR") {
             let safe_label: String = label
                 .chars()
                 .map(|ch| if ch.is_ascii_alphanumeric() { ch } else { '-' })
@@ -256,11 +256,11 @@ async fn windows_binary_server_accepts_clients_and_debug_cli() -> Result<()> {
             info.get("debug_control_enabled")
                 .and_then(|value| value.as_bool())
                 == Some(true),
-            "server should honor JCODE_DEBUG_CONTROL in Windows e2e"
+            "server should honor IAGENT_DEBUG_CONTROL in Windows e2e"
         );
 
         let output = server
-            .jcode_command()
+            .iagent_command()
             .arg("--no-update")
             .arg("--socket")
             .arg(&server.socket_path)

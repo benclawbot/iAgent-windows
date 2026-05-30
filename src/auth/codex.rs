@@ -5,7 +5,7 @@ use serde_json::Value;
 use std::path::PathBuf;
 use std::sync::RwLock;
 
-const ALLOW_LEGACY_AUTH_ENV: &str = "JCODE_ALLOW_CODEX_LEGACY_AUTH";
+const ALLOW_LEGACY_AUTH_ENV: &str = "IAGENT_ALLOW_CODEX_LEGACY_AUTH";
 pub const LEGACY_CODEX_AUTH_SOURCE_ID: &str = "openai_codex_auth_json";
 
 #[derive(Debug, Clone)]
@@ -33,7 +33,7 @@ pub struct OpenAiAccount {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct JcodeOpenAiAuthFile {
+pub struct IagentOpenAiAuthFile {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub openai_accounts: Vec<OpenAiAccount>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -95,7 +95,7 @@ pub fn login_target_label(requested: Option<&str>) -> Result<String> {
     ))
 }
 
-fn relabel_accounts(auth: &mut JcodeOpenAiAuthFile) -> bool {
+fn relabel_accounts(auth: &mut IagentOpenAiAuthFile) -> bool {
     let outcome = crate::auth::account_store::relabel_accounts(
         ACCOUNT_LABEL_PREFIX,
         &mut auth.openai_accounts,
@@ -162,14 +162,14 @@ pub fn has_unconsented_legacy_credentials() -> bool {
     legacy_auth_source_exists() && !legacy_auth_allowed()
 }
 
-pub fn load_auth_file() -> Result<JcodeOpenAiAuthFile> {
+pub fn load_auth_file() -> Result<IagentOpenAiAuthFile> {
     let path = iagent_auth_path()?;
     let mut auth = if path.exists() {
         crate::storage::harden_secret_file_permissions(&path);
         crate::storage::read_json(&path)
             .with_context(|| format!("Could not read OpenAI credentials from {:?}", path))?
     } else {
-        JcodeOpenAiAuthFile::default()
+        IagentOpenAiAuthFile::default()
     };
 
     if relabel_accounts(&mut auth) {
@@ -182,9 +182,9 @@ pub fn load_auth_file() -> Result<JcodeOpenAiAuthFile> {
     Ok(auth)
 }
 
-pub fn save_auth_file(auth: &JcodeOpenAiAuthFile) -> Result<()> {
+pub fn save_auth_file(auth: &IagentOpenAiAuthFile) -> Result<()> {
     let auth_path = iagent_auth_path()?;
-    let clean = JcodeOpenAiAuthFile {
+    let clean = IagentOpenAiAuthFile {
         openai_accounts: auth.openai_accounts.clone(),
         active_openai_account: auth.active_openai_account.clone(),
     };
@@ -321,7 +321,7 @@ pub fn load_credentials() -> Result<CodexCredentials> {
         {
             return Ok(creds);
         }
-        expired_candidates.push(("jcode", creds));
+        expired_candidates.push(("iagent", creds));
     }
 
     if legacy_allowed {

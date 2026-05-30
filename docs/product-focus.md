@@ -73,7 +73,7 @@ Ship one high-confidence loop end to end:
 - `action.execution`: `{ "action_type": "fill_form", "success": true, "risk_level": "edit_local" }`
 - `action.undo`: `{ "action_type": "edit", "undo_used": true }`
 
-Events are appended to `~/.jcode/telemetry/core_loop_metrics.jsonl` with `schema_version`.
+Events are appended to `~/.iagent/telemetry/core_loop_metrics.jsonl` with `schema_version`.
 
 ## Dashboard Query Examples
 

@@ -77,7 +77,7 @@ pub(super) async fn resolve_debug_session(
 }
 
 pub(super) fn debug_message_timeout_secs() -> Option<u64> {
-    let raw = std::env::var("JCODE_DEBUG_MESSAGE_TIMEOUT_SECS").ok()?;
+    let raw = std::env::var("IAGENT_DEBUG_MESSAGE_TIMEOUT_SECS").ok()?;
     let trimmed = raw.trim();
     if trimmed.is_empty() {
         return None;
@@ -578,13 +578,13 @@ pub(super) async fn execute_debug_command(
 
     if trimmed == "reload" {
         let repo_dir = crate::build::get_repo_dir()
-            .ok_or_else(|| anyhow::anyhow!("Could not find jcode repository directory"))?;
+            .ok_or_else(|| anyhow::anyhow!("Could not find iagent repository directory"))?;
 
         let target_binary = crate::build::find_dev_binary(&repo_dir)
             .unwrap_or_else(|| build::release_binary_path(&repo_dir));
         if !target_binary.exists() {
             return Err(anyhow::anyhow!(format!(
-                "No binary found at {}. Run 'jcode self-dev --build' first, or build with 'scripts/dev_cargo.sh build --profile selfdev -p jcode --bin jcode' and publish current.",
+                "No binary found at {}. Run 'iagent self-dev --build' first, or build with 'scripts/dev_cargo.sh build --profile selfdev -p iagent --bin iagent' and publish current.",
                 target_binary.display()
             )));
         }
@@ -695,8 +695,8 @@ mod tests {
     #[tokio::test]
     async fn debug_tool_selfdev_reload_returns_promptly_for_direct_execution() {
         let _env_lock = lock_env();
-        let _test_session = EnvGuard::set("JCODE_TEST_SESSION", "1");
-        let _debug_control = EnvGuard::set("JCODE_DEBUG_CONTROL", "1");
+        let _test_session = EnvGuard::set("IAGENT_TEST_SESSION", "1");
+        let _debug_control = EnvGuard::set("IAGENT_DEBUG_CONTROL", "1");
 
         let mut reload_rx = crate::server::subscribe_reload_signal_for_tests();
 

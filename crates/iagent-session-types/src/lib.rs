@@ -633,7 +633,7 @@ pub fn format_session_search_results(
     ));
 
     output.push_str(&format!(
-        "_Scanned: {} Jcode sessions ({} candidates), {} external sessions{}{}._\n\n",
+        "_Scanned: {} Iagent sessions ({} candidates), {} external sessions{}{}._\n\n",
         report.scanned_iagent_sessions,
         report.candidate_iagent_sessions,
         report.scanned_external_sessions,

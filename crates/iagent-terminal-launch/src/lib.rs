@@ -166,7 +166,7 @@ pub fn detected_resume_terminal() -> Option<String> {
 #[cfg(unix)]
 pub fn resume_terminal_candidates() -> Vec<String> {
     let mut candidates = Vec::new();
-    if let Ok(term) = std::env::var("JCODE_TERMINAL") {
+    if let Ok(term) = std::env::var("IAGENT_TERMINAL") {
         push_unique_terminal(&mut candidates, term);
     }
     if let Some(term) = detected_resume_terminal() {
@@ -211,7 +211,7 @@ pub fn resume_terminal_candidates() -> Vec<String> {
 #[cfg(not(unix))]
 pub fn resume_terminal_candidates() -> Vec<String> {
     let mut candidates = Vec::new();
-    if let Ok(term) = std::env::var("JCODE_TERMINAL") {
+    if let Ok(term) = std::env::var("IAGENT_TERMINAL") {
         push_unique_terminal(&mut candidates, term);
     }
     if let Some(term) = detected_resume_terminal() {
@@ -257,7 +257,7 @@ fn build_spawn_command(term: &str, command: &TerminalCommand, cwd: &Path) -> Opt
         .stdout(Stdio::null())
         .stderr(Stdio::null());
     if command.fresh_spawn {
-        cmd.env("JCODE_FRESH_SPAWN", "1");
+        cmd.env("IAGENT_FRESH_SPAWN", "1");
     }
 
     match term {
@@ -277,7 +277,7 @@ fn build_spawn_command(term: &str, command: &TerminalCommand, cwd: &Path) -> Opt
                 .args(["-na", "Ghostty", "--args", "-e", "/bin/bash", "-lc"])
                 .arg(shell);
             if command.fresh_spawn {
-                cmd.env("JCODE_FRESH_SPAWN", "1");
+                cmd.env("IAGENT_FRESH_SPAWN", "1");
             }
         }
         "kitty" => {

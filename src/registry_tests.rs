@@ -39,8 +39,8 @@ fn test_registry_find_by_name() {
 fn find_server_by_socket_sync_returns_matching_server() {
     let _guard = lock_test_env();
     let temp_home = tempfile::tempdir().expect("temp home");
-    let prev_home: Option<OsString> = std::env::var_os("JCODE_HOME");
-    crate::env::set_var("JCODE_HOME", temp_home.path());
+    let prev_home: Option<OsString> = std::env::var_os("IAGENT_HOME");
+    crate::env::set_var("IAGENT_HOME", temp_home.path());
 
     let socket = PathBuf::from("/tmp/blazing.sock");
     let mut registry = ServerRegistry::default();
@@ -59,9 +59,9 @@ fn find_server_by_socket_sync_returns_matching_server() {
     assert_eq!(found.icon, info.icon);
 
     if let Some(prev_home) = prev_home {
-        crate::env::set_var("JCODE_HOME", prev_home);
+        crate::env::set_var("IAGENT_HOME", prev_home);
     } else {
-        crate::env::remove_var("JCODE_HOME");
+        crate::env::remove_var("IAGENT_HOME");
     }
 }
 
@@ -70,8 +70,8 @@ fn find_server_by_socket_sync_returns_matching_server() {
 async fn cleanup_stale_preserves_live_socket_paths() {
     let _guard = lock_test_env();
     let temp_home = tempfile::tempdir().expect("temp home");
-    let prev_home: Option<OsString> = std::env::var_os("JCODE_HOME");
-    crate::env::set_var("JCODE_HOME", temp_home.path());
+    let prev_home: Option<OsString> = std::env::var_os("IAGENT_HOME");
+    crate::env::set_var("IAGENT_HOME", temp_home.path());
 
     let temp_runtime = tempfile::tempdir().expect("temp runtime");
     let socket = temp_runtime.path().join("iagent.sock");
@@ -114,8 +114,8 @@ async fn cleanup_stale_preserves_live_socket_paths() {
     );
 
     if let Some(prev_home) = prev_home {
-        crate::env::set_var("JCODE_HOME", prev_home);
+        crate::env::set_var("IAGENT_HOME", prev_home);
     } else {
-        crate::env::remove_var("JCODE_HOME");
+        crate::env::remove_var("IAGENT_HOME");
     }
 }

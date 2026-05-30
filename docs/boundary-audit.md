@@ -11,7 +11,7 @@ iagent::desktop_ambient::run(false).await
 
 ## Current Architecture
 
-All Windows shell components (`desktop-monitor`, `suggestion-engine`, `overlay-ui`) and the jcode backend compile into the **same process**. No IPC boundary yet. The `iagent-ambient` binary is the ambient agent — it owns the iAgent provider adapter and drives the event loop.
+All Windows shell components (`desktop-monitor`, `suggestion-engine`, `overlay-ui`) and the iagent backend compile into the **same process**. No IPC boundary yet. The `iagent-ambient` binary is the ambient agent — it owns the iAgent provider adapter and drives the event loop.
 
 ---
 

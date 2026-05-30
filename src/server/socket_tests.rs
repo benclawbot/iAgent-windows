@@ -18,8 +18,8 @@ use std::time::Duration;
 
 #[test]
 fn sibling_socket_path_roundtrip() {
-    let main = std::path::PathBuf::from("/tmp/jcode.sock");
-    let debug = std::path::PathBuf::from("/tmp/jcode-debug.sock");
+    let main = std::path::PathBuf::from("/tmp/iagent.sock");
+    let debug = std::path::PathBuf::from("/tmp/iagent-debug.sock");
 
     assert_eq!(sibling_socket_path(&main), Some(debug.clone()));
     assert_eq!(sibling_socket_path(&debug), Some(main));
@@ -36,8 +36,8 @@ fn cleanup_socket_pair_removes_main_and_debug_files() {
             .as_nanos()
     );
     let dir = std::env::temp_dir();
-    let main = dir.join(format!("jcode-test-{}.sock", stamp));
-    let debug = dir.join(format!("jcode-test-{}-debug.sock", stamp));
+    let main = dir.join(format!("iagent-test-{}.sock", stamp));
+    let debug = dir.join(format!("iagent-test-{}-debug.sock", stamp));
 
     std::fs::write(&main, b"").expect("create main socket placeholder");
     std::fs::write(&debug, b"").expect("create debug socket placeholder");
@@ -81,8 +81,8 @@ async fn connect_socket_preserves_refused_socket_path() {
 fn daemon_lock_serializes_server_processes() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
 
     let lock_path = daemon_lock_path();
     let first = try_acquire_daemon_lock(&lock_path)
@@ -98,9 +98,9 @@ fn daemon_lock_serializes_server_processes() {
     drop(third);
 
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 
@@ -108,10 +108,10 @@ fn daemon_lock_serializes_server_processes() {
 #[test]
 fn existing_server_start_errors_are_detected() {
     assert!(server_start_matches_existing_server(
-        "Error: Another jcode server process is already running for runtime dir /run/user/1000"
+        "Error: Another iagent server process is already running for runtime dir /run/user/1000"
     ));
     assert!(server_start_matches_existing_server(
-        "Error: Refusing to replace active server socket at /run/user/1000/jcode.sock"
+        "Error: Refusing to replace active server socket at /run/user/1000/iagent.sock"
     ));
     assert!(!server_start_matches_existing_server(
         "Error: failed to bind socket: permission denied"
@@ -122,8 +122,8 @@ fn existing_server_start_errors_are_detected() {
 fn reload_marker_active_expires_stale_marker() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
 
     let marker = reload_marker_path();
     if let Some(parent) = marker.parent() {
@@ -136,9 +136,9 @@ fn reload_marker_active_expires_stale_marker() {
     assert!(!marker.exists(), "stale reload marker should be cleaned up");
 
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 
@@ -146,17 +146,17 @@ fn reload_marker_active_expires_stale_marker() {
 fn reload_marker_active_for_recent_socket_ready_marker() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
 
     write_reload_state("test-request", "test-hash", ReloadPhase::SocketReady, None);
     assert!(reload_marker_active(Duration::from_secs(30)));
 
     clear_reload_marker();
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 
@@ -164,8 +164,8 @@ fn reload_marker_active_for_recent_socket_ready_marker() {
 fn publish_reload_socket_ready_updates_current_process_marker() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
 
     write_reload_state(
         "test-request",
@@ -183,9 +183,9 @@ fn publish_reload_socket_ready_updates_current_process_marker() {
 
     clear_reload_marker();
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 
@@ -193,8 +193,8 @@ fn publish_reload_socket_ready_updates_current_process_marker() {
 fn publish_reload_socket_ready_clears_marker_for_foreign_pid() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
 
     ReloadState {
         request_id: "test-request".to_string(),
@@ -213,9 +213,9 @@ fn publish_reload_socket_ready_clears_marker_for_foreign_pid() {
     );
 
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 
@@ -223,8 +223,8 @@ fn publish_reload_socket_ready_clears_marker_for_foreign_pid() {
 async fn inspect_reload_wait_status_reports_ready_for_socket_ready_marker() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
 
     write_reload_state("test-request", "test-hash", ReloadPhase::SocketReady, None);
 
@@ -234,9 +234,9 @@ async fn inspect_reload_wait_status_reports_ready_for_socket_ready_marker() {
 
     clear_reload_marker();
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 
@@ -246,8 +246,8 @@ async fn inspect_reload_wait_status_keeps_waiting_while_starting_marker_is_activ
  {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
 
     ReloadState {
         request_id: "test-request".to_string(),
@@ -272,9 +272,9 @@ async fn inspect_reload_wait_status_keeps_waiting_while_starting_marker_is_activ
 
     clear_reload_marker();
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 
@@ -282,8 +282,8 @@ async fn inspect_reload_wait_status_keeps_waiting_while_starting_marker_is_activ
 async fn wait_for_reload_handoff_event_returns_promptly_when_no_event_arrives() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
 
     let socket_path = temp.path().join("missing.sock");
     let started = std::time::Instant::now();
@@ -294,9 +294,9 @@ async fn wait_for_reload_handoff_event_returns_promptly_when_no_event_arrives() 
     );
 
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 
@@ -334,8 +334,8 @@ async fn inspect_reload_wait_status_uses_last_known_pid_when_marker_missing() {
 async fn inspect_reload_wait_status_reports_failed_when_reload_pid_is_dead() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
     let dead_pid = std::process::id().saturating_add(1_000_000);
     assert!(
         !reload_process_alive(dead_pid),
@@ -358,9 +358,9 @@ async fn inspect_reload_wait_status_reports_failed_when_reload_pid_is_dead() {
 
     clear_reload_marker();
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 
@@ -368,8 +368,8 @@ async fn inspect_reload_wait_status_reports_failed_when_reload_pid_is_dead() {
 async fn await_reload_handoff_returns_ready_after_marker_transition() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
 
     ReloadState {
         request_id: "test-request".to_string(),
@@ -397,9 +397,9 @@ async fn await_reload_handoff_returns_ready_after_marker_transition() {
 
     clear_reload_marker();
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }
 
@@ -407,8 +407,8 @@ async fn await_reload_handoff_returns_ready_after_marker_transition() {
 async fn await_reload_handoff_returns_failed_after_marker_transition() {
     let _guard = crate::storage::lock_test_env();
     let temp = tempfile::tempdir().expect("tempdir");
-    let prev_runtime = std::env::var_os("JCODE_RUNTIME_DIR");
-    crate::env::set_var("JCODE_RUNTIME_DIR", temp.path());
+    let prev_runtime = std::env::var_os("IAGENT_RUNTIME_DIR");
+    crate::env::set_var("IAGENT_RUNTIME_DIR", temp.path());
 
     ReloadState {
         request_id: "test-request".to_string(),
@@ -441,8 +441,8 @@ async fn await_reload_handoff_returns_failed_after_marker_transition() {
 
     clear_reload_marker();
     if let Some(prev_runtime) = prev_runtime {
-        crate::env::set_var("JCODE_RUNTIME_DIR", prev_runtime);
+        crate::env::set_var("IAGENT_RUNTIME_DIR", prev_runtime);
     } else {
-        crate::env::remove_var("JCODE_RUNTIME_DIR");
+        crate::env::remove_var("IAGENT_RUNTIME_DIR");
     }
 }

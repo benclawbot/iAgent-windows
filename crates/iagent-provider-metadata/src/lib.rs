@@ -24,7 +24,7 @@ impl LoginProviderAuthKind {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LoginProviderTarget {
     AutoImport,
-    Jcode,
+    Iagent,
     Claude,
     OpenAi,
     OpenAiApiKey,
@@ -42,7 +42,7 @@ pub enum LoginProviderTarget {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LoginProviderAuthStateKey {
     ExternalImport,
-    Jcode,
+    Iagent,
     Anthropic,
     OpenAi,
     Azure,
@@ -544,16 +544,16 @@ pub const AUTO_IMPORT_LOGIN_PROVIDER: LoginProviderDescriptor = LoginProviderDes
     order: LoginProviderSurfaceOrder::new(Some(1), Some(1), None, None, None),
 };
 
-pub const JCODE_LOGIN_PROVIDER: LoginProviderDescriptor = LoginProviderDescriptor {
-    id: "jcode",
-    display_name: "Jcode Subscription",
+pub const IAGENT_LOGIN_PROVIDER: LoginProviderDescriptor = LoginProviderDescriptor {
+    id: "iagent",
+    display_name: "Iagent Subscription",
     auth_kind: LoginProviderAuthKind::ApiKey,
-    auth_state_key: LoginProviderAuthStateKey::Jcode,
+    auth_state_key: LoginProviderAuthStateKey::Iagent,
     auth_status_method: "API key",
-    aliases: &["subscription", "jcode-subscription"],
-    menu_detail: "curated jcode subscription models",
+    aliases: &["subscription", "iagent-subscription"],
+    menu_detail: "curated iagent subscription models",
     recommended: false,
-    target: LoginProviderTarget::Jcode,
+    target: LoginProviderTarget::Iagent,
     order: LoginProviderSurfaceOrder::new(Some(3), Some(3), Some(3), Some(3), Some(3)),
 };
 
@@ -1106,7 +1106,7 @@ const LOGIN_PROVIDERS: [LoginProviderDescriptor; 44] = [
     CLAUDE_LOGIN_PROVIDER,
     OPENAI_LOGIN_PROVIDER,
     OPENAI_API_LOGIN_PROVIDER,
-    JCODE_LOGIN_PROVIDER,
+    IAGENT_LOGIN_PROVIDER,
     OPENROUTER_LOGIN_PROVIDER,
     BEDROCK_LOGIN_PROVIDER,
     AZURE_LOGIN_PROVIDER,
@@ -1407,7 +1407,7 @@ mod tests {
     fn matrix_login_provider_aliases_resolve_to_canonical_ids() {
         assert_eq!(
             resolve_login_provider("subscription").map(|provider| provider.id),
-            Some("jcode")
+            Some("iagent")
         );
         assert_eq!(
             resolve_login_provider("anthropic").map(|provider| provider.id),
@@ -1549,7 +1549,7 @@ mod tests {
         );
         assert_eq!(
             resolve_login_selection("4", &providers).map(|provider| provider.id),
-            Some("jcode")
+            Some("iagent")
         );
         assert_eq!(
             resolve_login_selection("5", &providers).map(|provider| provider.id),

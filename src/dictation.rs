@@ -5,7 +5,7 @@ use std::process::{Command, Stdio};
 use std::sync::{Mutex, OnceLock};
 use tokio::time::{Duration, timeout};
 
-const CLIENT_TITLE_PREFIXES: &[&str] = &["jcode:d:", "jcode:c:"];
+const CLIENT_TITLE_PREFIXES: &[&str] = &["iagent:d:", "iagent:c:"];
 
 #[derive(Debug, Clone)]
 pub struct DictationRun {
@@ -18,7 +18,7 @@ pub async fn run_configured() -> Result<DictationRun> {
     let command = cfg.command.trim();
     if command.is_empty() {
         anyhow::bail!(
-            "Dictation is not configured. Set `[dictation].command` in `~/.jcode/config.toml`."
+            "Dictation is not configured. Set `[dictation].command` in `~/.iagent/config.toml`."
         );
     }
 
@@ -215,8 +215,8 @@ fn resolve_session_from_window_title(title: &str) -> Option<String> {
 
 fn extract_session_short_name_from_window_title(title: &str) -> Option<String> {
     let (_, rest) = title
-        .split_once("jcode/")
-        .or_else(|| title.split_once("jcode "))?;
+        .split_once("iagent/")
+        .or_else(|| title.split_once("iagent "))?;
     let candidate = rest.split('[').next().unwrap_or(rest).trim();
     let token = candidate.split_whitespace().next_back()?;
     normalize_session_short_name(token)

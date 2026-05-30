@@ -7,7 +7,7 @@ const GOOGLE_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL: &str = "https://www.googleapis.com/oauth2/v2/userinfo";
 pub const GEMINI_MANUAL_REDIRECT_URI: &str = "https://codeassist.google.com/authcode";
 pub const GEMINI_CLI_AUTH_SOURCE_ID: &str = "gemini_cli_oauth_creds";
-// Configure OAuth credentials outside the repository. The upstream jcode fork
+// Configure OAuth credentials outside the repository. The upstream iagent fork
 // embedded public desktop OAuth credentials; iAgent keeps them out of source so
 // GitHub push protection and downstream distributions stay clean.
 const GEMINI_CLIENT_ID: &str = "configure-via-GEMINI_CLIENT_ID";
@@ -87,12 +87,12 @@ struct GeminiCliOAuthCredentials {
 /// Resolve the Gemini CLI command from the environment or a sensible default.
 ///
 /// Preference order:
-/// 1. `JCODE_GEMINI_CLI_PATH` (supports a full command like `npx @google/gemini-cli`)
+/// 1. `IAGENT_GEMINI_CLI_PATH` (supports a full command like `npx @google/gemini-cli`)
 /// 2. `gemini` on PATH
 /// 3. `npx @google/gemini-cli`
 pub fn gemini_cli_command() -> GeminiCliCommand {
     resolve_gemini_cli_command_with(
-        std::env::var("JCODE_GEMINI_CLI_PATH").ok().as_deref(),
+        std::env::var("IAGENT_GEMINI_CLI_PATH").ok().as_deref(),
         super::command_exists,
     )
 }

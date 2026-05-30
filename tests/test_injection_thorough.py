@@ -23,7 +23,7 @@ if hasattr(os, "getuid"):
     RUNTIME_DIR = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
 else:
     RUNTIME_DIR = os.environ.get("XDG_RUNTIME_DIR") or os.environ.get("TEMP", ".")
-SOCKET_PATH = os.path.join(RUNTIME_DIR, "jcode-debug.sock")
+SOCKET_PATH = os.path.join(RUNTIME_DIR, "iagent-debug.sock")
 
 def send_cmd(sock, cmd, session_id=None, timeout=120):
     """Send a debug command and get the response."""
@@ -309,7 +309,7 @@ def main():
     # Check socket exists
     if not os.path.exists(SOCKET_PATH):
         print(f"ERROR: Socket not found at {SOCKET_PATH}")
-        print("Make sure jcode is running with debug control enabled.")
+        print("Make sure iagent is running with debug control enabled.")
         return 1
 
     all_passed = True

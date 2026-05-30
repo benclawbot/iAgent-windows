@@ -5,7 +5,7 @@ use crate::storage;
 use iagent_gateway_types::{PairedDevice, PairingCode};
 
 // ---------------------------------------------------------------------------
-// Device registry (persisted to ~/.jcode/devices.json)
+// Device registry (persisted to ~/.iagent/devices.json)
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -16,7 +16,7 @@ pub struct DeviceRegistry {
 }
 
 impl DeviceRegistry {
-    /// Load from ~/.jcode/devices.json
+    /// Load from ~/.iagent/devices.json
     pub fn load() -> Self {
         let path = match storage::iagent_dir() {
             Ok(d) => d.join("devices.json"),
@@ -31,7 +31,7 @@ impl DeviceRegistry {
         }
     }
 
-    /// Save to ~/.jcode/devices.json
+    /// Save to ~/.iagent/devices.json
     pub fn save(&self) -> Result<()> {
         let path = storage::iagent_dir()?.join("devices.json");
         let contents = serde_json::to_string_pretty(self)?;

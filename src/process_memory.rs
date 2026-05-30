@@ -392,7 +392,7 @@ fn default_heap_profile_path() -> Result<PathBuf> {
     let base = crate::storage::iagent_dir()?.join("profiles").join("heap");
     let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%SZ");
     let pid = std::process::id();
-    Ok(base.join(format!("jcode-{}-{}.heap", pid, timestamp)))
+    Ok(base.join(format!("iagent-{}-{}.heap", pid, timestamp)))
 }
 
 #[cfg(feature = "jemalloc")]

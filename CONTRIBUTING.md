@@ -2,6 +2,19 @@
 
 Thanks for contributing.
 
+## Quick workflow
+
+1. Fork the repo and create a topic branch from `main`.
+2. Make focused changes with tests/docs updated in the same PR.
+3. Run the local checks that match your changes:
+   - `cargo check --workspace --all-targets`
+   - `cargo test`
+   - `cargo clippy --workspace --all-targets -- -D warnings`
+4. Open a pull request with:
+   - problem summary
+   - reproduction or failing test
+   - fix description and validation notes
+
 ## Issues vs pull requests
 
 If the problem is easy for me to reproduce, please prefer opening a GitHub issue. A clear issue with reproduction steps, expected behavior, actual behavior, logs, screenshots, or traces is usually the fastest path to a fix.

@@ -185,7 +185,7 @@ fn install_macos_hotkey_listener(
     <string>{stderr_path}</string>
     <key>EnvironmentVariables</key>
     <dict>
-        <key>JCODE_PREFERRED_TERMINAL</key>
+        <key>IAGENT_PREFERRED_TERMINAL</key>
         <string>{terminal}</string>
     </dict>
 </dict>

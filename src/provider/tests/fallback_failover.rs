@@ -173,8 +173,8 @@ fn test_set_model_rejects_cross_provider_without_creds() {
     let runtime = enter_test_runtime();
     let _enter = runtime.enter();
     crate::subscription_catalog::clear_runtime_env();
-    crate::env::remove_var("JCODE_ACTIVE_PROVIDER");
-    crate::env::remove_var("JCODE_FORCE_PROVIDER");
+    crate::env::remove_var("IAGENT_ACTIVE_PROVIDER");
+    crate::env::remove_var("IAGENT_FORCE_PROVIDER");
 
     let provider = MultiProvider {
         claude: RwLock::new(None),

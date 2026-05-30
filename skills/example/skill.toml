@@ -1,0 +1,6 @@
+permissions = ["filesystem:read", "filesystem:write", "shell:execute"]
+triggers = [
+  "template a new skill",
+  "show me a skill example",
+  "how do I author a skill"
+]

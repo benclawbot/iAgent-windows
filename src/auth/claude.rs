@@ -44,7 +44,7 @@ pub struct ClaudeCredentials {
     pub subscription_type: Option<String>,
 }
 
-/// Represents a named Anthropic OAuth account stored in jcode's auth.json.
+/// Represents a named Anthropic OAuth account stored in iagent's auth.json.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnthropicAccount {
     pub label: String,
@@ -62,7 +62,7 @@ pub struct AnthropicAccount {
 /// Multi-account iagent auth.json format.
 /// Backwards-compatible: also reads the old single-account `{"anthropic": {...}}` layout.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct JcodeAuthFile {
+pub struct IagentAuthFile {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub anthropic_accounts: Vec<AnthropicAccount>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -121,7 +121,7 @@ pub fn login_target_label(requested: Option<&str>) -> Result<String> {
     ))
 }
 
-fn relabel_accounts(auth: &mut JcodeAuthFile) -> bool {
+fn relabel_accounts(auth: &mut IagentAuthFile) -> bool {
     let outcome = crate::auth::account_store::relabel_accounts(
         ACCOUNT_LABEL_PREFIX,
         &mut auth.anthropic_accounts,
@@ -185,15 +185,15 @@ pub fn iagent_path() -> Result<PathBuf> {
 // ---- Multi-account helpers ----
 
 /// Read the iagent auth file, auto-migrating from legacy format if needed.
-pub fn load_auth_file() -> Result<JcodeAuthFile> {
+pub fn load_auth_file() -> Result<IagentAuthFile> {
     let path = iagent_path()?;
     if !path.exists() {
-        return Ok(JcodeAuthFile::default());
+        return Ok(IagentAuthFile::default());
     }
 
     crate::storage::harden_secret_file_permissions(&path);
 
-    let mut auth: JcodeAuthFile = crate::storage::read_json(&path)
+    let mut auth: IagentAuthFile = crate::storage::read_json(&path)
         .with_context(|| format!("Could not read iagent credentials from {:?}", path))?;
 
     if auth.anthropic_accounts.is_empty()
@@ -225,10 +225,10 @@ pub fn load_auth_file() -> Result<JcodeAuthFile> {
 }
 
 /// Write the iagent auth file (multi-account format).
-pub fn save_auth_file(auth: &JcodeAuthFile) -> Result<()> {
+pub fn save_auth_file(auth: &IagentAuthFile) -> Result<()> {
     let auth_path = iagent_path()?;
 
-    let clean = JcodeAuthFile {
+    let clean = IagentAuthFile {
         anthropic_accounts: auth.anthropic_accounts.clone(),
         active_anthropic_account: auth.active_anthropic_account.clone(),
         anthropic: None,
@@ -411,7 +411,7 @@ pub fn is_max_subscription() -> bool {
 }
 
 /// Load credentials for the active Anthropic account.
-/// Falls through Claude Code -> jcode accounts -> OpenCode, preferring non-expired tokens.
+/// Falls through Claude Code -> iagent accounts -> OpenCode, preferring non-expired tokens.
 pub fn load_credentials() -> Result<ClaudeCredentials> {
     let now_ms = chrono::Utc::now().timestamp_millis();
 
@@ -438,7 +438,7 @@ pub fn load_credentials() -> Result<ClaudeCredentials> {
         if creds.expires_at > now_ms {
             return Ok(creds);
         }
-        expired_candidates.push(("jcode", creds));
+        expired_candidates.push(("iagent", creds));
     }
 
     if opencode_path()
@@ -468,7 +468,7 @@ pub fn load_credentials() -> Result<ClaudeCredentials> {
     anyhow::bail!("No Claude OAuth credentials found (checked Claude Code, iagent, OpenCode)")
 }
 
-/// Load credentials for a specific jcode account by label.
+/// Load credentials for a specific iagent account by label.
 pub fn load_credentials_for_account(label: &str) -> Result<ClaudeCredentials> {
     let auth = load_auth_file()?;
     let account = auth

@@ -383,7 +383,7 @@ const RETRY_BASE_DELAY_MS: u64 = 1000;
 
 /// Default max output tokens for Anthropic models.
 /// Set to 32k to avoid truncating long tool calls (e.g. writing large files).
-/// Override with JCODE_ANTHROPIC_MAX_TOKENS env var.
+/// Override with IAGENT_ANTHROPIC_MAX_TOKENS env var.
 const DEFAULT_MAX_TOKENS: u32 = 32_768;
 
 /// Available models
@@ -424,7 +424,7 @@ impl AnthropicProvider {
     }
 
     pub fn new() -> Self {
-        let model = std::env::var("JCODE_ANTHROPIC_MODEL").unwrap_or_else(|_| {
+        let model = std::env::var("IAGENT_ANTHROPIC_MODEL").unwrap_or_else(|_| {
             if Self::is_usage_exhausted() {
                 "claude-sonnet-4-6".to_string()
             } else {
@@ -439,7 +439,7 @@ impl AnthropicProvider {
             })
         });
 
-        let max_tokens = std::env::var("JCODE_ANTHROPIC_MAX_TOKENS")
+        let max_tokens = std::env::var("IAGENT_ANTHROPIC_MAX_TOKENS")
             .ok()
             .and_then(|v| v.trim().parse::<u32>().ok())
             .unwrap_or(DEFAULT_MAX_TOKENS);
@@ -1361,7 +1361,7 @@ async fn stream_response(
     oauth_session_id: &str,
 ) -> Result<()> {
     use crate::message::ConnectionPhase;
-    if std::env::var("JCODE_ANTHROPIC_DEBUG")
+    if std::env::var("IAGENT_ANTHROPIC_DEBUG")
         .map(|v| v == "1")
         .unwrap_or(false)
         && let Ok(json) = serde_json::to_string_pretty(&request)

@@ -93,10 +93,10 @@ async fn spawn_tester(opts: serde_json::Value) -> Result<String> {
         ));
     }
 
-    let debug_cmd = std::env::temp_dir().join(format!("jcode_debug_cmd_{}", id));
-    let debug_resp = std::env::temp_dir().join(format!("jcode_debug_response_{}", id));
-    let stdout_path = std::env::temp_dir().join(format!("jcode_tester_stdout_{}", id));
-    let stderr_path = std::env::temp_dir().join(format!("jcode_tester_stderr_{}", id));
+    let debug_cmd = std::env::temp_dir().join(format!("iagent_debug_cmd_{}", id));
+    let debug_resp = std::env::temp_dir().join(format!("iagent_debug_response_{}", id));
+    let stdout_path = std::env::temp_dir().join(format!("iagent_tester_stdout_{}", id));
+    let stderr_path = std::env::temp_dir().join(format!("iagent_tester_stderr_{}", id));
 
     let stdout_file = std::fs::File::create(&stdout_path)?;
     let stderr_file = std::fs::File::create(&stderr_path)?;
@@ -112,11 +112,11 @@ async fn spawn_tester(opts: serde_json::Value) -> Result<String> {
     cmd.current_dir(cwd);
     cmd.env(crate::cli::selfdev::CLIENT_SELFDEV_ENV, "1");
     cmd.env(
-        "JCODE_DEBUG_CMD_PATH",
+        "IAGENT_DEBUG_CMD_PATH",
         debug_cmd.to_string_lossy().to_string(),
     );
     cmd.env(
-        "JCODE_DEBUG_RESPONSE_PATH",
+        "IAGENT_DEBUG_RESPONSE_PATH",
         debug_resp.to_string_lossy().to_string(),
     );
     cmd.arg("--debug-socket");

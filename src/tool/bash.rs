@@ -12,7 +12,8 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 #[cfg(unix)]
 use std::fs::OpenOptions;
-use std::path::Path;
+use std::io::Write as _;
+use std::path::{Path, PathBuf};
 #[cfg(unix)]
 use std::process::Command as StdCommand;
 use std::process::Stdio;
@@ -28,11 +29,11 @@ const MAX_OUTPUT_LEN: usize = 30000;
 const DEFAULT_TIMEOUT_MS: u64 = 120000;
 const STDIN_POLL_INTERVAL_MS: u64 = 500;
 const STDIN_INITIAL_DELAY_MS: u64 = 300;
-const PROGRESS_MARKER_PREFIX: &str = "JCODE_PROGRESS ";
-const CHECKPOINT_MARKER_PREFIX: &str = "JCODE_CHECKPOINT ";
-const BACKGROUND_PROGRESS_GUIDANCE: &str = "For long-running background commands, prefer scripts or commands that periodically print progress updates. Best format: print lines starting with `JCODE_PROGRESS ` followed by JSON like {\"percent\":42,\"message\":\"Running\"} or {\"current\":120,\"total\":1000,\"unit\":\"batches\",\"message\":\"Epoch 2/5\",\"eta_seconds\":30}. Supported JSON fields are `percent`, `message`, `current`, `total`, `unit`, `eta_seconds`, and optional `kind`=`indeterminate` or `kind`=`checkpoint`. For milestone-style wakeups, print `JCODE_CHECKPOINT {\"message\":\"Unit tests passed\"}`. Generic fallback output that can be parsed includes `42%`, `3/10 tests`, `3 of 10 steps`, `1.5/3.0 GiB`, or phase lines like `Compiling ...`, `Downloading ...`, `Running ...`, and `Building ...`. If you are writing the script yourself, add these progress/checkpoint lines explicitly.";
-const BASH_TOOL_DESCRIPTION: &str = "Run a bash command. For long-running background commands, prefer scripts that emit progress/checkpoint lines. Print `JCODE_PROGRESS {json}` or `JCODE_CHECKPOINT {json}` lines for reliable reporting, or at least output parseable progress like `42%`, `3/10 tests`, `3 of 10 steps`, `1.5/3.0 GiB`, or `Running ...`.";
-const WINDOWS_SHELL_TOOL_DESCRIPTION: &str = "Run a shell command. For long-running background commands, prefer scripts that emit progress/checkpoint lines. Print `JCODE_PROGRESS {json}` or `JCODE_CHECKPOINT {json}` lines for reliable reporting, or at least output parseable progress like `42%`, `3/10 tests`, `3 of 10 steps`, `1.5/3.0 GiB`, or `Running ...`.";
+const PROGRESS_MARKER_PREFIX: &str = "IAGENT_PROGRESS ";
+const CHECKPOINT_MARKER_PREFIX: &str = "IAGENT_CHECKPOINT ";
+const BACKGROUND_PROGRESS_GUIDANCE: &str = "For long-running background commands, prefer scripts or commands that periodically print progress updates. Best format: print lines starting with `IAGENT_PROGRESS ` followed by JSON like {\"percent\":42,\"message\":\"Running\"} or {\"current\":120,\"total\":1000,\"unit\":\"batches\",\"message\":\"Epoch 2/5\",\"eta_seconds\":30}. Supported JSON fields are `percent`, `message`, `current`, `total`, `unit`, `eta_seconds`, and optional `kind`=`indeterminate` or `kind`=`checkpoint`. For milestone-style wakeups, print `IAGENT_CHECKPOINT {\"message\":\"Unit tests passed\"}`. Generic fallback output that can be parsed includes `42%`, `3/10 tests`, `3 of 10 steps`, `1.5/3.0 GiB`, or phase lines like `Compiling ...`, `Downloading ...`, `Running ...`, and `Building ...`. If you are writing the script yourself, add these progress/checkpoint lines explicitly.";
+const BASH_TOOL_DESCRIPTION: &str = "Run a bash command. For long-running background commands, prefer scripts that emit progress/checkpoint lines. Print `IAGENT_PROGRESS {json}` or `IAGENT_CHECKPOINT {json}` lines for reliable reporting, or at least output parseable progress like `42%`, `3/10 tests`, `3 of 10 steps`, `1.5/3.0 GiB`, or `Running ...`.";
+const WINDOWS_SHELL_TOOL_DESCRIPTION: &str = "Run a shell command. For long-running background commands, prefer scripts that emit progress/checkpoint lines. Print `IAGENT_PROGRESS {json}` or `IAGENT_CHECKPOINT {json}` lines for reliable reporting, or at least output parseable progress like `42%`, `3/10 tests`, `3 of 10 steps`, `1.5/3.0 GiB`, or `Running ...`.";
 
 fn progress_ratio_regex() -> Result<&'static regex::Regex> {
     static REGEX: LazyLock<Result<regex::Regex, regex::Error>> = LazyLock::new(|| {
@@ -418,7 +419,7 @@ async fn handle_background_output_line(
         }
         Ok(None) => {}
         Err(err) => {
-            let warning = format!("[jcode warning] failed to parse background progress: {err}\n");
+            let warning = format!("[iagent warning] failed to parse background progress: {err}\n");
             file.write_all(warning.as_bytes()).await.ok();
             file.flush().await.ok();
         }
@@ -448,14 +449,175 @@ fn build_shell_command(cmd_str: &str) -> TokioCommand {
     }
 }
 
+fn command_requests_elevation(command: &str) -> bool {
+    let lower = command.to_ascii_lowercase();
+    lower.contains(" sudo ")
+        || lower.starts_with("sudo ")
+        || lower.contains(" runas ")
+        || lower.contains("-verb runas")
+}
+
+fn command_uses_network(command: &str) -> bool {
+    let lower = command.to_ascii_lowercase();
+    lower.contains("http://")
+        || lower.contains("https://")
+        || lower.contains("curl ")
+        || lower.contains("wget ")
+        || lower.contains("invoke-webrequest")
+        || lower.contains("invoke-restmethod")
+}
+
+fn command_has_path_traversal(command: &str) -> bool {
+    command.contains("../") || command.contains("..\\")
+}
+
+fn command_likely_mutates_files(command: &str) -> bool {
+    let lower = command.to_ascii_lowercase();
+    lower.contains("rm ")
+        || lower.contains("del ")
+        || lower.contains("erase ")
+        || lower.contains("move ")
+        || lower.contains("mv ")
+        || lower.contains("copy ")
+        || lower.contains("cp ")
+        || lower.contains("rename ")
+        || lower.contains("set-content")
+        || lower.contains("add-content")
+        || lower.contains("out-file")
+        || lower.contains("new-item")
+        || lower.contains("remove-item")
+        || lower.contains(" >")
+}
+
+fn expand_allowed_path(raw: &str) -> Option<PathBuf> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    if trimmed == "~" {
+        return dirs::home_dir();
+    }
+    let expanded = trimmed.replace("%USERPROFILE%", &std::env::var("USERPROFILE").unwrap_or_default());
+    Some(PathBuf::from(expanded))
+}
+
+fn canonical_like(path: &Path) -> Option<PathBuf> {
+    std::fs::canonicalize(path).ok().or_else(|| {
+        if path.is_absolute() {
+            Some(path.to_path_buf())
+        } else {
+            std::env::current_dir().ok().map(|cwd| cwd.join(path))
+        }
+    })
+}
+
+fn path_allowed_by_policy(path: &Path, allowlist: &[String]) -> bool {
+    let Some(candidate) = canonical_like(path) else {
+        return false;
+    };
+    allowlist.iter().any(|entry| {
+        let Some(allowed) = expand_allowed_path(entry).and_then(|p| canonical_like(&p)) else {
+            return false;
+        };
+        candidate.starts_with(&allowed)
+    })
+}
+
+fn validate_shell_policy(command: &str, ctx: &ToolContext) -> Result<()> {
+    let permissions = &crate::config::config().permissions;
+    let auto_approve = std::env::var("IAGENT_AUTO_APPROVE")
+        .ok()
+        .map(|value| {
+            let normalized = value.trim().to_ascii_lowercase();
+            matches!(normalized.as_str(), "1" | "true" | "yes" | "on")
+        })
+        .unwrap_or(false);
+    let effective_shell_mode = if auto_approve
+        && !matches!(
+            permissions.shell_execution,
+            crate::config::ShellExecutionMode::Disabled
+        ) {
+        crate::config::ShellExecutionMode::Auto
+    } else {
+        permissions.shell_execution.clone()
+    };
+
+    if matches!(
+        effective_shell_mode,
+        crate::config::ShellExecutionMode::Disabled
+    ) {
+        anyhow::bail!("Shell execution is disabled by config ([permissions].shell_execution=disabled)");
+    }
+
+    if command_has_path_traversal(command) {
+        anyhow::bail!("Rejected command: path traversal patterns are blocked by policy");
+    }
+
+    if !permissions.elevation_allowed && command_requests_elevation(command) {
+        anyhow::bail!(
+            "Rejected command: elevation is disabled ([permissions].elevation_allowed=false)"
+        );
+    }
+
+    if !permissions.network_access && command_uses_network(command) {
+        anyhow::bail!("Rejected command: network access is disabled by policy");
+    }
+
+    if command_likely_mutates_files(command)
+        && let Some(ref working_dir) = ctx.working_dir
+        && !path_allowed_by_policy(working_dir, &permissions.file_write_paths)
+    {
+        anyhow::bail!(
+            "Rejected command: working directory '{}' is outside [permissions].file_write_paths",
+            working_dir.display()
+        );
+    }
+
+    Ok(())
+}
+
+fn append_shell_audit_entry(
+    ctx: &ToolContext,
+    command: &str,
+    intent: Option<&str>,
+    run_in_background: bool,
+    disposition: &str,
+    reason: Option<&str>,
+) {
+    let Ok(log_root) = crate::storage::logs_dir() else {
+        return;
+    };
+    if std::fs::create_dir_all(&log_root).is_err() {
+        return;
+    }
+    let path = log_root.join("shell-audit.jsonl");
+    let entry = json!({
+        "ts": Utc::now().to_rfc3339(),
+        "session_id": ctx.session_id,
+        "working_dir": ctx.working_dir.as_ref().map(|d| d.display().to_string()),
+        "command": command,
+        "intent": intent.unwrap_or(""),
+        "background": run_in_background,
+        "disposition": disposition,
+        "reason": reason.unwrap_or(""),
+    });
+    if let Ok(mut file) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+    {
+        let _ = writeln!(file, "{}", entry);
+    }
+}
+
 #[cfg(unix)]
 fn build_detached_shell_wrapper(command: &str) -> StdCommand {
     let mut cmd = StdCommand::new("bash");
     cmd.arg("-lc")
         .arg(
-            r#"eval "$JCODE_RELOAD_DETACH_COMMAND"; status=$?; printf '\n--- Command finished with exit code: %s ---\n' "$status"; exit "$status""#,
+            r#"eval "$IAGENT_RELOAD_DETACH_COMMAND"; status=$?; printf '\n--- Command finished with exit code: %s ---\n' "$status"; exit "$status""#,
         )
-        .env("JCODE_RELOAD_DETACH_COMMAND", command);
+        .env("IAGENT_RELOAD_DETACH_COMMAND", command);
     cmd
 }
 
@@ -550,9 +712,9 @@ impl Tool for BashTool {
 
     fn parameters_schema(&self) -> Value {
         let cmd_desc = if cfg!(windows) {
-            "The shell command to execute (via cmd.exe). If you write a long-running script or loop for run_in_background=true, make it print progress lines. Preferred format: `JCODE_PROGRESS {json}`."
+            "The shell command to execute (via cmd.exe). If you write a long-running script or loop for run_in_background=true, make it print progress lines. Preferred format: `IAGENT_PROGRESS {json}`."
         } else {
-            "The bash command to execute. If you write a long-running script or loop for run_in_background=true, make it print progress lines. Preferred format: `JCODE_PROGRESS {json}`."
+            "The bash command to execute. If you write a long-running script or loop for run_in_background=true, make it print progress lines. Preferred format: `IAGENT_PROGRESS {json}`."
         };
         json!({
             "type": "object",
@@ -587,6 +749,26 @@ impl Tool for BashTool {
         let mut params: BashInput = serde_json::from_value(input)?;
         let run_in_background = params.run_in_background.unwrap_or(false);
 
+        if let Err(err) = validate_shell_policy(&params.command, &ctx) {
+            append_shell_audit_entry(
+                &ctx,
+                &params.command,
+                params.intent.as_deref(),
+                run_in_background,
+                "blocked",
+                Some(&err.to_string()),
+            );
+            return Err(err);
+        }
+        append_shell_audit_entry(
+            &ctx,
+            &params.command,
+            params.intent.as_deref(),
+            run_in_background,
+            "allowed",
+            None,
+        );
+
         if run_in_background {
             return self.execute_background(params, ctx).await;
         }
@@ -598,7 +780,7 @@ impl Tool for BashTool {
         if crate::browser::is_browser_command(&params.command) {
             params.command = crate::browser::rewrite_command_with_full_path(&params.command);
 
-            // Start/attach a browser session for this jcode session.
+            // Start/attach a browser session for this iagent session.
             // This gives each agent its own browser tab, preventing
             // multi-agent conflicts when using the browser bridge.
             if !cfg!(windows)

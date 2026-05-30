@@ -11,7 +11,7 @@ pub fn hot_restart(session_id: &str) -> Result<()> {
 
     log_info!(("Restarting with current binary: {:?}", exe));
 
-    crate::env::set_var("JCODE_RESUMING", "1");
+    crate::env::set_var("IAGENT_RESUMING", "1");
 
     let mut cmd = ProcessCommand::new(&exe);
     if is_selfdev {
@@ -26,9 +26,9 @@ pub fn hot_restart(session_id: &str) -> Result<()> {
 pub fn hot_reload(session_id: &str) -> Result<()> {
     let cwd = std::env::current_dir()?;
 
-    crate::env::set_var("JCODE_RESUMING", "1");
+    crate::env::set_var("IAGENT_RESUMING", "1");
 
-    if let Ok(migrate_binary) = std::env::var("JCODE_MIGRATE_BINARY") {
+    if let Ok(migrate_binary) = std::env::var("IAGENT_MIGRATE_BINARY") {
         let binary_path = std::path::PathBuf::from(&migrate_binary);
         if binary_path.exists() {
             crate::logging::info("Migrating to stable binary...");
@@ -151,7 +151,7 @@ pub fn hot_rebuild(session_id: &str) -> Result<()> {
 
     update::print_centered(&format!("Restarting with session {}...", session_id));
 
-    crate::env::set_var("JCODE_RESUMING", "1");
+    crate::env::set_var("IAGENT_RESUMING", "1");
 
     let mut cmd = ProcessCommand::new(&exe);
     if is_selfdev {
@@ -333,7 +333,7 @@ pub fn hot_update(session_id: &str) -> Result<()> {
 
                     update::print_centered(&format!("Restarting with session {}...", session_id));
 
-                    crate::env::set_var("JCODE_RESUMING", "1");
+                    crate::env::set_var("IAGENT_RESUMING", "1");
 
                     let mut cmd = ProcessCommand::new(&exe);
                     if is_selfdev {
@@ -361,7 +361,7 @@ pub fn hot_update(session_id: &str) -> Result<()> {
         }
     }
 
-    crate::env::set_var("JCODE_RESUMING", "1");
+    crate::env::set_var("IAGENT_RESUMING", "1");
     let exe = std::env::current_exe()?;
     let is_selfdev = crate::cli::selfdev::client_selfdev_requested();
     let mut cmd = ProcessCommand::new(&exe);

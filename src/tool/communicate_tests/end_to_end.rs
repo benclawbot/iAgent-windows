@@ -5,9 +5,9 @@ async fn communicate_list_and_await_members_work_end_to_end() {
     let runtime_dir = tempfile::TempDir::new().expect("runtime tempdir");
     let repo_dir = std::env::current_dir().expect("repo cwd");
     let socket_path = runtime_dir.path().join("iagent.sock");
-    let _runtime = EnvGuard::set("JCODE_RUNTIME_DIR", runtime_dir.path());
-    let _socket = EnvGuard::set("JCODE_SOCKET", &socket_path);
-    let _debug = EnvGuard::set("JCODE_DEBUG_CONTROL", "1");
+    let _runtime = EnvGuard::set("IAGENT_RUNTIME_DIR", runtime_dir.path());
+    let _socket = EnvGuard::set("IAGENT_SOCKET", &socket_path);
+    let _debug = EnvGuard::set("IAGENT_DEBUG_CONTROL", "1");
 
     let provider: Arc<dyn Provider> = Arc::new(DelayedTestProvider {
         delay: Duration::from_millis(300),
@@ -112,9 +112,9 @@ async fn communicate_status_returns_busy_snapshot_for_running_member() {
     let runtime_dir = tempfile::TempDir::new().expect("runtime tempdir");
     let repo_dir = std::env::current_dir().expect("repo cwd");
     let socket_path = runtime_dir.path().join("iagent.sock");
-    let _runtime = EnvGuard::set("JCODE_RUNTIME_DIR", runtime_dir.path());
-    let _socket = EnvGuard::set("JCODE_SOCKET", &socket_path);
-    let _debug = EnvGuard::set("JCODE_DEBUG_CONTROL", "1");
+    let _runtime = EnvGuard::set("IAGENT_RUNTIME_DIR", runtime_dir.path());
+    let _socket = EnvGuard::set("IAGENT_SOCKET", &socket_path);
+    let _debug = EnvGuard::set("IAGENT_DEBUG_CONTROL", "1");
 
     let provider: Arc<dyn Provider> = Arc::new(DelayedTestProvider {
         delay: Duration::from_millis(300),
@@ -195,9 +195,9 @@ async fn communicate_spawn_reports_completion_back_to_spawner() {
     let runtime_dir = tempfile::TempDir::new().expect("runtime tempdir");
     let repo_dir = std::env::current_dir().expect("repo cwd");
     let socket_path = runtime_dir.path().join("iagent.sock");
-    let _runtime = EnvGuard::set("JCODE_RUNTIME_DIR", runtime_dir.path());
-    let _socket = EnvGuard::set("JCODE_SOCKET", &socket_path);
-    let _debug = EnvGuard::set("JCODE_DEBUG_CONTROL", "1");
+    let _runtime = EnvGuard::set("IAGENT_RUNTIME_DIR", runtime_dir.path());
+    let _socket = EnvGuard::set("IAGENT_SOCKET", &socket_path);
+    let _debug = EnvGuard::set("IAGENT_DEBUG_CONTROL", "1");
 
     let provider: Arc<dyn Provider> = Arc::new(DelayedTestProvider {
         delay: Duration::from_millis(100),
@@ -272,9 +272,9 @@ async fn communicate_spawn_with_prompt_and_summary_work_end_to_end() {
     let runtime_dir = tempfile::TempDir::new().expect("runtime tempdir");
     let repo_dir = std::env::current_dir().expect("repo cwd");
     let socket_path = runtime_dir.path().join("iagent.sock");
-    let _runtime = EnvGuard::set("JCODE_RUNTIME_DIR", runtime_dir.path());
-    let _socket = EnvGuard::set("JCODE_SOCKET", &socket_path);
-    let _debug = EnvGuard::set("JCODE_DEBUG_CONTROL", "1");
+    let _runtime = EnvGuard::set("IAGENT_RUNTIME_DIR", runtime_dir.path());
+    let _socket = EnvGuard::set("IAGENT_SOCKET", &socket_path);
+    let _debug = EnvGuard::set("IAGENT_DEBUG_CONTROL", "1");
 
     let provider: Arc<dyn Provider> = Arc::new(DelayedTestProvider {
         delay: Duration::from_millis(100),

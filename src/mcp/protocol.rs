@@ -210,7 +210,7 @@ impl McpConfig {
     }
 
     /// Import MCP servers from Claude Code and Codex CLI on first run.
-    /// Only runs if ~/.jcode/mcp.json doesn't exist yet.
+    /// Only runs if ~/.iagent/mcp.json doesn't exist yet.
     #[expect(
         clippy::collapsible_if,
         reason = "Import logic keeps source-specific MCP config handling explicit"
@@ -324,7 +324,7 @@ impl McpConfig {
         Ok(config)
     }
 
-    /// Load from default locations (merges jcode global + local, local overrides)
+    /// Load from default locations (merges iagent global + local, local overrides)
     #[expect(
         clippy::collapsible_if,
         reason = "Import logic keeps source-specific MCP config merge order explicit"
@@ -335,7 +335,7 @@ impl McpConfig {
 
         let mut merged = Self::default();
 
-        // Load jcode's own global config (~/.jcode/mcp.json)
+        // Load iagent's own global config (~/.iagent/mcp.json)
         if let Ok(iagent_dir) = crate::storage::iagent_dir() {
             let iagent_mcp = iagent_dir.join("mcp.json");
             if iagent_mcp.exists() {
@@ -345,10 +345,10 @@ impl McpConfig {
             }
         }
 
-        // Load project-local jcode config (.jcode/mcp.json)
-        let local_jcode = std::path::Path::new(".jcode/mcp.json");
-        if local_jcode.exists() {
-            if let Ok(config) = Self::load_from_file(local_jcode) {
+        // Load project-local iagent config (.iagent/mcp.json)
+        let local_iagent = std::path::Path::new(".iagent/mcp.json");
+        if local_iagent.exists() {
+            if let Ok(config) = Self::load_from_file(local_iagent) {
                 merged.servers.extend(config.servers);
             }
         }

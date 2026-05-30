@@ -4,7 +4,7 @@
 
 **Goal:** Add system-wide floating proposal popups to the Python iAgent frontend so AI-suggested actions require a user Validate or Refuse decision before execution.
 
-**Architecture:** Keep the proposal decision model separate from PySide widgets so action routing is unit-testable. The CompanionManager emits proposal requests for mutating response actions, the app-level popup controller displays topmost floating cards, and accepted proposals route back through the existing command, jcode, and typing handlers.
+**Architecture:** Keep the proposal decision model separate from PySide widgets so action routing is unit-testable. The CompanionManager emits proposal requests for mutating response actions, the app-level popup controller displays topmost floating cards, and accepted proposals route back through the existing command, iagent, and typing handlers.
 
 **Tech Stack:** Python 3.12, PySide6, pytest, uv, PyInstaller.
 
@@ -26,9 +26,9 @@
 - Modify: `app/iagent-py/iagent/companion_manager.py`
 - Modify: `app/iagent-py/tests/test_submit_text_prompt.py`
 
-- [ ] Write failing tests proving `[CMD:...]` and `[JCODE:...]` produce proposals instead of immediate execution.
+- [ ] Write failing tests proving `[CMD:...]` and `[IAGENT:...]` produce proposals instead of immediate execution.
 - [ ] Add `proposal_requested` and `proposal_decided` signals.
-- [ ] Route accepted proposals through the existing command, jcode, and typing execution paths.
+- [ ] Route accepted proposals through the existing command, iagent, and typing execution paths.
 - [ ] Verify focused manager tests pass.
 
 ### Task 3: Floating Popup UI

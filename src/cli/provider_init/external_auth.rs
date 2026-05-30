@@ -3,7 +3,7 @@ use super::*;
 pub(super) fn can_prompt_for_external_auth() -> bool {
     std::io::stdin().is_terminal()
         && std::io::stderr().is_terminal()
-        && std::env::var("JCODE_NON_INTERACTIVE").is_err()
+        && std::env::var("IAGENT_NON_INTERACTIVE").is_err()
 }
 
 pub(super) fn external_auth_blocked_message(

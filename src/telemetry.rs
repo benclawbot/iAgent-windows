@@ -20,7 +20,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{Duration, Instant};
 
-const TELEMETRY_ENDPOINT: &str = "https://jcode-telemetry.jeremyhuang55555.workers.dev/v1/event";
+const TELEMETRY_ENDPOINT: &str = "https://iagent-telemetry.jeremyhuang55555.workers.dev/v1/event";
 const ASYNC_SEND_TIMEOUT: Duration = Duration::from_secs(5);
 const BLOCKING_INSTALL_TIMEOUT: Duration = Duration::from_millis(1200);
 const BLOCKING_LIFECYCLE_TIMEOUT: Duration = Duration::from_millis(800);
@@ -254,7 +254,7 @@ enum DeliveryMode {
 }
 
 pub fn is_enabled() -> bool {
-    if std::env::var("JCODE_NO_TELEMETRY").is_ok() || std::env::var("DO_NOT_TRACK").is_ok() {
+    if std::env::var("IAGENT_NO_TELEMETRY").is_ok() || std::env::var("DO_NOT_TRACK").is_ok() {
         return false;
     }
     if let Ok(dir) = storage::iagent_dir()
@@ -785,7 +785,7 @@ pub fn record_command_family(command: &str) {
 
 fn post_payload(payload: serde_json::Value, timeout: Duration) -> bool {
     let client = match reqwest::blocking::Client::builder()
-        .user_agent(crate::provider::JCODE_USER_AGENT)
+        .user_agent(crate::provider::IAGENT_USER_AGENT)
         .timeout(timeout)
         .build()
     {
@@ -1716,10 +1716,10 @@ pub fn current_provider_model() -> Option<(String, String)> {
 
 fn show_first_run_notice() {
     eprintln!("\x1b[90m");
-    eprintln!("  jcode collects anonymous usage statistics (install count, version, OS,");
+    eprintln!("  iagent collects anonymous usage statistics (install count, version, OS,");
     eprintln!("  session activity, tool counts, and crash/exit reasons). No code, filenames,");
     eprintln!("  prompts, or personal data is sent.");
-    eprintln!("  To opt out: export JCODE_NO_TELEMETRY=1");
+    eprintln!("  To opt out: export IAGENT_NO_TELEMETRY=1");
     eprintln!("  Details: https://github.com/benclawbot/iAgent-windows/blob/main/TELEMETRY.md");
     eprintln!("\x1b[0m");
 }

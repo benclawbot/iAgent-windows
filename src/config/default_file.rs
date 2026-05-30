@@ -69,7 +69,7 @@ session_picker_enter = "new-terminal"
 # command = "~/.local/bin/my-whisper-script --grammar-target code"
 command = ""
 
-# How to apply the transcript inside jcode: insert|append|replace|send
+# How to apply the transcript inside iagent: insert|append|replace|send
 mode = "send"
 
 # Optional in-app hotkey to trigger dictation. Set to "off" to disable.
@@ -160,7 +160,7 @@ engine = "duckduckgo"
 fallback_engines = ["bing"]
 # Bring your own Bing Search API key for primary Bing searches. Prefer using an env var.
 # Fallback Bing searches intentionally use keyless HTML search.
-# bing_api_key_env = "JCODE_BING_API_KEY"
+# bing_api_key_env = "IAGENT_BING_API_KEY"
 # bing_api_key = ""
 # Bing market/region, for example "en-US" or "zh-CN".
 bing_market = "en-US"
@@ -228,7 +228,7 @@ bind_addr = "0.0.0.0"
 # Notification settings for ambient mode events
 
 # ntfy.sh push notifications (free, phone app: https://ntfy.sh)
-# ntfy_topic = "jcode-ambient-your-secret-topic"
+# ntfy_topic = "iagent-ambient-your-secret-topic"
 # ntfy_server = "https://ntfy.sh"
 
 # Desktop notifications via notify-send (default: true)
@@ -237,10 +237,10 @@ desktop_notifications = true
 # Email notifications via SMTP
 # email_enabled = false
 # email_to = "you@example.com"
-# email_from = "jcode@example.com"
+# email_from = "iagent@example.com"
 # email_smtp_host = "smtp.gmail.com"
 # email_smtp_port = 587
-# Password via env: JCODE_SMTP_PASSWORD (preferred) or config below
+# Password via env: IAGENT_SMTP_PASSWORD (preferred) or config below
 # email_password = ""
 
 # IMAP for email replies (reply to ambient emails to send directives)
@@ -250,16 +250,34 @@ desktop_notifications = true
 
 # Telegram notifications via Bot API (free, https://telegram.org)
 # telegram_enabled = false
-# telegram_bot_token = ""  # From @BotFather (prefer JCODE_TELEGRAM_BOT_TOKEN env var)
+# telegram_bot_token = ""  # From @BotFather (prefer IAGENT_TELEGRAM_BOT_TOKEN env var)
 # telegram_chat_id = ""    # Your user/chat ID
 # telegram_reply_enabled = false  # Reply to bot messages to send directives
 
 # Discord notifications via Bot API (https://discord.com/developers)
 # discord_enabled = false
-# discord_bot_token = ""     # From Discord Developer Portal (prefer JCODE_DISCORD_BOT_TOKEN env var)
+# discord_bot_token = ""     # From Discord Developer Portal (prefer IAGENT_DISCORD_BOT_TOKEN env var)
 # discord_channel_id = ""    # Channel ID to post in
 # discord_bot_user_id = ""   # Bot's user ID (for filtering own messages)
 # discord_reply_enabled = false  # Messages in channel become agent directives
+
+[permissions]
+# Shell execution mode:
+# - proposal: require user approval for shell actions (default)
+# - auto: allow shell actions without approval
+# - disabled: block shell actions
+shell_execution = "proposal"
+
+# Paths where mutating work is expected to be allowed.
+# Keep this list narrow in production.
+file_write_paths = ["~", "%USERPROFILE%\\Projects"]
+
+# Allow network access from tools that make outbound calls.
+network_access = true
+
+# Allow privilege escalation attempts (UAC/sudo).
+# Recommended default: false.
+elevation_allowed = false
 "#;
 
         std::fs::write(&path, default_content)?;

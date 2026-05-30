@@ -126,7 +126,7 @@ fn source_build_root() -> Result<PathBuf> {
 }
 
 fn source_build_repo_dir() -> Result<PathBuf> {
-    Ok(source_build_root()?.join("jcode"))
+    Ok(source_build_root()?.join("iagent"))
 }
 
 fn record_release_update_duration(duration: Duration) {
@@ -144,7 +144,7 @@ fn record_source_update_duration(duration: Duration) {
 }
 
 pub fn should_auto_update() -> bool {
-    if std::env::var("JCODE_NO_AUTO_UPDATE").is_ok() {
+    if std::env::var("IAGENT_NO_AUTO_UPDATE").is_ok() {
         return false;
     }
 
@@ -649,13 +649,13 @@ fn has_cargo() -> bool {
         .unwrap_or(false)
 }
 
-/// Build jcode from source by cloning/pulling the repo and running cargo build
+/// Build iagent from source by cloning/pulling the repo and running cargo build
 fn build_from_source() -> Result<PathBuf> {
     let started = Instant::now();
     let build_dir = source_build_root()?;
     fs::create_dir_all(&build_dir)?;
 
-    let repo_dir = build_dir.join("jcode");
+    let repo_dir = build_dir.join("iagent");
 
     if repo_dir.join(".git").exists() {
         // Pull latest
@@ -724,7 +724,7 @@ fn build_from_source() -> Result<PathBuf> {
     let output = std::process::Command::new("cargo")
         .args(["build", "--release"])
         .current_dir(&repo_dir)
-        .env("JCODE_RELEASE_BUILD", "1")
+        .env("IAGENT_RELEASE_BUILD", "1")
         .output()
         .context("Failed to run cargo build")?;
 
@@ -764,7 +764,7 @@ pub fn download_and_install_blocking_with_progress(
     let download_url = asset.browser_download_url.clone();
 
     let temp_dir = std::env::temp_dir();
-    let temp_path = temp_dir.join(format!("jcode-update-{}", std::process::id()));
+    let temp_path = temp_dir.join(format!("iagent-update-{}", std::process::id()));
 
     let client = reqwest::blocking::Client::builder()
         .timeout(DOWNLOAD_TIMEOUT)
@@ -834,12 +834,12 @@ pub fn download_and_install_blocking_with_progress(
             }
             let dest = extract_dir.join(&file_name);
             entry.unpack(&dest)?;
-            if file_name.starts_with("jcode") && !file_name.ends_with(".bin") {
+            if file_name.starts_with("iagent") && !file_name.ends_with(".bin") {
                 extracted_binary = Some(dest);
             }
         }
         let Some(extracted_binary) = extracted_binary else {
-            anyhow::bail!("Could not find jcode binary inside tar.gz archive");
+            anyhow::bail!("Could not find iagent binary inside tar.gz archive");
         };
         crate::platform::set_permissions_executable(&extracted_binary)?;
 
@@ -989,7 +989,7 @@ mod tests {
     #[test]
     fn test_asset_name() {
         let name = get_asset_name();
-        assert!(name.starts_with("jcode-"));
+        assert!(name.starts_with("iagent-"));
     }
 
     #[test]
@@ -1037,15 +1037,15 @@ mod tests {
     fn test_verify_asset_checksum_text_accepts_matching_digest() {
         let bytes = b"hello update";
         let digest = format!("{:x}", Sha256::digest(bytes));
-        let contents = format!("{}  jcode-linux-x86_64.tar.gz\n", digest);
-        verify_asset_checksum_text(&contents, "jcode-linux-x86_64.tar.gz", bytes).unwrap();
+        let contents = format!("{}  iagent-linux-x86_64.tar.gz\n", digest);
+        verify_asset_checksum_text(&contents, "iagent-linux-x86_64.tar.gz", bytes).unwrap();
     }
 
     #[test]
     fn test_verify_asset_checksum_text_rejects_mismatch() {
         let wrong = "0".repeat(64);
-        let contents = format!("{}  jcode-linux-x86_64.tar.gz\n", wrong);
-        let err = verify_asset_checksum_text(&contents, "jcode-linux-x86_64.tar.gz", b"actual")
+        let contents = format!("{}  iagent-linux-x86_64.tar.gz\n", wrong);
+        let err = verify_asset_checksum_text(&contents, "iagent-linux-x86_64.tar.gz", b"actual")
             .unwrap_err()
             .to_string();
         assert!(err.contains("Checksum mismatch"));
@@ -1055,7 +1055,7 @@ mod tests {
     fn test_verify_asset_checksum_text_requires_asset_entry() {
         let digest = "1".repeat(64);
         let contents = format!("{}  other-asset.tar.gz\n", digest);
-        let err = verify_asset_checksum_text(&contents, "jcode-linux-x86_64.tar.gz", b"actual")
+        let err = verify_asset_checksum_text(&contents, "iagent-linux-x86_64.tar.gz", b"actual")
             .unwrap_err()
             .to_string();
         assert!(err.contains("does not list"));
@@ -1063,7 +1063,7 @@ mod tests {
 
     #[test]
     fn test_parse_sha256sums_rejects_invalid_digest() {
-        let err = parse_sha256sums("not-a-sha  jcode-linux-x86_64.tar.gz\n")
+        let err = parse_sha256sums("not-a-sha  iagent-linux-x86_64.tar.gz\n")
             .unwrap_err()
             .to_string();
         assert!(err.contains("invalid SHA256 digest"));

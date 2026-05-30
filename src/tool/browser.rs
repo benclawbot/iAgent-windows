@@ -776,7 +776,7 @@ async fn firefox_run_bridge_command(
         };
         if details.contains("Unknown action:") {
             anyhow::bail!(
-                "The connected Firefox browser bridge is missing required support for action '{}'. This usually means the installed extension is older than the browser CLI expected by jcode. Use browser action='status' to confirm, then action='setup' to repair or update the extension.\n\nOriginal bridge error: {}",
+                "The connected Firefox browser bridge is missing required support for action '{}'. This usually means the installed extension is older than the browser CLI expected by iagent. Use browser action='status' to confirm, then action='setup' to repair or update the extension.\n\nOriginal bridge error: {}",
                 action,
                 details
             );
@@ -836,7 +836,7 @@ fn temp_screenshot_path() -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis())
         .unwrap_or(0);
-    std::env::temp_dir().join(format!("jcode-browser-{}.png", ts))
+    std::env::temp_dir().join(format!("iagent-browser-{}.png", ts))
 }
 
 fn render_browser_output(action: &str, title: String, result: Value) -> ToolOutput {

@@ -133,7 +133,7 @@ pub enum ContentBlock {
         data: String,
     },
     /// Hidden OpenAI Responses compaction item used to preserve native
-    /// compaction state across turns/saves when jcode explicitly triggers it.
+    /// compaction state across turns/saves when iagent explicitly triggers it.
     OpenAICompaction {
         encrypted_content: String,
     },

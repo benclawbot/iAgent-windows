@@ -109,9 +109,9 @@ fn has_cursor_api_key_from_env() {
 #[test]
 fn cursor_vscdb_paths_respect_iagent_home() {
     let _guard = crate::storage::lock_test_env();
-    let prev_home = std::env::var_os("JCODE_HOME");
+    let prev_home = std::env::var_os("IAGENT_HOME");
     let temp = TempDir::new().unwrap();
-    crate::env::set_var("JCODE_HOME", temp.path());
+    crate::env::set_var("IAGENT_HOME", temp.path());
 
     let paths = cursor_vscdb_paths();
     assert!(!paths.is_empty());
@@ -120,9 +120,9 @@ fn cursor_vscdb_paths_respect_iagent_home() {
     }
 
     if let Some(prev_home) = prev_home {
-        crate::env::set_var("JCODE_HOME", prev_home);
+        crate::env::set_var("IAGENT_HOME", prev_home);
     } else {
-        crate::env::remove_var("JCODE_HOME");
+        crate::env::remove_var("IAGENT_HOME");
     }
 }
 
@@ -138,9 +138,9 @@ fn load_access_token_from_auth_file_does_not_change_external_permissions() {
     use std::os::unix::fs::PermissionsExt;
 
     let _guard = crate::storage::lock_test_env();
-    let prev_home = std::env::var_os("JCODE_HOME");
+    let prev_home = std::env::var_os("IAGENT_HOME");
     let temp = TempDir::new().unwrap();
-    crate::env::set_var("JCODE_HOME", temp.path());
+    crate::env::set_var("IAGENT_HOME", temp.path());
 
     let path = cursor_auth_file_path().expect("cursor auth path");
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -173,9 +173,9 @@ fn load_access_token_from_auth_file_does_not_change_external_permissions() {
     assert_eq!(file_mode, 0o644);
 
     if let Some(prev_home) = prev_home {
-        crate::env::set_var("JCODE_HOME", prev_home);
+        crate::env::set_var("IAGENT_HOME", prev_home);
     } else {
-        crate::env::remove_var("JCODE_HOME");
+        crate::env::remove_var("IAGENT_HOME");
     }
 }
 

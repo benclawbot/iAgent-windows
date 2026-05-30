@@ -43,6 +43,10 @@ pub(crate) struct Args {
     #[arg(long, global = true)]
     pub(crate) trace: bool,
 
+    /// Auto-approve mutating shell actions for unattended mode
+    #[arg(long, global = true)]
+    pub(crate) auto_approve: bool,
+
     /// Suppress non-error CLI/status output for scripting and wrappers
     #[arg(long, global = true)]
     pub(crate) quiet: bool,
@@ -562,6 +566,17 @@ pub(crate) enum MemoryCommand {
 
     /// Show memory statistics
     Stats,
+
+    /// Clear stored memories with confirmation
+    Clear {
+        /// Scope to clear (project, global, all)
+        #[arg(short, long, default_value = "all")]
+        scope: String,
+
+        /// Skip interactive confirmation prompt
+        #[arg(long)]
+        force: bool,
+    },
 
     /// Clear test memory storage (used by debug sessions)
     ClearTest,

@@ -16,8 +16,8 @@
 | File | Usage | Gate | Status |
 |---|---|---|---|
 | `crates/desktop-monitor/src/file_ops.rs:528` | `libc::statvfs` for disk usage | `#[cfg(target_os = "linux")]` | OK — Linux-only, correctly gated |
-| `crates/jcode-storage/src/lib.rs:39` | `libc::geteuid()` | None (warns on Windows) | Appears in lib.rs — verify if storage path |
-| `crates/jcode-core/src/stdin_detect.rs:142+` | Various libc ptr math | None | Signal/tty handling — appears Unix-only |
+| `crates/iagent-storage/src/lib.rs:39` | `libc::geteuid()` | None (warns on Windows) | Appears in lib.rs — verify if storage path |
+| `crates/iagent-core/src/stdin_detect.rs:142+` | Various libc ptr math | None | Signal/tty handling — appears Unix-only |
 | `src/platform.rs:69+` | `getrlimit`, `setrlimit`, `kill`, `setsid`, `waitpid` | None | **Unix-only platform layer** — this file is clearly not designed for Windows yet |
 | `src/process_memory.rs:3` | `libc::c_char` | None | Appears to be Unix-only FFI |
 | `src/process_title.rs:80` | `libc::prctl` | None | **Unix-only** — process title via prctl |

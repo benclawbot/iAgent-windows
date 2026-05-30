@@ -34,7 +34,7 @@ fn configure_system_allocator() {
     }
 
     const M_ARENA_MAX: i32 = -8;
-    let arena_max = std::env::var("JCODE_GLIBC_ARENA_MAX")
+    let arena_max = std::env::var("IAGENT_GLIBC_ARENA_MAX")
         .ok()
         .and_then(|value| value.trim().parse::<i32>().ok())
         .filter(|value| *value > 0)

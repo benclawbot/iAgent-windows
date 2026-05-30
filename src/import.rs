@@ -321,7 +321,7 @@ fn find_session_file(session_id: &str) -> Result<PathBuf> {
     anyhow::bail!("Session {} not found", session_id);
 }
 
-/// Convert Claude Code content blocks to jcode ContentBlocks
+/// Convert Claude Code content blocks to iagent ContentBlocks
 fn convert_content_blocks(content: &ClaudeCodeContent) -> Vec<ContentBlock> {
     match content {
         ClaudeCodeContent::Empty => vec![],
@@ -465,7 +465,7 @@ pub fn import_session_from_file(path: &Path, session_id: &str) -> Result<Session
                 .and_then(|s| s.summary.or(Some(s.first_prompt)))
         });
 
-    // Create jcode session
+    // Create iagent session
     let iagent_session_id = imported_claude_code_session_id(session_id);
     let mut session = Session::create_with_id(iagent_session_id, None, title);
     session.provider_session_id = Some(session_id.to_string());

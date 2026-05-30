@@ -1,90 +1,28 @@
-﻿# iAgent Windows
+# iAgent Windows
 
-Desktop-native AI agent runtime for Windows with local execution, tool orchestration, safety approvals, and persistent personal workflows.
+Desktop-native AI agent runtime for Windows with local tool execution, explicit safety controls, and persistent memory.
 
-![iAgent Hero Banner](img/1.png)
+## Minimum Requirements
 
-## What This Repo Actually Ships Today
-
-`iagent-windows` is a Rust workspace plus a Python desktop dock.
-
-- Rust runtime (`iagent` binary) for agent orchestration, providers, tools, sessions, memory, and safety
-- Python desktop dock (`app/iagent-py`) for tray/dock UX, proposal popups, settings, and Office-goal routing
-- Windows install/runtime scripts (`scripts/install.ps1`, launcher/hotkey/personal-daemon setup)
-
-## Architecture and Functionalities
-
-![iAgent Architecture and Functionalities](img/2.png)
-
-## Core Functional Surface
-
-### 1. Runtime + Agent Orchestration
-
-- Local async agent runtime with session management and background daemon mode
-- Tool-call execution loop with structured tool schemas
-- Subagent orchestration (`subagent` / `task` tool family, `swarm`/communicate support)
-- MCP server management (`mcp` tool)
-
-### 2. Safety / Approval / Audit
-
-- Permission gating for mutating desktop actions (click/type/hotkey/scroll)
-- Action history + flight recorder (`flight_recorder` tool)
-- Connector write preflight + explicit scope grants + write evidence ledger (`connector` tool)
-
-### 3. Personal Desktop Layer
-
-Implemented via `personal` tool + `personal-daemon`:
-
-- snippets + typed expansion
-- reminders + due/snooze flows
-- clipboard capture/recovery/pin/delete
-- recent app/window recall + switch helpers
-- background jobs and job queue controls
-- timeline capture/search/delete
-- window snapping/tiling/layout plans + project workspaces
-- privacy/sensitive-context controls and personal-data clearing
-
-### 4. Productivity / Workflow Systems
-
-- `briefing`: proactive briefings, recaps, next-best suggestions
-- `attention`: quiet hours, interruption budgets, delivery/digest control
-- `dispatch`: authenticated local/remote task dispatch, approval, completion/failure evidence
-- `meeting`: transcript/action-item capture and conversion flows
-- `recipe`: reusable typed workflow plans
-- `processing_report`: processing/transparency records and export
-- `intent`: discover/validate/import/list app intent manifests (`iagent.intent.json`)
-
-### 5. Desktop, Browser, and Office Integrations
-
-- `computer` tool: screenshot, active window/context, list/open apps, click/type/hotkey/scroll/wait
-- `browser` tool: browser bridge control (status/setup/tabs/open/snapshot/content/interactables/click/type/fill/eval/etc.)
-- `app` tool:
-  - OfficeCLI operations (`oc_*`) for `.docx`, `.xlsx`, `.pptx`
-  - browser/form automation actions (`browser_*`, `form_fill`)
-- Word-focused helper tool (`word`) plus deterministic Office scripts under `app/iagent-py`
-
-### 6. Built-In Tooling (first-party)
-
-The runtime currently registers tools including:
-
-`read`, `write`, `edit`, `multiedit`, `patch`, `apply_patch`, `glob`, `grep`, `ls`, `file`, `bash`, `open`, `agentgrep`, `codesearch`, `browser`, `computer`, `websearch`, `webfetch`, `memory`, `conversation_search`, `session_search`, `goal`, `todo`, `bg`, `batch`, `dispatch`, `connector`, `attention`, `briefing`, `meeting`, `recipe`, `intent`, `processing_report`, `personal`, `flight_recorder`, `swarm`, `gmail`, `word`, `mcp`, `skill_manage`, `skill_script`, `app`, plus self-dev/ambient tools by mode.
+- Windows: **Windows 10 22H2+** (Windows 11 recommended)
+- RAM: **8 GB minimum** (16 GB recommended for large sessions)
+- Disk: **2 GB free** minimum (more for build/test workflows)
+- Tooling for source builds:
+  - Rust **1.70+** (`rustc --version`)
+  - Git (`git --version`)
+  - PowerShell **5.1+** (`$PSVersionTable.PSVersion`)
 
 ## Install (Windows)
 
+Pinned script URL (recommended):
+
 ```powershell
-irm "https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/install.ps1?v=dock" | iex
+irm "https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/install.ps1?v=0.13.0" | iex
 ```
 
-Installer behavior includes:
+The installer now performs SHA256 verification against release `checksums.txt` before installing downloaded binaries.
 
-- installs `iagent.exe`
-- sets up dock runtime (unless `-SkipDockSetup`)
-- creates launchers/shortcuts
-- can set up Alt+; hotkey startup helper
-- can set up personal daemon startup helper
-- installs/validates OfficeCLI support
-
-Useful installer switches:
+Useful switches:
 
 - `-SkipDockSetup`
 - `-SkipHotkeySetup`
@@ -92,66 +30,139 @@ Useful installer switches:
 - `-SkipDesktopShortcut`
 - `-SkipAlacrittySetup`
 
-## CLI Surface (Current)
+Uninstall:
 
-Top-level commands include:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\uninstall.ps1
+```
 
-- `serve`, `connect`, `run`, `repl`, `update`
-- `login`, `auth`, `auth-test`
-- `provider`, `model`, `usage`, `version`
-- `memory`, `session`, `ambient`
-- `personal-daemon`
-- `pair`, `dictate`
-- `setup-hotkey`, `setup-launcher`
-- `browser`
-- `selfdev`, `debug`
-- `restart`
+## Trust & Safety
 
-## Provider/Auth Reality
+Mutating actions are designed to be explicit and auditable.
 
-The runtime supports multiple auth/provider paths (OpenAI, OpenRouter, Gemini, Azure/OpenAI-compatible and others via provider profiles).
+```mermaid
+flowchart LR
+  A["Agent runtime"] --> P["PROPOSAL"]
+  P --> S["Shell actions"]
+  P --> F["File writes/deletes"]
+  P --> B["Browser/form submissions"]
+  P --> O["Office document mutations"]
+```
 
-- primary auth entry: `iagent login`
-- diagnostics: `iagent auth status`, `iagent auth doctor`, `iagent auth-test`
+### Proposal flow
 
-(Several internal docs/messages still use older `jcode` naming while runtime behavior is already under `iagent`.)
+Actions that can change local state are expected to go through approval controls, including:
+
+- shell execution
+- file writes/deletes
+- desktop/browser form submission
+- Office document mutations
+
+When a proposal is shown, users can approve or reject.
+
+- **Reject**: action is cancelled and logged.
+- **Approve**: action executes and is logged with timestamp.
+- On restart after a crash, pending proposals are never auto-executed.
+
+### Auto-approve mode
+
+Power users can run unattended mode with:
+
+```powershell
+iagent --auto-approve
+```
+
+This bypasses interactive approval prompts for proposal-mode shell actions. Use only in trusted environments.
+
+### Permissions policy (`config.toml`)
+
+`[permissions]` controls shell behavior and scope:
+
+```toml
+[permissions]
+shell_execution = "proposal"        # proposal | auto | disabled
+file_write_paths = ["~", "%USERPROFILE%\\Projects"]
+network_access = true
+elevation_allowed = false
+```
+
+Shell execution audit entries are appended to `shell-audit.jsonl` under the iAgent logs directory.
+
+## Browser Automation Setup
+
+Browser control uses Chrome/Edge DevTools Protocol (CDP).
+
+If no debuggable browser is available, choose one of:
+
+1. launch a managed browser instance with debugging enabled
+2. update browser launch configuration to include `--remote-debugging-port=9222`
+
+See `docs/browser-smoke.md` for smoke-test commands.
+
+## Headless Build Boundary
+
+Default builds are headless. TUI compatibility checks are feature-gated.
+
+- Headless default: `cargo build`
+- TUI compatibility feature: `cargo build --features tui`
+
+The Rust TUI is not the primary end-user interface; the Python dock app is the user-facing shell.
+
+## Provider Matrix (v1.0)
+
+Shipped and supported:
+
+- OpenAI
+- OpenRouter
+- Gemini
+
+Optional feature-gated provider path:
+
+- AWS Bedrock (currently enabled in default build profile; targeted for stricter feature-gating in follow-up)
+
+See `docs/tools.md` for details.
+
+## First Run
+
+If no config exists, interactive launch triggers a setup wizard that:
+
+1. prompts for provider choice (OpenAI/OpenRouter/Gemini)
+2. prompts for API key
+3. writes `config.toml`
+4. runs a self-check summary
+
+## Configuration and Docs
+
+- Config reference: `docs/configuration.md`
+- Tool/provider matrix: `docs/tools.md`
+- Skills authoring/discovery: `docs/skills.md`
+- Memory durability/export/clear: `docs/memory.md`
+- OAuth/auth notes: `OAUTH.md`
+- Telemetry/privacy: `TELEMETRY.md`
 
 ## Development
 
 ```powershell
 cargo check --workspace --all-targets
-cargo build --bins
 cargo test
+cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-CI currently emphasizes:
+CI gates include Windows builds, clippy warnings-as-errors, focused tests, and coverage generation.
 
-- Windows MSVC `cargo check` in multiple feature combos
-- focused unit canary test
-- build-all-binaries self-check job
-- app-integrations office workflow tests
-- coverage via `cargo llvm-cov`
+## Contributing
 
-## Repository Layout
+Contribution workflow is documented in `CONTRIBUTING.md`.
 
-- `src/` -> runtime, server, agent loop, tool implementations
-- `crates/` -> workspace crates (runtime types, providers, integrations, storage, monitor, overlay, etc.)
-- `app/iagent-py/` -> Python desktop dock and companion UX
-- `scripts/` -> installer, PowerShell checks, dev helpers
-- `docs/` -> product/design notes
+## License
 
-## Known Gaps / Caveats (Important)
+This project is licensed under the **MIT License**. See `LICENSE`.
 
-- `lsp` tool is explicitly stubbed (not full LSP integration yet).
-- Some help strings/docs still reference legacy `jcode` command naming.
-- Current README in `main` documents a `--self-check` CLI path that is not present in the current command parser.
-- Browser control exists in more than one path (`browser` tool bridge + `app` tool CDP actions); docs should keep these pathways explicit.
+## Suggested GitHub Topics
 
-## Suggested Companion Docs
-
-- `OAUTH.md` for provider login/auth details
-- `TELEMETRY.md` for telemetry/privacy behavior
-- `CONTRIBUTING.md` for contribution workflow
-
-
-
+- `windows`
+- `ai-agent`
+- `rust`
+- `ambient-computing`
+- `llm`
+- `automation`

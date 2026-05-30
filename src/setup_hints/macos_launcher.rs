@@ -33,7 +33,7 @@ pub(super) fn install_macos_app_launcher() -> Result<(PathBuf, MacTerminalKind)>
     let exe = std::env::current_exe()?;
     let exe_path = exe.to_string_lossy().into_owned();
     let terminal = effective_macos_terminal();
-    let launcher_path = macos_dir.join("jcode-launcher");
+    let launcher_path = macos_dir.join("iagent-launcher");
     let launcher_script = macos_launcher_script(terminal, &exe_path, &app_dir);
     std::fs::write(&launcher_path, launcher_script)?;
 
@@ -49,17 +49,17 @@ pub(super) fn install_macos_app_launcher() -> Result<(PathBuf, MacTerminalKind)>
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Jcode</string>
+    <string>Iagent</string>
     <key>CFBundleDisplayName</key>
-    <string>Jcode</string>
+    <string>Iagent</string>
     <key>CFBundleIdentifier</key>
-    <string>com.jcode.launcher</string>
+    <string>com.iagent.launcher</string>
     <key>CFBundleVersion</key>
     <string>{version}</string>
     <key>CFBundleShortVersionString</key>
     <string>{version}</string>
     <key>CFBundleExecutable</key>
-    <string>jcode-launcher</string>
+    <string>iagent-launcher</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>LSApplicationCategoryType</key>
@@ -85,12 +85,12 @@ pub(super) fn install_macos_app_launcher() -> Result<(PathBuf, MacTerminalKind)>
 
 fn macos_app_launcher_dir() -> Result<PathBuf> {
     let home = dirs::home_dir().context("Could not find home directory")?;
-    Ok(home.join("Applications").join("Jcode.app"))
+    Ok(home.join("Applications").join("Iagent.app"))
 }
 
 fn legacy_macos_app_launcher_dir() -> Result<PathBuf> {
     let home = dirs::home_dir().context("Could not find home directory")?;
-    Ok(home.join("Applications").join("jcode.app"))
+    Ok(home.join("Applications").join("iagent.app"))
 }
 
 fn macos_app_launcher_info_plist_path(app_dir: &Path) -> PathBuf {
@@ -101,7 +101,7 @@ fn macos_app_launcher_executable_path(app_dir: &Path) -> PathBuf {
     app_dir
         .join("Contents")
         .join("MacOS")
-        .join("jcode-launcher")
+        .join("iagent-launcher")
 }
 
 fn macos_app_launcher_is_valid(app_dir: &Path) -> bool {
@@ -162,7 +162,7 @@ fn macos_launcher_script(terminal: MacTerminalKind, exe_path: &str, app_dir: &Pa
         exe_path
     ));
     let terminal_failure_message = escape_applescript_text(&format!(
-        "iagent could not open {}.\n\nTry rerunning:\niagent setup-launcher\n\nLauncher log:\n~/.jcode/launcher/macos-launcher.log",
+        "iagent could not open {}.\n\nTry rerunning:\niagent setup-launcher\n\nLauncher log:\n~/.iagent/launcher/macos-launcher.log",
         terminal.label()
     ));
 
@@ -171,7 +171,7 @@ fn macos_launcher_script(terminal: MacTerminalKind, exe_path: &str, app_dir: &Pa
 set -u
 
 PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
-LOG_DIR="$HOME/.jcode/launcher"
+LOG_DIR="$HOME/.iagent/launcher"
 LOG_FILE="$LOG_DIR/macos-launcher.log"
 mkdir -p "$LOG_DIR" >/dev/null 2>&1 || true
 
