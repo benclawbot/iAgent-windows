@@ -3,6 +3,9 @@ incremental = true
 
 [env]
 RUST_TEST_THREADS = "1"
+TEMP = { value = "test-tmp", relative = true }
+TMP = { value = "test-tmp", relative = true }
+TMPDIR = { value = "test-tmp", relative = true }
 
 [target.x86_64-pc-windows-msvc]
 rustflags = ["-C", "target-cpu=x86-64"]

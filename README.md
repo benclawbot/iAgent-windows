@@ -88,6 +88,12 @@ elevation_allowed = false
 
 Shell execution audit entries are appended to `shell-audit.jsonl` under the iAgent logs directory.
 
+### Antivirus-friendly build boundary
+
+iAgent keeps desktop automation capabilities available in runtime builds, but default Windows test runs avoid Cargo's monolithic library unit-test executable. That harness can look ransomware-like to behavior engines because one constantly changing unsigned process rapidly exercises memory, file, network, provider, desktop, and background-job code. Maintainers can still run the full library unit sweep explicitly with `cargo test --lib` in a trusted build environment.
+
+Library-test builds also use non-executing desktop stubs, a repo-local temp directory, and stripped symbols to reduce false-positive surface. Windows builds embed iAgent version metadata and an `asInvoker` application manifest. Release artifacts should still be code-signed by the distribution pipeline; unsigned local debug and test binaries can trigger reputation or behavior-based antivirus heuristics.
+
 ## Browser Automation Setup
 
 Browser control uses Chrome/Edge DevTools Protocol (CDP).
@@ -145,7 +151,7 @@ If no config exists, interactive launch triggers a setup wizard that:
 
 ```powershell
 cargo check --workspace --all-targets
-cargo test
+cargo test --workspace --tests
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 

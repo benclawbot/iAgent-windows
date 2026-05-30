@@ -1,24 +1,35 @@
+#[cfg(not(test))]
 use std::sync::Arc;
+#[cfg(not(test))]
 use std::time::Duration;
 
 use anyhow::Result;
+#[cfg(not(test))]
 use async_trait::async_trait;
+#[cfg(not(test))]
 use desktop_monitor::{
     DesktopMonitor, ImportanceScorer, NotificationDetector, NotificationState, UserPatterns,
 };
+#[cfg(not(test))]
 use overlay_ui::{
     ImportantNotification as OverlayNotification, OverlayConfig, spawn_overlay_daemon,
 };
+#[cfg(not(test))]
 use suggestion_engine::{EngineConfig, LanguageModelProvider, SuggestionEngine};
 
+#[cfg(not(test))]
 use crate::cli::provider_init::{ProviderChoice, init_provider_and_registry};
+#[cfg(not(test))]
 use crate::config::config;
+#[cfg(not(test))]
 use crate::provider::Provider;
 
+#[cfg(not(test))]
 struct IAgentProviderAdapter {
     provider: Arc<dyn Provider>,
 }
 
+#[cfg(not(test))]
 #[async_trait]
 impl LanguageModelProvider for IAgentProviderAdapter {
     async fn complete(&self, prompt: &str) -> Result<String> {
@@ -41,6 +52,7 @@ fn app_enabled(app_name: &str, enabled: &[String], disabled: &[String]) -> bool 
             .any(|e| !e.trim().is_empty() && app.contains(&e.to_ascii_lowercase()))
 }
 
+#[cfg(not(test))]
 pub async fn run(headless: bool) -> Result<()> {
     let ambient_cfg = &config().ambient;
     let monitor = DesktopMonitor::new()?;
@@ -112,6 +124,13 @@ pub async fn run(headless: bool) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+pub async fn run(_headless: bool) -> Result<()> {
+    Err(anyhow::anyhow!(
+        "desktop ambient runtime is disabled in the library test harness"
+    ))
 }
 
 #[cfg(test)]

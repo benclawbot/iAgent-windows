@@ -118,6 +118,8 @@ fn main() {
     println!("cargo:rustc-env=IAGENT_GIT_TAG={}", git_tag);
     println!("cargo:rustc-env=IAGENT_CHANGELOG={}", changelog);
 
+    embed_windows_resource(&build_semver);
+
     // Forward IAGENT_RELEASE_BUILD env var if set (CI sets this for release binaries)
     if std::env::var("IAGENT_RELEASE_BUILD").is_ok() {
         println!("cargo:rustc-env=IAGENT_RELEASE_BUILD=1");
@@ -130,6 +132,44 @@ fn main() {
     println!("cargo:rerun-if-env-changed=IAGENT_RELEASE_BUILD");
     println!("cargo:rerun-if-env-changed=IAGENT_BUILD_SEMVER");
 }
+
+#[cfg(windows)]
+fn embed_windows_resource(version: &str) {
+    let mut resource = winresource::WindowsResource::new();
+    resource.set("FileDescription", "iAgent Windows desktop agent");
+    resource.set("ProductName", "iAgent");
+    resource.set("CompanyName", "iAgent");
+    resource.set("InternalName", "iagent");
+    resource.set("OriginalFilename", "iagent.exe");
+    resource.set("ProductVersion", version);
+    resource.set("FileVersion", version);
+    resource.set_manifest(
+        r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <assemblyIdentity version="1.0.0.0" processorArchitecture="*" name="iAgent.Windows" type="win32"/>
+  <description>iAgent Windows desktop agent</description>
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="asInvoker" uiAccess="false"/>
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>
+    </application>
+  </compatibility>
+</assembly>"#,
+    );
+
+    if let Err(err) = resource.compile() {
+        println!("cargo:warning=failed to embed Windows version resource: {err}");
+    }
+}
+
+#[cfg(not(windows))]
+fn embed_windows_resource(_version: &str) {}
 
 fn parse_semver(value: &str) -> Option<(u32, u32, u32)> {
     let trimmed = value.trim().trim_start_matches('v');

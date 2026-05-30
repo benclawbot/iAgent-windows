@@ -1,21 +1,21 @@
 use super::{Tool, ToolContext, ToolExecutionMode, ToolOutput};
 use crate::safety::{PermissionRequest, PermissionResult, SafetySystem, Urgency, new_request_id};
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 use anyhow::Context;
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 use base64::Engine;
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 use base64::engine::general_purpose::STANDARD;
 use chrono::Utc;
 use serde::Deserialize;
 use serde_json::{Value, json};
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct ComputerTool;
@@ -358,32 +358,36 @@ async fn open_app(app: String) -> Result<ToolOutput> {
         return Err(anyhow!("app must not be empty for action='open_app'"));
     }
 
-    #[cfg(windows)]
+    #[cfg(all(windows, not(test)))]
     {
         tokio::task::spawn_blocking(move || open_app_windows(&app))
             .await
             .context("open_app task failed")?
     }
 
-    #[cfg(not(windows))]
+    #[cfg(any(not(windows), test))]
     {
         let _ = app;
-        Err(anyhow!("computer open_app is only available on Windows"))
+        Err(anyhow!(
+            "computer open_app native desktop backend is disabled in this build"
+        ))
     }
 }
 
 async fn list_apps(filter: Option<String>) -> Result<ToolOutput> {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(test)))]
     {
         tokio::task::spawn_blocking(move || list_apps_windows(filter))
             .await
             .context("list_apps task failed")?
     }
 
-    #[cfg(not(windows))]
+    #[cfg(any(not(windows), test))]
     {
         let _ = filter;
-        Err(anyhow!("computer list_apps is only available on Windows"))
+        Err(anyhow!(
+            "computer list_apps native desktop backend is disabled in this build"
+        ))
     }
 }
 
@@ -469,7 +473,7 @@ fn source_rank(source: &str) -> u8 {
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn open_app_windows(app: &str) -> Result<ToolOutput> {
     let candidates = discover_app_candidates()?;
     let matches = find_app_matches(app, &candidates, 8);
@@ -518,7 +522,7 @@ fn open_app_windows(app: &str) -> Result<ToolOutput> {
     })))
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn list_apps_windows(filter: Option<String>) -> Result<ToolOutput> {
     let mut candidates = discover_app_candidates()?;
     candidates.sort_by(|a, b| {
@@ -572,7 +576,7 @@ fn list_apps_windows(filter: Option<String>) -> Result<ToolOutput> {
         })))
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn no_app_match_error(app: &str, candidates: &[AppCandidate]) -> anyhow::Error {
     let sample = candidates
         .iter()
@@ -585,7 +589,7 @@ fn no_app_match_error(app: &str, candidates: &[AppCandidate]) -> anyhow::Error {
     )
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn discover_app_candidates() -> Result<Vec<AppCandidate>> {
     let mut candidates = Vec::new();
     for (root, source) in app_search_roots() {
@@ -602,7 +606,7 @@ fn discover_app_candidates() -> Result<Vec<AppCandidate>> {
     Ok(candidates)
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn app_search_roots() -> Vec<(PathBuf, String)> {
     let mut roots = Vec::new();
     if let Some(user_profile) = std::env::var_os("USERPROFILE").map(PathBuf::from) {
@@ -642,7 +646,7 @@ fn app_search_roots() -> Vec<(PathBuf, String)> {
     unique
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn collect_app_candidates(root: &Path, source: &str, out: &mut Vec<AppCandidate>) -> Result<()> {
     let mut stack = vec![root.to_path_buf()];
     while let Some(dir) = stack.pop() {
@@ -672,7 +676,7 @@ fn collect_app_candidates(root: &Path, source: &str, out: &mut Vec<AppCandidate>
     Ok(())
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn is_launchable_app_path(path: &Path) -> bool {
     let Some(ext) = path.extension().and_then(|ext| ext.to_str()) else {
         return false;
@@ -683,7 +687,7 @@ fn is_launchable_app_path(path: &Path) -> bool {
     )
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn shell_execute_path(path: &Path) -> Result<()> {
     use std::os::windows::ffi::OsStrExt;
     use windows_sys::Win32::UI::Shell::ShellExecuteW;
@@ -717,7 +721,7 @@ fn shell_execute_path(path: &Path) -> Result<()> {
 }
 
 async fn capture_screenshot() -> Result<ToolOutput> {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(test)))]
     {
         let result = tokio::task::spawn_blocking(capture_screenshot_windows)
             .await
@@ -743,14 +747,16 @@ async fn capture_screenshot() -> Result<ToolOutput> {
             format!("desktop screenshot: {}x{}", result.width, result.height),
         ))
     }
-    #[cfg(not(windows))]
+    #[cfg(any(not(windows), test))]
     {
-        Err(anyhow!("computer screenshot is only available on Windows"))
+        Err(anyhow!(
+            "computer screenshot native desktop backend is disabled in this build"
+        ))
     }
 }
 
 async fn click(x: i32, y: i32, button: MouseButton) -> Result<ToolOutput> {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(test)))]
     {
         tokio::task::spawn_blocking(move || click_windows(x, y, button))
             .await
@@ -759,15 +765,17 @@ async fn click(x: i32, y: i32, button: MouseButton) -> Result<ToolOutput> {
             .with_title("computer: click")
             .with_metadata(json!({ "action": "click", "x": x, "y": y })))
     }
-    #[cfg(not(windows))]
+    #[cfg(any(not(windows), test))]
     {
         let _ = (x, y, button);
-        Err(anyhow!("computer click is only available on Windows"))
+        Err(anyhow!(
+            "computer click native desktop backend is disabled in this build"
+        ))
     }
 }
 
 async fn type_text(text: String) -> Result<ToolOutput> {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(test)))]
     {
         let char_count = text.chars().count();
         tokio::task::spawn_blocking(move || type_text_windows(&text))
@@ -777,10 +785,12 @@ async fn type_text(text: String) -> Result<ToolOutput> {
             .with_title("computer: type")
             .with_metadata(json!({ "action": "type", "characters": char_count })))
     }
-    #[cfg(not(windows))]
+    #[cfg(any(not(windows), test))]
     {
         let _ = text;
-        Err(anyhow!("computer type is only available on Windows"))
+        Err(anyhow!(
+            "computer type native desktop backend is disabled in this build"
+        ))
     }
 }
 
@@ -788,7 +798,7 @@ async fn hotkey(keys: Vec<String>) -> Result<ToolOutput> {
     if keys.is_empty() {
         return Err(anyhow!("keys must not be empty for action='hotkey'"));
     }
-    #[cfg(windows)]
+    #[cfg(all(windows, not(test)))]
     {
         let rendered = keys.join("+");
         tokio::task::spawn_blocking(move || hotkey_windows(&keys))
@@ -798,15 +808,17 @@ async fn hotkey(keys: Vec<String>) -> Result<ToolOutput> {
             .with_title("computer: hotkey")
             .with_metadata(json!({ "action": "hotkey", "keys": rendered })))
     }
-    #[cfg(not(windows))]
+    #[cfg(any(not(windows), test))]
     {
         let _ = keys;
-        Err(anyhow!("computer hotkey is only available on Windows"))
+        Err(anyhow!(
+            "computer hotkey native desktop backend is disabled in this build"
+        ))
     }
 }
 
 async fn scroll(x: Option<i32>, y: Option<i32>, amount: i32) -> Result<ToolOutput> {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(test)))]
     {
         tokio::task::spawn_blocking(move || scroll_windows(x, y, amount))
             .await
@@ -815,31 +827,33 @@ async fn scroll(x: Option<i32>, y: Option<i32>, amount: i32) -> Result<ToolOutpu
             .with_title("computer: scroll")
             .with_metadata(json!({ "action": "scroll", "x": x, "y": y, "amount": amount })))
     }
-    #[cfg(not(windows))]
+    #[cfg(any(not(windows), test))]
     {
         let _ = (x, y, amount);
-        Err(anyhow!("computer scroll is only available on Windows"))
+        Err(anyhow!(
+            "computer scroll native desktop backend is disabled in this build"
+        ))
     }
 }
 
 async fn active_window(include_context: bool) -> Result<ToolOutput> {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(test)))]
     {
         let info = tokio::task::spawn_blocking(move || active_window_windows(include_context))
             .await
             .context("active window task failed")??;
         Ok(info)
     }
-    #[cfg(not(windows))]
+    #[cfg(any(not(windows), test))]
     {
         let _ = include_context;
         Err(anyhow!(
-            "computer active_window is only available on Windows"
+            "computer active_window native desktop backend is disabled in this build"
         ))
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 struct ScreenshotResult {
     path: std::path::PathBuf,
     x: i32,
@@ -848,7 +862,7 @@ struct ScreenshotResult {
     height: i32,
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn capture_screenshot_windows() -> Result<ScreenshotResult> {
     use image::ColorType;
     use windows_sys::Win32::Graphics::Gdi::{
@@ -968,7 +982,7 @@ fn capture_screenshot_windows() -> Result<ScreenshotResult> {
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn click_windows(x: i32, y: i32, button: MouseButton) -> Result<()> {
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
         MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP,
@@ -990,7 +1004,7 @@ fn click_windows(x: i32, y: i32, button: MouseButton) -> Result<()> {
     Ok(())
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn scroll_windows(x: Option<i32>, y: Option<i32>, amount: i32) -> Result<()> {
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::MOUSEEVENTF_WHEEL;
     use windows_sys::Win32::UI::WindowsAndMessaging::SetCursorPos;
@@ -1009,7 +1023,7 @@ fn scroll_windows(x: Option<i32>, y: Option<i32>, amount: i32) -> Result<()> {
     Ok(())
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn type_text_windows(text: &str) -> Result<()> {
     let mut inputs = Vec::new();
     for unit in text.encode_utf16() {
@@ -1022,7 +1036,7 @@ fn type_text_windows(text: &str) -> Result<()> {
     Ok(())
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn hotkey_windows(keys: &[String]) -> Result<()> {
     let mut vks = Vec::with_capacity(keys.len());
     for key in keys {
@@ -1042,7 +1056,7 @@ fn hotkey_windows(keys: &[String]) -> Result<()> {
     Ok(())
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn active_window_windows(include_context: bool) -> Result<ToolOutput> {
     use windows_sys::Win32::Foundation::{POINT, RECT};
     use windows_sys::Win32::UI::WindowsAndMessaging::{
@@ -1117,7 +1131,7 @@ fn active_window_windows(include_context: bool) -> Result<ToolOutput> {
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 unsafe fn send_inputs(
     inputs: &[windows_sys::Win32::UI::Input::KeyboardAndMouse::INPUT],
 ) -> Result<()> {
@@ -1139,7 +1153,7 @@ unsafe fn send_inputs(
     Ok(())
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn mouse_input(
     flags: windows_sys::Win32::UI::Input::KeyboardAndMouse::MOUSE_EVENT_FLAGS,
     mouse_data: u32,
@@ -1163,7 +1177,7 @@ fn mouse_input(
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn unicode_key_input(
     unit: u16,
     key_up: bool,
@@ -1186,7 +1200,7 @@ fn unicode_key_input(
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn virtual_key_input(
     vk: windows_sys::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY,
     key_up: bool,
@@ -1209,7 +1223,7 @@ fn virtual_key_input(
     }
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn parse_virtual_key(
     key: &str,
 ) -> Result<windows_sys::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY> {
@@ -1261,7 +1275,7 @@ fn parse_virtual_key(
     Ok(vk)
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(test)))]
 fn temp_computer_path(label: &str, ext: &str) -> std::path::PathBuf {
     let ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)

@@ -182,7 +182,7 @@ pub fn apply_snippet_expansion_to_buffer(
 }
 
 struct SnippetHookGuard {
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", not(test)))]
     _thread: std::thread::JoinHandle<()>,
 }
 
@@ -191,12 +191,12 @@ fn start_snippet_expansion_hook(config: &PersonalDaemonConfig) -> Option<Snippet
         return None;
     }
 
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", not(test)))]
     {
         windows_snippet_hook::start()
     }
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(any(not(target_os = "windows"), test))]
     {
         None
     }
@@ -209,11 +209,12 @@ pub fn capture_snapshot(config: &PersonalDaemonConfig) -> PersonalDaemonSnapshot
         snapshot.clipboard_content = read_clipboard_text();
     }
 
-    if config.capture_active_window
-        && let Some(context) = desktop_monitor::capture_window_context()
-    {
-        snapshot.active_app = Some(context.app_name);
-        snapshot.active_window_title = Some(context.window_title);
+    if config.capture_active_window {
+        #[cfg(not(test))]
+        if let Some(context) = desktop_monitor::capture_window_context() {
+            snapshot.active_app = Some(context.app_name);
+            snapshot.active_window_title = Some(context.window_title);
+        }
     }
 
     snapshot
@@ -239,7 +240,7 @@ fn emit_notifications(tick: &PersonalDaemonTick, headless: bool) {
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", not(test)))]
 mod windows_snippet_hook {
     use std::mem::size_of;
     use std::sync::{Mutex, OnceLock, mpsc};
