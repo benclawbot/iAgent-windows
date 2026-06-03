@@ -1,0 +1,12 @@
+permissions = ["filesystem:read", "filesystem:write", "shell:execute"]
+triggers = [
+  "create a word document",
+  "make a resume",
+  "write a report",
+  "edit docx file",
+  "format a document",
+  "academic paper",
+  "official document",
+  "apply corporate style",
+  "fill docx template"
+]

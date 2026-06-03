@@ -1,0 +1,14 @@
+permissions = ["filesystem:read", "filesystem:write", "shell:execute"]
+triggers = [
+  "make a pdf",
+  "generate a report",
+  "write a proposal",
+  "create a resume as pdf",
+  "beautiful pdf",
+  "professional document",
+  "client-ready pdf",
+  "reformat this document",
+  "convert markdown to pdf",
+  "fill in pdf form",
+  "apply design to pdf"
+]

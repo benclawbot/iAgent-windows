@@ -1,0 +1,11 @@
+permissions = ["filesystem:read", "filesystem:write", "shell:execute"]
+triggers = [
+  "generate a powerpoint",
+  "create a presentation",
+  "make a slide deck",
+  "build a pitch deck",
+  "edit pptx file",
+  "extract text from presentation",
+  "pptx from outline",
+  "create slides from brief"
+]

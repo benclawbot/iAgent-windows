@@ -1,0 +1,14 @@
+permissions = ["filesystem:read", "filesystem:write", "shell:execute"]
+triggers = [
+  "create an excel file",
+  "build a spreadsheet",
+  "make a financial model",
+  "add column to spreadsheet",
+  "insert row in excel",
+  "validate excel formulas",
+  "analyze spreadsheet data",
+  "open xlsx",
+  "read excel",
+  "format cells",
+  "create pivot table"
+]

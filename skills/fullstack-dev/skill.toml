@@ -1,0 +1,13 @@
+permissions = ["filesystem:read"]
+triggers = [
+  "build a full-stack app",
+  "scaffold a backend",
+  "create a REST API",
+  "design service layer",
+  "implement auth flow",
+  "add real-time features",
+  "websocket setup",
+  "sse setup",
+  "production hardening",
+  "twelve-factor app"
+]
