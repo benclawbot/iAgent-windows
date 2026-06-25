@@ -1,63 +1,64 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1792" height="1024" viewBox="0 0 1792 1024" role="img" aria-labelledby="title desc">
-  <title id="title">iAgent Windows ambient agent architecture</title>
-  <desc id="desc">Stylized ambient agent architecture diagram for iAgent Windows, based on verified README and source-code components.</desc>
+  <title id="title">iAgent Windows Ambient Agent Architecture</title>
+  <desc id="desc">A stylish ambient-agent architecture diagram for iAgent Windows with verified components from the README and source files.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#05070d"/><stop offset="0.5" stop-color="#071827"/><stop offset="1" stop-color="#0b1f16"/></linearGradient>
-    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#42e8ff"/><stop offset="1" stop-color="#227dff"/></linearGradient>
-    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#76ffb3"/><stop offset="1" stop-color="#1a9f66"/></linearGradient>
-    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d0a2ff"/><stop offset="1" stop-color="#6d4cff"/></linearGradient>
-    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd66b"/><stop offset="1" stop-color="#ff8a1f"/></linearGradient>
-    <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="bg1" cx="50%" cy="48%" r="75%"><stop offset="0%" stop-color="#111827"/><stop offset="45%" stop-color="#07111f"/><stop offset="100%" stop-color="#020617"/></radialGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#2563eb"/></linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bbf7d0"/><stop offset="1" stop-color="#16a34a"/></linearGradient>
+    <linearGradient id="purple" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e9d5ff"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f97316"/></linearGradient>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="140%"><feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#000" flood-opacity=".45"/></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+    <marker id="arr" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto"><path d="M2 2 L10 6 L2 10 Z" fill="#67e8f9"/></marker>
+    <marker id="garr" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto"><path d="M2 2 L10 6 L2 10 Z" fill="#86efac"/></marker>
     <style>
-      .title{font:900 54px 'Segoe UI',Arial,sans-serif;fill:#f8fafc;letter-spacing:-1.5px}.sub{font:600 19px 'Segoe UI',Arial,sans-serif;fill:#67e8f9}.panel{fill:#07111f;stroke:#1f6f8f;stroke-width:2.2;rx:18;filter:url(#glow)}.p2{fill:#07151c;stroke:#20d38a}.p3{fill:#100d22;stroke:#a78bfa}.p4{fill:#151006;stroke:#f59e0b}.h{font:800 22px 'Segoe UI',Arial,sans-serif;fill:#f8fafc}.m{font:600 14px 'Segoe UI',Arial,sans-serif;fill:#b6c7d9}.t{font:600 15px 'Segoe UI',Arial,sans-serif;fill:#e2e8f0}.tiny{font:600 12px 'Segoe UI',Arial,sans-serif;fill:#9fb3c8}.chip{font:800 13px 'Segoe UI',Arial,sans-serif;fill:#001018}.line{fill:none;stroke:#7dd3fc;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow)}.dash{fill:none;stroke:#8bffa8;stroke-width:2.3;stroke-dasharray:8 8;stroke-linecap:round;marker-end:url(#arrow2)}.box{fill:#0b1726;stroke:#284767;stroke-width:1.4;rx:9}.gbox{fill:#092016;stroke:#2fd889}.vbox{fill:#15102b;stroke:#9b7cff}.abox{fill:#1d1406;stroke:#f5a524}.icon{font:800 20px 'Segoe UI Symbol','Segoe UI',Arial,sans-serif;fill:#a5f3fc}
+      .title{font:900 58px Inter,'Segoe UI',Arial,sans-serif;fill:#f8fafc;letter-spacing:-2px}.subtitle{font:600 20px Inter,'Segoe UI',Arial,sans-serif;fill:#67e8f9}.panel{fill:#071423;stroke:#1e8bb6;stroke-width:2.4;filter:url(#shadow)}.green{fill:#071a13;stroke:#22c55e}.purple{fill:#110c24;stroke:#8b5cf6}.orange{fill:#1f1305;stroke:#f59e0b}.store{fill:#081422;stroke:#60a5fa}.h{font:800 22px Inter,'Segoe UI',Arial,sans-serif;fill:#f8fafc}.sub{font:600 13px Inter,'Segoe UI',Arial,sans-serif;fill:#a7f3d0}.txt{font:600 14px Inter,'Segoe UI',Arial,sans-serif;fill:#dbeafe}.tiny{font:600 11px Inter,'Segoe UI',Arial,sans-serif;fill:#94a3b8}.chip{font:900 15px Inter,'Segoe UI',Arial,sans-serif;fill:#02111b}.node{fill:#0b1f32;stroke:#274b6f;stroke-width:1.2}.g{fill:none;stroke:#67e8f9;stroke-width:3;marker-end:url(#arr);stroke-linecap:round}.gd{fill:none;stroke:#86efac;stroke-width:2.4;marker-end:url(#garr);stroke-dasharray:8 8;stroke-linecap:round}.thin{fill:none;stroke:#64748b;stroke-width:1.4;stroke-dasharray:5 7}.n{font:900 25px Inter,'Segoe UI',Arial,sans-serif;fill:#03131b}.ic{font:900 24px 'Segoe UI Symbol','Segoe UI',Arial,sans-serif;fill:#bfdbfe}
     </style>
-    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M2,2 L10,6 L2,10 Z" fill="#7dd3fc"/></marker>
-    <marker id="arrow2" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M2,2 L10,6 L2,10 Z" fill="#8bffa8"/></marker>
   </defs>
-  <rect width="1792" height="1024" fill="url(#bg)"/>
-  <circle cx="285" cy="165" r="270" fill="#38bdf8" opacity=".09"/><circle cx="1430" cy="850" r="330" fill="#22c55e" opacity=".08"/><circle cx="980" cy="100" r="250" fill="#a78bfa" opacity=".08"/>
-  <text x="520" y="70" class="title">iAgent Windows</text>
-  <text x="492" y="102" class="sub">ambient agent architecture — verified from README and source files</text>
+  <rect width="1792" height="1024" fill="url(#bg1)"/>
+  <circle cx="190" cy="160" r="240" fill="#0ea5e9" opacity=".14" filter="url(#soft)"/><circle cx="1500" cy="880" r="360" fill="#22c55e" opacity=".12" filter="url(#soft)"/><circle cx="930" cy="230" r="230" fill="#8b5cf6" opacity=".10" filter="url(#soft)"/>
+  <text x="545" y="70" class="title">iAgent Windows</text>
+  <text x="490" y="103" class="subtitle">Ambient agent architecture — verified from README + source files</text>
 
-  <rect x="20" y="26" width="320" height="510" rx="20" class="panel"/>
-  <text x="42" y="58" class="h">① Install &amp; Launch</text>
-  <g class="t"><text x="52" y="102">▸ scripts/install.ps1</text><text x="52" y="135">▸ release download + SHA256 checks</text><text x="52" y="168">▸ installs iagent.exe</text><text x="52" y="201">▸ sets up desktop dock app</text><text x="52" y="234">▸ installs uv runtime</text><text x="52" y="267">▸ optional worker dependency install</text><text x="52" y="300">▸ optional Alacritty setup</text><text x="52" y="333">▸ Alt+; global hotkey setup</text><text x="52" y="366">▸ desktop shortcut</text><text x="52" y="399">▸ personal ambient daemon launcher</text><text x="52" y="432">▸ app/launch-iagent.ps1 starts dock</text><text x="52" y="465">▸ worker starts only if worker_url set</text></g>
+  <rect x="20" y="28" width="330" height="505" rx="22" class="panel"/>
+  <circle cx="55" cy="62" r="20" fill="url(#blue)"/><text x="47" y="71" class="n">1</text><text x="88" y="70" class="h">Install &amp; Launch</text>
+  <g class="txt"><text x="48" y="115">▸ scripts/install.ps1</text><text x="48" y="147">▸ release download + SHA256 verification</text><text x="48" y="179">▸ installs iagent.exe</text><text x="48" y="211">▸ sets up desktop dock app</text><text x="48" y="243">▸ installs uv runtime</text><text x="48" y="275">▸ optional worker dependency install</text><text x="48" y="307">▸ optional Alacritty setup</text><text x="48" y="339">▸ Alt+; global hotkey setup</text><text x="48" y="371">▸ desktop shortcut</text><text x="48" y="403">▸ personal ambient daemon launcher</text><text x="48" y="435">▸ app/launch-iagent.ps1 starts dock</text><text x="48" y="467">▸ optional worker starts only with worker_url</text></g>
 
-  <rect x="370" y="135" width="350" height="470" rx="20" class="panel p2"/>
-  <text x="392" y="169" class="h">② Python Desktop Shell</text><text x="392" y="194" class="m">PySide6 + qasync • app/iagent-py</text>
-  <g class="t"><text x="402" y="236">▸ tray icon + menu</text><text x="402" y="269">▸ history window</text><text x="402" y="302">▸ task inbox + prompt dock</text><text x="402" y="335">▸ proposal popups</text><text x="402" y="368">▸ hotkey monitor</text><text x="402" y="401">▸ mic capture + screen capture</text><text x="402" y="434">▸ execution memory</text><text x="402" y="467">▸ background command runner</text><text x="402" y="500">▸ queues iagent goals</text><text x="402" y="533">▸ Office artifact builders</text></g>
-  <text x="563" y="236" class="icon">◉</text><text x="563" y="335" class="icon">▣</text><text x="563" y="434" class="icon">✦</text>
+  <rect x="385" y="130" width="355" height="470" rx="22" class="panel green"/>
+  <circle cx="420" cy="166" r="20" fill="url(#green)"/><text x="412" y="175" class="n">2</text><text x="452" y="174" class="h">Python Desktop Shell</text><text x="452" y="197" class="sub">PySide6 + qasync • app/iagent-py</text>
+  <rect x="415" y="225" width="145" height="315" rx="12" class="node"/><rect x="575" y="225" width="135" height="315" rx="12" class="node"/>
+  <g class="txt"><text x="432" y="260">▸ tray icon</text><text x="432" y="292">▸ history window</text><text x="432" y="324">▸ task inbox</text><text x="432" y="356">▸ prompt dock</text><text x="432" y="388">▸ proposal popups</text><text x="432" y="420">▸ hotkey monitor</text><text x="432" y="452">▸ mic capture</text><text x="432" y="484">▸ screen capture</text><text x="592" y="260">▸ execution memory</text><text x="592" y="292">▸ voice start/stop</text><text x="592" y="324">▸ start/stop ambient</text><text x="592" y="356">▸ queues goals</text><text x="592" y="388">▸ background shell cmds</text><text x="592" y="420">▸ Office builders</text><text x="592" y="452">PowerPoint • Word • Excel</text></g>
 
-  <rect x="760" y="165" width="300" height="410" rx="20" class="panel p3"/>
-  <text x="785" y="199" class="h">③ Companion Flow</text><text x="785" y="224" class="m">interaction orchestration</text>
-  <rect x="790" y="255" width="240" height="45" class="vbox"/><text x="816" y="283" class="t">Mic / text prompt</text>
-  <rect x="790" y="330" width="240" height="80" class="vbox"/><text x="824" y="363" class="h">CompanionManager</text><text x="837" y="390" class="m">+ task flow</text>
-  <g class="tiny"><text x="788" y="448">final transcript • response delta</text><text x="788" y="474">response complete • assistant feedback</text><text x="788" y="500">background_command_requested</text><text x="788" y="526">iagent_goal_requested • proposal_requested</text></g>
+  <rect x="760" y="160" width="300" height="430" rx="22" class="panel purple"/>
+  <circle cx="795" cy="196" r="20" fill="url(#purple)"/><text x="787" y="205" class="n">3</text><text x="825" y="204" class="h">Companion Flow</text><text x="825" y="227" class="sub">interaction + task routing</text>
+  <rect x="795" y="255" width="230" height="50" rx="25" class="node"/><text x="852" y="286" class="txt">Mic / User Prompt</text>
+  <rect x="810" y="335" width="200" height="82" rx="18" fill="#20113f" stroke="#c084fc" stroke-width="2"/><text x="838" y="370" class="h">CompanionManager</text><text x="873" y="397" class="sub">+ task flow</text>
+  <g class="tiny"><text x="800" y="460">interim transcript • final transcript</text><text x="800" y="485">response delta • response complete</text><text x="800" y="510">background_command_requested</text><text x="800" y="535">iagent_goal_requested • proposal_requested</text><text x="800" y="560">typing_action_blocked • success_turn_completed</text></g>
 
-  <rect x="1100" y="135" width="315" height="590" rx="20" class="panel p2"/>
-  <text x="1125" y="169" class="h">④ Rust Backend Runtime</text><text x="1125" y="194" class="m">src/main.rs → CLI/server/agent</text>
-  <rect x="1125" y="220" width="265" height="180" class="gbox"/><text x="1144" y="250" class="h">A. CLI + Server</text><g class="t"><text x="1144" y="285">serve • run • login</text><text x="1144" y="316">auth / provider / model</text><text x="1144" y="347">memory / session commands</text><text x="1144" y="378">ambient • daemon • browser setup</text></g>
-  <rect x="1125" y="423" width="265" height="172" class="gbox"/><text x="1144" y="453" class="h">B. Agent Core</text><g class="t"><text x="1144" y="486">provider-backed agent</text><text x="1144" y="516">session + skill registry</text><text x="1144" y="546">soft interrupts / shutdown</text><text x="1144" y="576">cache + usage tracking</text></g>
-  <rect x="1125" y="617" width="265" height="80" class="gbox"/><text x="1144" y="647" class="h">C. Safety</text><text x="1144" y="675" class="t">approval, compaction, orchestration</text>
+  <rect x="1090" y="125" width="325" height="615" rx="22" class="panel green"/>
+  <circle cx="1125" cy="161" r="20" fill="url(#green)"/><text x="1117" y="170" class="n">4</text><text x="1155" y="169" class="h">Rust Backend Runtime</text><text x="1155" y="192" class="sub">CLI + server + agent session core</text>
+  <rect x="1120" y="225" width="265" height="185" rx="12" class="node"/><text x="1140" y="257" class="h">A. CLI + Server</text><g class="txt"><text x="1140" y="292">serve • run • login</text><text x="1140" y="322">auth / provider / model commands</text><text x="1140" y="352">memory / session commands</text><text x="1140" y="382">ambient • daemon • browser setup</text></g>
+  <rect x="1120" y="430" width="265" height="170" rx="12" class="node"/><text x="1140" y="462" class="h">B. Agent Core</text><g class="txt"><text x="1140" y="497">provider-backed agent</text><text x="1140" y="527">session state + skill registry</text><text x="1140" y="557">soft interrupts + shutdown</text><text x="1140" y="587">cache + usage tracking</text></g>
+  <rect x="1120" y="620" width="265" height="90" rx="12" class="node"/><text x="1140" y="652" class="h">C. Safety + Orchestration</text><text x="1140" y="682" class="txt">approval, compaction, subagents</text>
 
-  <rect x="1445" y="25" width="325" height="420" rx="20" class="panel p4"/>
-  <text x="1470" y="59" class="h">⑤ Tool Registry</text><text x="1470" y="84" class="m">src/tool/mod.rs</text>
-  <g class="t"><text x="1482" y="128">▸ file/code: read, write, edit, patch</text><text x="1482" y="160">▸ grep, glob, ls</text><text x="1482" y="192">▸ shell: bash, bg, batch</text><text x="1482" y="224">▸ desktop/browser: computer, browser</text><text x="1482" y="256">▸ app, word, gmail, meeting</text><text x="1482" y="288">▸ memory/search/session_search</text><text x="1482" y="320">▸ subagent, batch, swarm, dispatch</text><text x="1482" y="352">▸ connector, briefing, recipe, personal</text><text x="1482" y="384">▸ skills, MCP, selfdev, scheduling</text></g>
+  <rect x="1450" y="25" width="322" height="435" rx="22" class="panel orange"/>
+  <circle cx="1485" cy="61" r="20" fill="url(#orange)"/><text x="1477" y="70" class="n">5</text><text x="1515" y="69" class="h">Tool Registry</text><text x="1515" y="92" class="sub">src/tool/mod.rs</text>
+  <g class="txt"><text x="1485" y="135">▸ file/code: read, write, edit, patch</text><text x="1485" y="165">▸ grep, glob, ls, file, codesearch</text><text x="1485" y="195">▸ shell: bash, bg, batch</text><text x="1485" y="225">▸ desktop/browser: computer, browser</text><text x="1485" y="255">▸ app, open, word, gmail, meeting</text><text x="1485" y="285">▸ memory, conversation_search</text><text x="1485" y="315">▸ session_search</text><text x="1485" y="345">▸ subagent, batch, swarm, dispatch</text><text x="1485" y="375">▸ connector, briefing, recipe, personal</text><text x="1485" y="405">▸ skills, MCP, selfdev, scheduling</text></g>
 
-  <rect x="1420" y="500" width="350" height="275" rx="20" class="panel"/>
-  <text x="1445" y="534" class="h">⑥ Providers &amp; Integrations</text>
-  <g class="t"><text x="1460" y="582">Provider layer: OpenAI, OpenRouter, Gemini</text><text x="1460" y="614">Copilot, Cursor, Claude / Anthropic</text><text x="1460" y="646">Antigravity, iAgent provider path</text><text x="1460" y="678">Bedrock behind feature flag</text><text x="1460" y="722">External: browser CDP, OfficeCLI, shell/fs</text><text x="1460" y="752">optional worker_url for transcription/TTS paths</text></g>
+  <rect x="1430" y="500" width="342" height="285" rx="22" class="panel"/>
+  <circle cx="1465" cy="536" r="20" fill="url(#blue)"/><text x="1457" y="545" class="n">6</text><text x="1495" y="544" class="h">Providers &amp; Integrations</text>
+  <g class="txt"><text x="1462" y="590">Provider layer: OpenAI, OpenRouter, Gemini</text><text x="1462" y="620">Copilot, Cursor, Claude / Anthropic</text><text x="1462" y="650">Antigravity, iAgent provider path</text><text x="1462" y="680">Bedrock behind feature flag</text><text x="1462" y="725">External: browser CDP • OfficeCLI</text><text x="1462" y="755">Windows apps • shell/filesystem</text></g>
 
-  <rect x="20" y="660" width="730" height="250" rx="20" class="panel p2"/>
-  <text x="45" y="695" class="h">⑦ Ambient Desktop Mode</text><text x="45" y="720" class="m">proactive monitor → suggest → notify → schedule → trigger cycles</text>
-  <g class="t"><text x="55" y="765">▸ desktop_monitor • suggestion_engine • notification_detector</text><text x="55" y="798">▸ importance scorer • overlay_ui daemon • app filters</text><text x="55" y="831">▸ safety handle • reminders / scheduled sessions</text><text x="55" y="864">▸ directives • inject messages into active ambient cycle</text></g>
-  <g class="tiny"><circle cx="600" cy="760" r="7" fill="#9ca3af"/><text x="617" y="765">idle</text><circle cx="600" cy="790" r="7" fill="#86efac"/><text x="617" y="795">running</text><circle cx="600" cy="820" r="7" fill="#60a5fa"/><text x="617" y="825">scheduled</text><circle cx="600" cy="850" r="7" fill="#facc15"/><text x="617" y="855">paused</text><circle cx="600" cy="880" r="7" fill="#f87171"/><text x="617" y="885">disabled</text></g>
+  <rect x="20" y="660" width="735" height="250" rx="22" class="panel green"/>
+  <circle cx="55" cy="696" r="20" fill="url(#green)"/><text x="47" y="705" class="n">7</text><text x="88" y="704" class="h">Ambient Desktop Mode</text><text x="88" y="727" class="sub">proactively monitor → suggest → notify → schedule → trigger cycles</text>
+  <g class="txt"><text x="55" y="775">▸ desktop_monitor • suggestion_engine • notification_detector</text><text x="55" y="807">▸ importance scorer • overlay_ui daemon • app filters</text><text x="55" y="839">▸ safety handle • reminders / scheduled sessions</text><text x="55" y="871">▸ directives • inject messages into active ambient cycle</text></g>
+  <g class="tiny"><circle cx="610" cy="770" r="7" fill="#9ca3af"/><text x="627" y="775">idle</text><circle cx="610" cy="797" r="7" fill="#86efac"/><text x="627" y="802">running</text><circle cx="610" cy="824" r="7" fill="#60a5fa"/><text x="627" y="829">scheduled</text><circle cx="610" cy="851" r="7" fill="#facc15"/><text x="627" y="856">paused</text><circle cx="610" cy="878" r="7" fill="#f87171"/><text x="627" y="883">disabled</text></g>
 
-  <rect x="800" y="820" width="580" height="150" rx="20" class="panel"/>
-  <text x="825" y="855" class="h">⑧ Storage, Memory &amp; Config</text>
-  <g class="t"><text x="845" y="900">%APPDATA%\iAgent\config.toml • ~/.iagent/config.toml • logs • sessions</text><text x="845" y="933">execution_memory.json • JSON memory graph • ambient queue/state</text><text x="845" y="960">visible_cycle.json • cycle_result.json • shell-audit.jsonl • setup_hints.json</text></g>
+  <rect x="795" y="815" width="640" height="160" rx="22" class="panel store"/>
+  <text x="830" y="852" class="h">⑧ Storage, Memory &amp; Config</text>
+  <g class="txt"><text x="845" y="900">%APPDATA%\iAgent\config.toml • ~/.iagent/config.toml • logs • sessions</text><text x="845" y="932">execution_memory.json • JSON memory graph • ambient queue/state</text><text x="845" y="964">visible_cycle.json • cycle_result.json • shell-audit.jsonl • setup_hints.json</text></g>
 
-  <path class="line" d="M340 285 C355 285 355 310 370 310"/><path class="line" d="M720 360 C742 360 742 360 760 360"/><path class="line" d="M1060 360 C1080 360 1080 360 1100 360"/><path class="line" d="M1415 305 C1430 305 1430 305 1445 305"/><path class="line" d="M1415 600 C1418 600 1418 600 1420 600"/>
-  <path class="dash" d="M545 605 C490 635 430 660 370 690"/><path class="dash" d="M1170 725 C1125 775 1075 805 1040 820"/><path class="dash" d="M660 780 C760 780 830 750 1110 650"/><path class="dash" d="M1088 895 C1020 850 900 820 740 790"/>
-  <text x="590" y="1000" class="tiny">Grounded in repository README + source files. No invented components.</text>
+  <path class="g" d="M350 285 C365 285 365 300 385 300"/><path class="g" d="M740 365 C750 365 750 365 760 365"/><path class="g" d="M1060 365 C1075 365 1075 365 1090 365"/><path class="g" d="M1415 310 C1430 310 1430 310 1450 310"/><path class="g" d="M1415 610 C1422 610 1422 610 1430 610"/>
+  <path class="gd" d="M545 600 C500 635 440 660 385 700"/><path class="gd" d="M1115 740 C1065 785 1010 805 970 815"/><path class="gd" d="M680 795 C810 780 960 735 1120 670"/><path class="gd" d="M1110 895 C980 855 860 825 735 785"/>
+  <text x="594" y="1000" class="tiny">Grounded in repository README and source files. No invented Electron/React layer.</text>
 </svg>
