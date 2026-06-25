@@ -21,7 +21,7 @@ The project is not just a chat box. From the code, it is structured as a local a
 The diagram below is stored in the repository under `assets/diagrams/` and embedded with standard GitHub README HTML.
 
 <p align="center">
-  <img src="assets/diagrams/iagent-architecture-gpt-image.svg" alt="iAgent Windows ambient agent architecture diagram" width="100%">
+  <img src="assets/diagrams/iagent-architecture-ambient-v2.svg" alt="iAgent Windows ambient agent architecture diagram" width="100%">
 </p>
 
 ## Main components
