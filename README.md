@@ -1,6 +1,6 @@
 # iAgent Windows
 
-Desktop-native AI agent runtime for Windows with local tool execution, explicit safety controls, and persistent memory.
+Desktop-native AI agent runtime for Windows with a Python dock shell, a Rust backend runtime, local tool execution, explicit safety controls, ambient desktop assistance, and persistent memory.
 
 ## Minimum Requirements
 
@@ -20,7 +20,7 @@ Pinned script URL (recommended):
 irm "https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/scripts/install.ps1?v=0.13.0" | iex
 ```
 
-The installer now performs SHA256 verification against release `checksums.txt` before installing downloaded binaries.
+The installer performs SHA256 verification against release `checksums.txt` before installing downloaded binaries.
 
 Useful switches:
 
@@ -36,18 +36,40 @@ Uninstall:
 powershell -ExecutionPolicy Bypass -File .\scripts\uninstall.ps1
 ```
 
+## Verified Architecture
+
+The diagram below is intentionally limited to components that exist in this repository. It does not claim services, agents, data stores, or integrations that are not present in code or docs.
+
+<p align="center">
+  <img src="assets/iagent-architecture.svg" alt="iAgent Windows verified architecture diagram" width="100%">
+</p>
+
+### Component map
+
+| Layer | Verified components | Source paths |
+| --- | --- | --- |
+| Installer and launchers | Release download, checksum verification, binary install, dock setup, `uv` setup, optional worker dependencies, Alacritty setup, desktop shortcut, Alt+; hotkey launcher, personal daemon launcher | `scripts/install.ps1`, `app/launch-iagent.ps1` |
+| Python desktop shell | PySide6 tray app, history window, task inbox, prompt dock, proposal popups, hotkey monitor, mic capture, screen capture, background command runner, companion manager, first-run config bootstrap | `app/iagent-py/iagent/app.py`, `app/iagent-py/pyproject.toml` |
+| Rust backend entrypoints | `iagent`, `iagent-test-api`, `iagent-harness`, `iagent-ambient`, `iagent-overlay-ui` binaries | `Cargo.toml`, `src/main.rs`, `src/bin/*` |
+| CLI and server runtime | Startup profile, logging, config permission hardening, telemetry checks, update checks, provider initialization, server mode, one-shot `run`, login, auth, provider, model, memory, session, ambient, personal daemon, browser setup, restart commands | `src/cli/startup.rs`, `src/cli/args.rs`, `src/cli/dispatch.rs`, `src/server.rs` |
+| Agent session core | Provider-backed agent, tool registry, skill registry, session state, active skill restrictions, memory enablement flag, soft interrupts, background-tool signal, graceful shutdown signal, cache tracking, usage tracking | `src/agent.rs` |
+| Tool registry | File/code tools, shell tools, browser/computer/app/Word tools, Gmail/meeting/briefing tools, memory/session/conversation search, subagent/batch/swarm orchestration, skills, MCP, self-development, scheduling | `src/tool/mod.rs`, `crates/iagent-tool-core`, `crates/iagent-tool-types` |
+| Providers | Multi-provider layer with OpenAI, OpenRouter, Gemini, Copilot, Cursor, Claude, Anthropic, Antigravity, iAgent provider path, and feature-gated Bedrock | `src/provider/mod.rs`, `crates/iagent-provider-*` |
+| Ambient desktop mode | Desktop monitor, notification detector, importance scoring, suggestion engine, overlay daemon, app filters, provider adapter, safety handle, ambient queue/state/scheduling | `src/desktop_ambient.rs`, `src/ambient.rs`, `src/ambient/runner.rs`, `crates/desktop-monitor`, `crates/suggestion-engine`, `crates/overlay-ui` |
+| Persistence and configuration | Windows config, cross-platform config, logs, sessions, JSON memory graph files, ambient queue/state, backup recovery for memory graph | `docs/configuration.md`, `docs/memory.md`, `src/storage.rs`, `crates/iagent-storage` |
+
+## Runtime Flow
+
+1. `scripts/install.ps1` installs the Windows binary and, unless skipped, installs the desktop dock app under `%LOCALAPPDATA%\iAgent\app`.
+2. `app/launch-iagent.ps1` starts the Python dock with `uv run python -m iagent` and starts the optional worker only when `worker_url` is configured.
+3. The Python app starts the tray shell, loads `%APPDATA%\iAgent\config.toml`, wires the hotkey, mic/screen capture, task inbox, history, proposal popups, and companion manager.
+4. User prompts or queued goals are sent to the Rust backend through `iagent run --json --quiet <goal>` or through the long-running server path.
+5. The Rust runtime initializes providers, sessions, tools, skills, memory, and safety controls before executing agent turns.
+6. Mutating shell/file/browser/Office actions remain proposal-controlled unless explicitly configured otherwise.
+
 ## Trust & Safety
 
 Mutating actions are designed to be explicit and auditable.
-
-```mermaid
-flowchart LR
-  A["Agent runtime"] --> P["PROPOSAL"]
-  P --> S["Shell actions"]
-  P --> F["File writes/deletes"]
-  P --> B["Browser/form submissions"]
-  P --> O["Office document mutations"]
-```
 
 ### Proposal flow
 
