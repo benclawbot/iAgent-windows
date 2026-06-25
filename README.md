@@ -41,7 +41,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\uninstall.ps1
 The diagram below is intentionally limited to components that exist in this repository. It does not claim services, agents, data stores, or integrations that are not present in code or docs.
 
 <p align="center">
-  <img src="assets/iagent-architecture.svg" alt="iAgent Windows verified architecture diagram" width="100%">
+  <img src="https://raw.githubusercontent.com/benclawbot/iAgent-windows/main/assets/iagent-architecture.svg" alt="iAgent Windows verified architecture diagram" width="100%">
 </p>
 
 ### Component map
