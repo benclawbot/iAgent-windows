@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1180" viewBox="0 0 1800 1180" role="img" aria-labelledby="title desc">
+  <title id="title">iAgent Windows verified architecture</title>
+  <desc id="desc">Architecture diagram derived from repository code: installer, Python dock shell, Rust backend runtime, providers, tools, ambient desktop mode, and storage boundaries.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c1222"/>
+      <stop offset="48%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#13251f"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#182235"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#44f0a1"/>
+      <stop offset="100%" stop-color="#1f9d68"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.33"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#8ee7c7"/>
+    </marker>
+    <style>
+      .title { font: 800 46px Inter, Segoe UI, Arial, sans-serif; fill: #f8fafc; letter-spacing: -1px; }
+      .subtitle { font: 500 20px Inter, Segoe UI, Arial, sans-serif; fill: #a7f3d0; }
+      .box-title { font: 800 25px Inter, Segoe UI, Arial, sans-serif; fill: #f8fafc; }
+      .box-sub { font: 600 16px Inter, Segoe UI, Arial, sans-serif; fill: #94a3b8; }
+      .body { font: 500 18px Inter, Segoe UI, Arial, sans-serif; fill: #dbeafe; }
+      .muted { font: 500 15px Inter, Segoe UI, Arial, sans-serif; fill: #94a3b8; }
+      .tiny { font: 600 13px Inter, Segoe UI, Arial, sans-serif; fill: #cbd5e1; }
+      .chip { font: 700 14px Inter, Segoe UI, Arial, sans-serif; fill: #04111c; }
+      .panel { fill: url(#panel); stroke: #2dd4bf; stroke-opacity: .34; stroke-width: 1.4; filter: url(#shadow); }
+      .soft { fill: #101827; stroke: #334155; stroke-width: 1.2; }
+      .line { fill: none; stroke: #8ee7c7; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow); opacity: .88; }
+      .dash { fill: none; stroke: #93c5fd; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 9 10; marker-end: url(#arrow); opacity: .76; }
+      .boundary { fill: none; stroke: #64748b; stroke-width: 1.6; stroke-dasharray: 8 10; opacity: .8; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="1180" rx="0" fill="url(#bg)"/>
+  <circle cx="1540" cy="80" r="360" fill="#16a34a" opacity="0.08"/>
+  <circle cx="160" cy="1060" r="420" fill="#2563eb" opacity="0.09"/>
+
+  <text x="78" y="86" class="title">iAgent Windows architecture</text>
+  <text x="80" y="122" class="subtitle">Generated from verified repository components only — Python dock, Rust runtime, tool registry, providers, ambient desktop mode, installer, and storage.</text>
+
+  <rect x="70" y="170" width="1660" height="910" rx="34" class="boundary"/>
+  <text x="96" y="204" class="tiny">Runtime boundary on user’s Windows desktop</text>
+
+  <rect x="95" y="235" width="350" height="245" rx="26" class="panel"/>
+  <rect x="120" y="262" width="88" height="28" rx="14" fill="url(#amber)"/>
+  <text x="136" y="282" class="chip">INSTALL</text>
+  <text x="122" y="328" class="box-title">PowerShell installer</text>
+  <text x="122" y="360" class="box-sub">scripts/install.ps1</text>
+  <text x="122" y="405" class="body">• downloads release artifact</text>
+  <text x="122" y="433" class="body">• verifies checksums.txt</text>
+  <text x="122" y="461" class="body">• sets dock, hotkey, daemon</text>
+
+  <rect x="545" y="195" width="485" height="330" rx="30" class="panel"/>
+  <rect x="574" y="222" width="112" height="28" rx="14" fill="url(#green)"/>
+  <text x="592" y="242" class="chip">DESKTOP</text>
+  <text x="574" y="292" class="box-title">Python dock shell</text>
+  <text x="574" y="324" class="box-sub">app/iagent-py • PySide6 • qasync</text>
+  <text x="574" y="370" class="body">• tray icon, history window, task inbox</text>
+  <text x="574" y="398" class="body">• prompt dock, voice state, proposals</text>
+  <text x="574" y="426" class="body">• mic capture, screen capture, hotkey</text>
+  <text x="574" y="454" class="body">• background command runner</text>
+  <text x="574" y="482" class="body">• optional worker launch when worker_url is set</text>
+
+  <rect x="1130" y="205" width="505" height="320" rx="30" class="panel"/>
+  <rect x="1160" y="232" width="112" height="28" rx="14" fill="url(#blue)"/>
+  <text x="1184" y="252" class="chip">RUST</text>
+  <text x="1160" y="302" class="box-title">iagent backend runtime</text>
+  <text x="1160" y="334" class="box-sub">src/main.rs → iagent::run → cli::startup</text>
+  <text x="1160" y="380" class="body">• CLI commands: serve, run, login, memory</text>
+  <text x="1160" y="408" class="body">• server lifecycle, sessions, sockets</text>
+  <text x="1160" y="436" class="body">• agent turns, streaming, interrupts</text>
+  <text x="1160" y="464" class="body">• update checks and restart recovery</text>
+
+  <rect x="415" y="625" width="405" height="305" rx="30" class="panel"/>
+  <rect x="444" y="652" width="100" height="28" rx="14" fill="url(#violet)"/>
+  <text x="466" y="672" class="chip">AGENT</text>
+  <text x="444" y="722" class="box-title">Agent session core</text>
+  <text x="444" y="754" class="box-sub">src/agent.rs</text>
+  <text x="444" y="800" class="body">• provider, session, skills registry</text>
+  <text x="444" y="828" class="body">• memory flag and runtime state</text>
+  <text x="444" y="856" class="body">• soft interrupt / graceful shutdown</text>
+  <text x="444" y="884" class="body">• cache tracking and tool-call repair</text>
+
+  <rect x="880" y="625" width="440" height="305" rx="30" class="panel"/>
+  <rect x="909" y="652" width="96" height="28" rx="14" fill="url(#green)"/>
+  <text x="933" y="672" class="chip">TOOLS</text>
+  <text x="909" y="722" class="box-title">Tool registry</text>
+  <text x="909" y="754" class="box-sub">src/tool/mod.rs • crates/iagent-tool-core</text>
+  <text x="909" y="800" class="body">• read/write/edit/patch/grep/bash</text>
+  <text x="909" y="828" class="body">• browser/computer/app/word/gmail</text>
+  <text x="909" y="856" class="body">• memory/session/conversation search</text>
+  <text x="909" y="884" class="body">• subagent, batch, swarm, skills, MCP</text>
+
+  <rect x="1385" y="610" width="285" height="320" rx="30" class="panel"/>
+  <rect x="1414" y="637" width="116" height="28" rx="14" fill="url(#blue)"/>
+  <text x="1430" y="657" class="chip">MODELS</text>
+  <text x="1414" y="707" class="box-title">Provider layer</text>
+  <text x="1414" y="739" class="box-sub">src/provider/mod.rs</text>
+  <text x="1414" y="785" class="body">• OpenAI / OpenRouter</text>
+  <text x="1414" y="813" class="body">• Gemini</text>
+  <text x="1414" y="841" class="body">• Copilot / Cursor</text>
+  <text x="1414" y="869" class="body">• Claude / Anthropic</text>
+  <text x="1414" y="897" class="body">• Bedrock behind feature flag</text>
+
+  <rect x="95" y="610" width="265" height="320" rx="30" class="panel"/>
+  <rect x="124" y="637" width="120" height="28" rx="14" fill="url(#amber)"/>
+  <text x="141" y="657" class="chip">AMBIENT</text>
+  <text x="124" y="707" class="box-title">Desktop ambient</text>
+  <text x="124" y="739" class="box-sub">src/desktop_ambient.rs</text>
+  <text x="124" y="785" class="body">• desktop_monitor</text>
+  <text x="124" y="813" class="body">• suggestion_engine</text>
+  <text x="124" y="841" class="body">• overlay_ui daemon</text>
+  <text x="124" y="869" class="body">• notification detector</text>
+  <text x="124" y="897" class="body">• safety handle</text>
+
+  <rect x="540" y="975" width="720" height="72" rx="24" class="soft"/>
+  <text x="570" y="1018" class="body">Storage/config: %APPDATA%\iAgent\config.toml, ~/.iagent/config.toml, logs, sessions, JSON memory graph, ambient queue/state</text>
+
+  <rect x="1320" y="975" width="350" height="72" rx="24" class="soft"/>
+  <text x="1350" y="1018" class="body">External endpoints: LLM APIs, browser CDP, Gmail/OfficeCLI, optional Cloudflare worker</text>
+
+  <path class="line" d="M445 350 C485 350 505 350 545 350"/>
+  <path class="line" d="M1030 360 C1075 360 1090 360 1130 360"/>
+  <path class="line" d="M1380 525 C1350 575 1305 615 1255 650"/>
+  <path class="line" d="M1155 525 C1050 580 910 610 760 650"/>
+  <path class="line" d="M815 780 C850 780 855 780 880 780"/>
+  <path class="line" d="M1320 780 C1345 780 1360 780 1385 780"/>
+  <path class="dash" d="M545 490 C425 545 335 600 270 660"/>
+  <path class="dash" d="M1020 500 C1110 610 1075 720 1020 625"/>
+  <path class="dash" d="M595 930 C630 955 665 970 715 975"/>
+  <path class="dash" d="M1100 930 C1075 952 1050 964 1010 975"/>
+  <path class="dash" d="M1515 930 C1510 948 1504 963 1498 975"/>
+
+  <text x="80" y="1130" class="muted">Diagram scope intentionally excludes unverified behavior. Component names match files, crates, or modules found in the repository.</text>
+</svg>
